@@ -34,7 +34,6 @@ Clone it and run
 
 ```
 $ go get ./..
-
 ```
 
 ## Integration
@@ -49,8 +48,9 @@ You may need to install protobufs
 
 If you change the portobufs definition run 
 
+```
 $ protoc -I=. --go_out=. ./docs.proto
-
+```
 
 
 

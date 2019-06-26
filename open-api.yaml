@@ -1,0 +1,358 @@
+openapi: 3.0.0
+info:
+  description: Milagro Secure - distributed / decentralized core security services.
+  title: Apache Milagro Server
+  contact:
+    email: howard@qredo.com
+  license:
+    name: Apache Milagro
+  version: 0.0.1
+paths:
+  /identity:
+    post:
+      summary: Create an identity document
+      tags:
+        - identity
+      operationId: createIdentity
+      # security:
+      # - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  required: true
+                  type: string
+                  x-go-name: Name
+                  example: thisNode             
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Identity'
+    get:
+       summary: Get a list of identities
+       tags:
+         - identity
+       operationId: getIdentities
+       security:
+        - bearerAuth: []
+       parameters: 
+         - name: page
+           in: query
+           description: current page
+           schema:
+             type: integer
+             default: 0
+         - name: perPage
+           in: query
+           description: number of items to show
+           schema:
+             type: integer
+             default: 10
+         - name: sortBy
+           in: query
+           description: Sort By field. Prefix with "-" for descending
+           schema:
+             type: string
+             enum:
+               - dateCreatedAsc               
+               - dateCreatedDesc               
+       responses:
+         '200':
+           description: Successful Operation
+           content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/IdentityList'
+  /identity/{idDocAddress}:
+    get:
+      tags:
+        - identity
+      summary: Get a single identity
+      description: Use a known idDocumentAddress to access a single ID document
+      operationId: getIdentityByID
+      security:
+      - bearerAuth: []
+      parameters:
+        - name: idDocAddress
+          in: path
+          description: IPFS hash address of user id doc
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful Operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Identity'
+  /secret/safe:
+    post:
+      summary: Generate and store secret
+      tags:
+        - secret
+      operationId: createsafe
+      # security:
+      # - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                beneficiaryIDDOC:
+                  type: string
+                  x-go-name: BeneficiaryIDDOC
+                  example: '"kjhdhdjd"'
+                coin:
+                  type: integer
+                  format: int64
+                  x-go-name: Coin
+                  example: 2
+        x-go-name: Body
+      responses:
+        '200':
+          $ref: '#/components/schemas/safesecret'
+    get:
+      summary: Get a list of secrets
+      tags:
+        - secret
+      operationId: getsafes
+      security:
+      - bearerAuth: []
+      parameters: 
+        - name: page
+          in: query
+          description: current page
+          schema:
+            type: integer
+            default: 0
+        - name: perPage
+          in: query
+          description: number of items to show
+          schema:
+            type: integer
+            default: 10
+        - name: sortBy
+          in: query
+          description: Sort By field. Prefix with "-" for descending
+          schema:
+            type: string
+            enum:
+              - dateCreated
+              - dateModified
+              - -dateCreated
+              - -dateModified
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Arrayofsafesecrets'
+  /secret/safe/{safesecretAddress}:
+    get:
+      summary: Get details of a secret
+      tags:
+        - secret
+      operationId: getsafe
+      security:
+      - bearerAuth: []
+      parameters:
+        - name: safesecretAddress
+          in: path
+          description: IPFS hash address of safe secret doc
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/schemas/safesecret'
+  /secret/key:
+    post:
+      summary: Release secret
+      tags:
+        - secret
+      operationId: createkey
+      # security:
+      # - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                partTwosecretDoc:
+                  type: string
+                  # example: QmReoUkzq6dEwdTZqCzNAqiMKPGdY2E3recm2tud1uuqia
+      responses:
+        '200':
+          $ref: '#/components/schemas/keysecret'
+  /secret/pairing:
+    post:
+      summary: Generate and issue a type-3 pairing key
+      tags:
+        - secret
+      operationId: createsafe
+      # security:
+      # - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                beneficiaryIDDOC:
+                  type: string
+                  x-go-name: BeneficiaryIDDOC
+                  example: '"kjhdhdjd"'
+                coin:
+                  type: integer
+                  format: int64
+                  x-go-name: Coin
+                  example: 2
+        x-go-name: Body
+      responses:
+        '200':
+          $ref: '#/components/schemas/safesecret'
+  /fulfill/safe:
+    post:
+      summary: Create Public Address
+      tags:
+        - fulfill
+      operationId: fulfillsafe 
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                safeDocAddress:
+                  type: string
+                  x-go-name: safeDocAddress
+                  example: Qme5S5xVfGYF46oftiLQDevPAGSKy1aggdtrZvvEdiXuqM
+        x-go-name: Body
+      responses:
+        '200':
+          $ref: '#/components/schemas/safesecret'
+  /fulfill/key:
+    post:
+      summary: Return Private Key
+      tags:
+        - fulfill
+      operationId: fulfillkey
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                safeDocAddress:
+                  type: string
+                  x-go-name: keyDocAddress
+                  example: Qme5S5xVfGYF46oftiLQDevPAGSKy1aggdtrZvvEdiXuqM
+        x-go-name: Body
+      responses:
+        '200':
+          $ref: '#/components/schemas/safesecret'
+  /healthcheck:
+    get:
+      description: Test Server Health
+      tags:
+        - system
+      operationId: healthcheck
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemHealth'
+servers:
+  - url: 'http://localhost:5555'
+  - url: 'http://localhost:5556'
+# security:
+#   - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Identity:
+      type: object
+      properties:
+        idDocumentAddress:
+          type: string
+        AuthenticationReference:  
+          type: string
+        BenListenerWalletAddress: 
+          type: string
+        BenSASPubKey:             
+          type: string
+        BenECAddPubKey:           
+          type: string
+        SikePublicKey:            
+          type: string
+        PicnicPublicKey:
+          type: string      
+        Handle:
+          type: string
+        Email:
+          type: string
+        Username:
+          type: string
+        Timestamp:
+          type: integer 
+    IdentityList:
+      type: object
+      items:
+        $ref: '#/components/schemas/IdentityArray'
+    IdentityArray:
+      type: array
+      items: 
+        $ref: '#/components/schemas/Identity'
+    safesecret:
+      type: object
+      properties:
+        safesecretAddress:
+          type: string
+    Arrayofsafesecrets:
+      type: array
+      items:
+        $ref: '#/components/schemas/safesecret'
+    keysecret:
+      type: object
+      properties:
+        secretDocAddress:
+          type: string
+    SystemHealth:
+      type: object
+      properties:
+        timeStamp:
+          type: string
+        testString:
+          type: string
+tags:
+  - name: identity
+    description: Actors in the system
+    externalDocs:
+      url: 'https://milagro.apache.org/docs/milagro-intro/'
+      description: Apache Milagro Docs
+  - name: secret
+    description: Send Requests to Principal Node
+    externalDocs:
+      url: 'https://milagro.apache.org/docs/milagro-intro/'
+      description: Apache Milagro Docs
+  - name: fulfill
+    description: Actions performed by the Fiduciary node
+    externalDocs:
+      url: 'https://milagro.apache.org/docs/milagro-intro/'
+      description: Apache Milagro Docs

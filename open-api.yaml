@@ -92,11 +92,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Identity'
-  /secret/safe:
+  /order:
     post:
-      summary: Generate and store secret
+      summary: Create an order for a new secret
       tags:
-        - secret
+        - order
       operationId: createsafe
       # security:
       # - bearerAuth: []
@@ -122,7 +122,7 @@ paths:
     get:
       summary: Get a list of secrets
       tags:
-        - secret
+        - order
       operationId: getsafes
       security:
       - bearerAuth: []
@@ -156,11 +156,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Arrayofsafesecrets'
-  /secret/safe/{safesecretAddress}:
+  /order/{orderAddress}:
     get:
-      summary: Get details of a secret
+      summary: Get details of a secret in custody
       tags:
-        - secret
+        - order
       operationId: getsafe
       security:
       - bearerAuth: []
@@ -174,11 +174,11 @@ paths:
       responses:
         '200':
           $ref: '#/components/schemas/safesecret'
-  /secret/key:
+  /order/secret:
     post:
       summary: Release secret
       tags:
-        - secret
+        - order
       operationId: createkey
       # security:
       # - bearerAuth: []
@@ -194,11 +194,11 @@ paths:
       responses:
         '200':
           $ref: '#/components/schemas/keysecret'
-  /secret/pairing:
+  /order/pairing:
     post:
       summary: Generate and issue a type-3 pairing key
       tags:
-        - secret
+        - order
       operationId: createsafe
       # security:
       # - bearerAuth: []
@@ -221,7 +221,7 @@ paths:
       responses:
         '200':
           $ref: '#/components/schemas/safesecret'
-  /fulfill/safe:
+  /fulfill/order:
     post:
       summary: Create Public Address
       tags:
@@ -241,7 +241,7 @@ paths:
       responses:
         '200':
           $ref: '#/components/schemas/safesecret'
-  /fulfill/key:
+  /fulfill/order/secret:
     post:
       summary: Return Private Key
       tags:
@@ -261,7 +261,27 @@ paths:
       responses:
         '200':
           $ref: '#/components/schemas/safesecret'
-  /healthcheck:
+  /fulfill/order/pairing:
+    post:
+      summary: Return mPIN Key
+      tags:
+        - fulfill
+      operationId: fulfillkey
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                safeDocAddress:
+                  type: string
+                  x-go-name: keyDocAddress
+                  example: Qme5S5xVfGYF46oftiLQDevPAGSKy1aggdtrZvvEdiXuqM
+        x-go-name: Body
+      responses:
+        '200':
+          $ref: '#/components/schemas/safesecret'
+  /status:
     get:
       description: Test Server Health
       tags:
@@ -346,7 +366,7 @@ tags:
     externalDocs:
       url: 'https://milagro.apache.org/docs/milagro-intro/'
       description: Apache Milagro Docs
-  - name: secret
+  - name: order
     description: Send Requests to Principal Node
     externalDocs:
       url: 'https://milagro.apache.org/docs/milagro-intro/'

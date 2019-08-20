@@ -1,131 +1,44 @@
 openapi: 3.0.0
 info:
-  description: Milagro Secure - distributed / decentralized core security services.
   title: Apache Milagro Server
+  description: Milagro Secure - distributed / decentralized core security services. This is the HTTP API specification for the D-TA when it is running no plugins (or the plugin template).
   contact:
-    email: howard@qredo.com
+    email: dev@milagro.apache.org
   license:
-    name: Apache Milagro
-  version: 0.0.1
+    name: http://www.apache.org/licenses/LICENSE-2.0
+  version: 1.0.0  
 paths:
-  /identity:
+  /1.0/identity:
     post:
-      summary: Create an identity document
+      summary: Create an Identity Document
       tags:
-        - identity
-      operationId: createIdentity
-      # security:
-      # - bearerAuth: []
+        - identity      
       requestBody:
         content:
           application/json:
             schema:
               type: object
               properties:
-                name:
-                  required: true
+                Name:
                   type: string
-                  x-go-name: Name
-                  example: thisNode             
-      responses:
-        '200':
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Identity'
-    get:
-       summary: Get a list of identities
-       tags:
-         - identity
-       operationId: getIdentities
-       security:
-        - bearerAuth: []
-       parameters: 
-         - name: page
-           in: query
-           description: current page
-           schema:
-             type: integer
-             default: 0
-         - name: perPage
-           in: query
-           description: number of items to show
-           schema:
-             type: integer
-             default: 10
-         - name: sortBy
-           in: query
-           description: Sort By field. Prefix with "-" for descending
-           schema:
-             type: string
-             enum:
-               - dateCreatedAsc               
-               - dateCreatedDesc               
-       responses:
-         '200':
-           description: Successful Operation
-           content:
-             application/json:
-               schema:
-                 $ref: '#/components/schemas/IdentityList'
-  /identity/{idDocAddress}:
-    get:
-      tags:
-        - identity
-      summary: Get a single identity
-      description: Use a known idDocumentAddress to access a single ID document
-      operationId: getIdentityByID
-      security:
-      - bearerAuth: []
-      parameters:
-        - name: idDocAddress
-          in: path
-          description: IPFS hash address of user id doc
-          required: true
-          schema:
-            type: string
+                  example: ExampleNodeName             
       responses:
         '200':
           description: Successful Operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Identity'
-  /secret/safe:
-    post:
-      summary: Generate and store secret
-      tags:
-        - secret
-      operationId: createsafe
-      # security:
-      # - bearerAuth: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                beneficiaryIDDOC:
-                  type: string
-                  x-go-name: BeneficiaryIDDOC
-                  example: '"kjhdhdjd"'
-                coin:
-                  type: integer
-                  format: int64
-                  x-go-name: Coin
-                  example: 2
-        x-go-name: Body
-      responses:
-        '200':
-          $ref: '#/components/schemas/safesecret'
+                $ref: '#/components/schemas/CreateIdentityResponse'
+        '400':
+          description: Invalid Request
+          content:
+            text/plain:
+             schema:
+              type: string
     get:
-      summary: Get a list of secrets
+      summary: Get a list of identity documents
       tags:
-        - secret
-      operationId: getsafes
-      security:
-      - bearerAuth: []
+       - identity
       parameters: 
         - name: page
           in: query
@@ -145,214 +58,356 @@ paths:
           schema:
             type: string
             enum:
-              - dateCreated
-              - dateModified
-              - -dateCreated
-              - -dateModified
+              - dateCreatedAsc               
+              - dateCreatedDesc               
       responses:
         '200':
-          description: Successful operation
+          description: Successful Operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Arrayofsafesecrets'
-  /secret/safe/{safesecretAddress}:
+                $ref: '#/components/schemas/IdentityListResponse'
+        '400':
+          description: Invalid Request
+          content:
+            text/plain:
+              schema:
+                type: string
+  /1.0/identity/{IDDocumentCID}:
     get:
-      summary: Get details of a secret
+      summary: Get Details of an Identity
       tags:
-        - secret
-      operationId: getsafe
-      security:
-      - bearerAuth: []
-      parameters:
-        - name: safesecretAddress
+        - identity
+      parameters: 
+        - name: IDDocumentCID
           in: path
-          description: IPFS hash address of safe secret doc
+          description: IPFS hash address of Identity Document
           required: true
           schema:
             type: string
       responses:
         '200':
-          $ref: '#/components/schemas/safesecret'
-  /secret/key:
-    post:
-      summary: Release secret
-      tags:
-        - secret
-      operationId: createkey
-      # security:
-      # - bearerAuth: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                partTwosecretDoc:
-                  type: string
-                  # example: QmReoUkzq6dEwdTZqCzNAqiMKPGdY2E3recm2tud1uuqia
-      responses:
-        '200':
-          $ref: '#/components/schemas/keysecret'
-  /secret/pairing:
-    post:
-      summary: Generate and issue a type-3 pairing key
-      tags:
-        - secret
-      operationId: createsafe
-      # security:
-      # - bearerAuth: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                beneficiaryIDDOC:
-                  type: string
-                  x-go-name: BeneficiaryIDDOC
-                  example: '"kjhdhdjd"'
-                coin:
-                  type: integer
-                  format: int64
-                  x-go-name: Coin
-                  example: 2
-        x-go-name: Body
-      responses:
-        '200':
-          $ref: '#/components/schemas/safesecret'
-  /fulfill/safe:
-    post:
-      summary: Create Public Address
-      tags:
-        - fulfill
-      operationId: fulfillsafe 
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                safeDocAddress:
-                  type: string
-                  x-go-name: safeDocAddress
-                  example: Qme5S5xVfGYF46oftiLQDevPAGSKy1aggdtrZvvEdiXuqM
-        x-go-name: Body
-      responses:
-        '200':
-          $ref: '#/components/schemas/safesecret'
-  /fulfill/key:
-    post:
-      summary: Return Private Key
-      tags:
-        - fulfill
-      operationId: fulfillkey
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                safeDocAddress:
-                  type: string
-                  x-go-name: keyDocAddress
-                  example: Qme5S5xVfGYF46oftiLQDevPAGSKy1aggdtrZvvEdiXuqM
-        x-go-name: Body
-      responses:
-        '200':
-          $ref: '#/components/schemas/safesecret'
-  /healthcheck:
-    get:
-      description: Test Server Health
-      tags:
-        - system
-      operationId: healthcheck
-      responses:
-        '200':
-          description: Successful operation
+          description: Successful Operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SystemHealth'
+                $ref: '#/components/schemas/Identity'
+        '400':
+          description: Invalid Request
+          content:
+            text/plain:
+              schema:
+                type: string
+  /1.0/order:
+    post:
+      summary: Create an order for a new Commitment
+      description: This request will return a Commitment (SECP256 public key) from the Master Fiduciary. The response also includes IPFS hash adresses of the Order Documents passed between the Principal and Master Fiduciary.
+      tags:
+      - order
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                BeneficiaryIDDocumentCID:
+                  type: string                  
+                  example: QmfWg5GffUEzwahd9hkvdnqTGQs5PfusoEpx3kSDSdG4ze
+      responses:
+        '200':
+          description: Successful Operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '400':
+          description: Invalid Request
+          content:
+            text/plain:
+              schema:
+                type: string
+    get:
+      summary: Get a list of orders managed by this D-TA
+      tags: 
+      - order
+      parameters: 
+        - name: page
+          in: query
+          description: current page
+          schema:
+            type: integer
+            default: 0
+        - name: perPage
+          in: query
+          description: number of items to show
+          schema:
+            type: integer
+            default: 10
+        - name: sortBy
+          in: query
+          description: Sort By field. Prefix with "-" for descending
+          schema:
+            type: string
+            enum:
+              - dateCreatedAsc               
+              - dateCreatedDesc
+      responses:
+        '200':
+          description: Succesful Operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderListResponse'
+        '400':
+          description: Invalid Request
+          content:
+            text/plain:
+             schema:
+              type: string
+  /1.0/order/{OrderReference}:
+    get:
+      summary: Get details of an order
+      tags:
+      - order
+      parameters:
+      - name: OrderReference
+        in: path
+        description: Reference for a single order
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Succesful Operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetOrderResponse'
+        '400':
+          description: Invalid Request
+          content:
+            text/plain:
+             schema:
+              type: string
+  /1.0/order/secret:
+    post:
+      summary: Returns the SECP256 Secret Key
+      tags:
+        - order
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                OrderReference:
+                  type: string                  
+                  example: QmUV8LRzTxV4ozHKKAi68wQXBirSjYn4VEtEjEtqusqAQi
+                BeneficiaryIDDocumentCID:
+                  type: string                  
+                  example: QmfWg5GffUEzwahd9hkvdnqTGQs5PfusoEpx3kSDSdG4ze
+      responses:
+        '200':
+          description: Succesful Operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderSecretResponse'
+        '400':
+          description: Invalid Request
+          content:
+            text/plain:
+             schema:
+              type: string
+  /1.0/fulfill/order:
+    post:
+      summary: Create Public Address
+      tags:
+        - fulfill      
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                OrderPart1CID:
+                  type: string
+                  example: Qme5S5xVfGYF46oftiLQDevPAGSKy1aggdtrZvvEdiXuqM
+                DocumentCID:
+                  type: string
+                  example: Qme5S5xVfGYF46oftiLQDevPAGSKy1aggdtrZvvEdiXuqM
+      responses:
+        '200':           
+          description: Succesful Operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FulfillOrderResponse'
+        '400':
+          description: Invalid Request
+          content:
+            text/plain:
+             schema:
+              type: string
+  /1.0/fulfill/order/secret:
+    post:
+      summary: Return Private Key
+      tags:
+        - fulfill      
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                OrderPart3CID:
+                  type: string
+                SenderDocumentCID:
+                  type: string                                  
+      responses:
+        '200':
+          description: Succesful Operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FulfillOrderSecretResponse'
+        '400':
+          description: Invalid Request
+          content:
+            text/plain:
+             schema:
+              type: string
+  /1.0/status:
+    get:
+      description: Test Server Health
+      tags:
+        - system      
+      responses:
+        '200':
+          description: Successful Operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+        '400':
+          description: Invalid Request
+          content:
+            text/plain:
+              schema:
+                type: string
 servers:
-  - url: 'http://localhost:5555'
   - url: 'http://localhost:5556'
-# security:
-#   - bearerAuth: []
+  - url: 'http://localhost:5555' 
 components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
   schemas:
-    Identity:
-      type: object
-      properties:
-        idDocumentAddress:
-          type: string
-        AuthenticationReference:  
-          type: string
-        BenListenerWalletAddress: 
-          type: string
-        BenSASPubKey:             
-          type: string
-        BenECAddPubKey:           
-          type: string
-        SikePublicKey:            
-          type: string
-        PicnicPublicKey:
-          type: string      
-        Handle:
-          type: string
-        Email:
-          type: string
-        Username:
-          type: string
-        Timestamp:
-          type: integer 
-    IdentityList:
-      type: object
-      items:
-        $ref: '#/components/schemas/IdentityArray'
-    IdentityArray:
-      type: array
-      items: 
-        $ref: '#/components/schemas/Identity'
-    safesecret:
-      type: object
-      properties:
-        safesecretAddress:
-          type: string
-    Arrayofsafesecrets:
-      type: array
-      items:
-        $ref: '#/components/schemas/safesecret'
-    keysecret:
-      type: object
-      properties:
-        secretDocAddress:
-          type: string
-    SystemHealth:
-      type: object
-      properties:
-        timeStamp:
-          type: string
-        testString:
-          type: string
+      CreateIdentityResponse:
+        type: object
+        properties:
+          IDDocumentCID:
+            type: string      
+      IdentityListResponse:
+        type: object
+        properties:
+          IDDocumentList:
+            type: array
+            items: 
+              $ref: '#/components/schemas/Identity'    
+      Identity:
+        type: object
+        properties:
+          IDDocumentCID:
+            type: string
+          AuthenticationReference:  
+            type: string
+          BeneficiaryECPublicKey: 
+            type: string          
+          SikePublicKey:            
+            type: string
+          BlsPublicKey:
+            type: string                
+          Timestamp:
+            type: integer
+      OrderResponse:
+        type: object
+        properties:
+          OrderPart1CID:
+            type: string
+          OrderPart2CID:
+            type: string
+          OrderReference:
+            type: string
+          Commitment:
+            type: string
+          CreatedAt:
+            type: string
+      OrderListResponse:
+        type: object
+        properties:
+          OrderReference:
+            type: array
+            items:
+              type: string
+      GetOrderResponse:
+        type: object
+        properties:
+          Order:
+            type: object
+            properties:
+              Order: 
+                type: string
+              TimeStamp:
+                type: integer                            
+      OrderSecretResponse:
+        type: object
+        properties:
+          Secret:
+            type: string
+          Commitment:
+            type: string
+          OrderReference:
+            type: string
+      FulfillOrderResponse:
+        type: object
+        properties: 
+          OrderPart2CID:
+            type: string
+      FulfillOrderSecretResponse:
+        type: object
+        properties:
+          OrderPart4CID:
+            type: string
+      StatusResponse:
+        type: object
+        properties:
+          Application:
+            type: string
+          ExtensionVendor:
+            type: string
+          NodeCID:
+            type: string
+          TimeStamp:
+            type: string
+          Plugin:
+            type: string
 tags:
   - name: identity
     description: Actors in the system
     externalDocs:
       url: 'https://milagro.apache.org/docs/milagro-intro/'
       description: Apache Milagro Docs
-  - name: secret
-    description: Send Requests to Principal Node
+  - name: order
+    description: Communication between Principals and Master Fiduciaries
     externalDocs:
       url: 'https://milagro.apache.org/docs/milagro-intro/'
       description: Apache Milagro Docs
   - name: fulfill
-    description: Actions performed by the Fiduciary node
+    description: Actions performed by the Master Fiduciary
     externalDocs:
       url: 'https://milagro.apache.org/docs/milagro-intro/'
       description: Apache Milagro Docs
+  - name: system
+    description: Test Server Health
+    externalDocs:
+      url: 'https://milagro.apache.org/docs/milagro-intro/'
+      description: Apache Milagro Docs
+  

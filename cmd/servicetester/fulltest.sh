@@ -9,7 +9,7 @@ popd () {
 }
 
 start_server () {
-    go build -o target/service github.com/apache/incubator-milagro-dta/cmd/service
+    GO111MODULE=on go build -o target/service github.com/apache/incubator-milagro-dta/cmd/service
     target/service daemon -service=$1 > /dev/null &
     pid=$!
     sleep 3

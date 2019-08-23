@@ -2,7 +2,7 @@
 ---
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
 
-Milagro Custody D-TA is a colaborative key management server 
+Milagro D-TA is a colaborative key management server 
 
 Milagro D-TA facilitates secure and auditable communication between people who to use key pairs (Principal) and service providers who can keep the secret keys safe (Master Fiduciary). It is written in Go and uses REST services based on the [GoKit microservices framework](https://gokit.io), it uses IPFS to create a shared immutable log of transactions and relies on Milagro-Crypto-C for it's crypto.
 

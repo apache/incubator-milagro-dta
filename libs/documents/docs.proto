@@ -1,0 +1,136 @@
+/*
+// Build with (note the location of protobuf & gohome 
+// Also you cant use ~ to refer to home dir
+
+  protoc \
+  --proto_path=$HOME/go/src \
+  --proto_path=$HOME/go/src/github.com/gogo/protobuf/ \
+  --proto_path=. \
+  --go_out=. \
+  --govalidators_out=. \
+  *.proto
+
+Validation performed using
+https://github.com/mwitkow/go-proto-validators
+
+
+Objective:
+To Create an extensible document structure that
+
+1) Entire document is signed by the author, this signature can be verified.
+2) It contains a Plaintext Message - which anyone can read
+3) It contains multiple Encrypted Messages
+    a) Each encrypted message can be decrytpted by different recipients.
+    b) The recipients of each encrypted message are detail as Recipients in the header
+*/
+
+
+syntax="proto3";
+
+package documents;
+import "github.com/mwitkow/go-proto-validators/validator.proto";
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+//The Encrypted Envelope
+
+message SignedEnvelope {
+    bytes Signature = 1 [(validator.field) = { length_gt: 20}];
+    string SignerCID = 2 [(validator.field) = {regex: "^Q[[:alnum:]]{45}$|^$"}];
+    bytes Message   = 3;
+}
+
+message Envelope {
+   Header Header       = 1;
+   bytes Body          = 2;
+   bytes EncryptedBody = 3;
+} 
+
+message Header {
+    string IPFSID                  = 1; //this is always blank in a live document, the ID of the IPFS file is insert after decoding 
+    float Version                  = 2;
+    int64 DateTime                 = 3 [(validator.field) = {int_gt:1564050341,int_lt:32521429541}];
+    string PreviousCID             = 4;
+    float BodyTypeCode             = 5;
+    float BodyVersion              = 6;
+    float EncryptedBodyTypeCode    = 7;
+    float EncryptedBodyVersion     = 8;
+    bytes EncryptedBodyIV          = 9;
+    repeated Recipient Recipients  = 10 [(validator.field) = { repeated_count_max: 20}];
+}
+
+message Recipient {
+    float Version         = 1;
+    string CID            = 2 [(validator.field) = {regex: "^Q[[:alnum:]]{45}$|^$"}];
+    bytes EncapsulatedKey = 3;
+    bytes CipherText      = 4;
+    bytes IV              = 5;
+}
+
+
+message IDDocument {
+    string AuthenticationReference = 1;
+    bytes BeneficiaryECPublicKey   = 2;
+    bytes SikePublicKey            = 3;
+    bytes BLSPublicKey             = 4;
+    int64 Timestamp                = 5 [(validator.field) = {int_gt:1564050341,int_lt:32521429541}];
+}
+
+
+message OrderDocument {
+    string Type              = 1; //This can be used to extend the types of things that an order can do.
+    int64 Coin               = 2 [(validator.field) = {int_gt: -1, int_lt: 999}];
+    string PrincipalCID      = 3 [(validator.field) = {regex: "^Q[[:alnum:]]{45}$|^$"}];  //empty if ok
+    string BeneficiaryCID    = 4 [(validator.field) = {regex: "^Q[[:alnum:]]{45}$|^$"}];  //empty if ok
+    string Reference         = 5 [(validator.field) = {string_not_empty:true}]; //an id for this order e.g. walletID
+    int64 Timestamp          = 6 [(validator.field) = {int_gt:1564050341,int_lt:32521429541}];
+    OrderPart2 OrderPart2    = 7;
+    OrderPart3 OrderPart3    = 8;
+    OrderPart4 OrderPart4    = 9;
+}
+
+message OrderPart2 {
+    string CommitmentPublicKey = 1;
+    string PreviousOrderCID    = 2 [(validator.field) = {regex: "^Q[[:alnum:]]{45}$|^$"}];
+    int64 Timestamp            = 3 [(validator.field) = {int_gt:1564050341,int_lt:32521429541}];
+}
+
+message OrderPart3 {
+    string Redemption              = 1;
+    string PreviousOrderCID        = 2 [(validator.field) = {regex: "^Q[[:alnum:]]{45}$|^$"}];
+    bytes BeneficiaryEncryptedData = 3;
+    int64 Timestamp                = 4 [(validator.field) = {int_gt:1564050341,int_lt:32521429541}];
+}
+
+message OrderPart4 {
+    string Secret           = 1;
+    string PreviousOrderCID = 2 [(validator.field) = {regex: "^Q[[:alnum:]]{45}$|^$"}];
+    int64 Timestamp         = 3 [(validator.field) = {int_gt:1564050341,int_lt:32521429541}];
+}
+
+
+message Policy{
+    float Version = 1;
+    string Name   = 2; 
+}
+
+message PlainTestMessage1 {
+    string Nametest1 = 1;
+}
+
+message EncryptTestMessage1 {
+    string Nametest2 = 1;
+}
+
+message SimpleString {
+    string Content = 1;
+}
+
+
+//Version everything!!!!
+//Mark SIKE keys with a version
+
+
+
+// rtn = makeEnv(char* message, char* SIKEpk[],  char* encMessage, char* encapsulatedKey[], char* encapsulationVersion
+// rtn = decodeEnv(char* encapsulationVersion, char* encapsulatedKey,  char* SIKEprivKey)
+// rtn = sign( char* BLSsk, char* signature) 
+// rtn = verify(char* signature, char* message)  

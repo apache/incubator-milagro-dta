@@ -1,0 +1,97 @@
+cmake_minimum_required (VERSION 3.1 FATAL_ERROR)
+project (libpqnist)
+
+# Helper Macros
+macro(log var)
+  message(STATUS "${var}: ${${var}}")
+endmacro()
+
+# Includes
+include(CTest)
+include(GNUInstallDirs)
+
+# Extract version from the VERSION file
+file(STRINGS VERSION VERSION_FILE_CONTENT)
+string(REPLACE "." ";" VERSION_FILE_PARTS ${VERSION_FILE_CONTENT})
+list(GET VERSION_FILE_PARTS 0 VERSION_MAJOR)
+list(GET VERSION_FILE_PARTS 1 VERSION_MINOR)
+list(GET VERSION_FILE_PARTS 2 VERSION_PATCH)
+set(BUILD_VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
+log(BUILD_VERSION)
+log(CMAKE_GENERATOR)
+
+# Add options for build
+option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
+log(BUILD_SHARED_LIBS)
+log(BUILD_TESTING) # added by 'include(CTest)'
+
+# Allow the developer to select if Dynamic or Static libraries are built
+# Set the default LIB_TYPE variable to STATIC
+SET (LIB_TYPE STATIC)
+IF (BUILD_SHARED_LIBS)
+  # User wants to build Dynamic Libraries, so change the LIB_TYPE variable to CMake keyword 'SHARED'
+  SET (LIB_TYPE SHARED)
+ENDIF (BUILD_SHARED_LIBS)
+
+# Configure build
+set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE}
+    CACHE STRING "Choose the type of build: Debug Release Coverage ASan Check CheckFull"
+    FORCE)
+
+# Set a default build type if none was specified
+if(NOT CMAKE_BUILD_TYPE)
+  message(STATUS "Setting build type to 'Release' as none was specified.")
+  set(CMAKE_BUILD_TYPE Release)
+endif(NOT CMAKE_BUILD_TYPE)
+log(CMAKE_BUILD_TYPE)
+
+if(CMAKE_COMPILER_IS_GNUCC)
+    execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion
+                    OUTPUT_VARIABLE GCC_VERSION)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wno-strict-prototypes -Wunused-value -Wcast-align -Wunused-variable -Wundef -Wformat-security -Wno-pointer-sign -Wno-unknown-pragmas")
+
+    if (GCC_VERSION VERSION_GREATER 4.8 OR GCC_VERSION VERSION_EQUAL 4.8)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wshadow")
+        set(CMAKE_C_FLAGS_ASAN    "-O0 -g3 -fsanitize=address")
+    else (GCC_VERSION VERSION_GREATER 4.8 OR GCC_VERSION VERSION_EQUAL 4.8)
+        message(STATUS "GCC 4.8 required to run address sanitizer - please upgrade your installation")
+    endif(GCC_VERSION VERSION_GREATER 4.8 OR GCC_VERSION VERSION_EQUAL 4.8)
+
+    set(CMAKE_C_FLAGS_RELEASE     " -static -O2")
+    set(CMAKE_C_FLAGS_DEBUG       " -static -O0 -g3 -D DEBUG")
+    set(CMAKE_C_FLAGS_COVERAGE    " -static -O0 -g3 --coverage")
+endif(CMAKE_COMPILER_IS_GNUCC)
+
+if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
+    set(CMAKE_SHARED_LINKER_FLAGS "--coverage")
+endif(CMAKE_BUILD_TYPE STREQUAL "Coverage")
+
+log(CMAKE_INSTALL_PREFIX)
+
+# /include subdir
+set(INSTALL_INCLUDESUBDIR "${CMAKE_INSTALL_INCLUDEDIR}/")
+log(CMAKE_INSTALL_INCLUDEDIR)
+log(INSTALL_INCLUDESUBDIR)
+
+# Add subdirectories
+add_subdirectory(include)
+add_subdirectory(src)
+add_subdirectory(examples)
+
+if(BUILD_TESTING)
+  message(STATUS "Build tests")
+  add_subdirectory(test/smoke)
+  add_subdirectory(test/unit)  
+endif()
+
+# uninstall target
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+    IMMEDIATE @ONLY)
+
+add_custom_target(uninstall
+    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+
+include(CPackConfig.cmake)
+

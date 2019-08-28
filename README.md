@@ -12,7 +12,7 @@ Milagro D-TA provides a basic set of services for creating identities for actors
 2. **SafeGuardSecret** Encrypts a string and decrypts it again
 
 ## Instalation
-To see Milagro D-TA in action clone this repo and run the build script. This has currently been tested on Ubuntu (we'll make a Mac version shortly. Windows? You're on your own...)
+To see Milagro D-TA in action clone this repo and run the build script. This has currently been tested on Ubuntu 18.04 (we'll make a Mac version shortly. Windows? You're on your own...)
 
 ```
 git clone https://github.com/apache/incubator-milagro-dta.git
@@ -34,7 +34,7 @@ docker build -t mydta .
 ```
 
 ## Running Test
-
+To run an end-to-end test
 ```
 ./cmd/servicetester/fulltest.sh
 ```

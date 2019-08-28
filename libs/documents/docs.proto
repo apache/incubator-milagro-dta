@@ -167,3 +167,4 @@ message SimpleString {
 // rtn = decodeEnv(char* encapsulationVersion, char* encapsulatedKey,  char* SIKEprivKey)
 // rtn = sign( char* BLSsk, char* signature) 
 // rtn = verify(char* signature, char* message)  
+

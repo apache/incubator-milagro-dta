@@ -76,6 +76,7 @@ type IdentityListResponse struct {
 type OrderRequest struct {
 	// BeneficiaryIDDocumentCID string            `json:"BeneficiaryIDDocumentCID,omitempty" validate:"omitempty,IPFS"`
 	BeneficiaryIDDocumentCID string            `json:"beneficiaryIDDocumentCID,omitempty"`
+	Policy                   Policy            `json:"Policy,omitempty"`
 	Extension                map[string]string `json:"extension,omitempty"`
 }
 
@@ -167,4 +168,59 @@ type StatusResponse struct {
 	ExtensionVendor string            `json:"extensionVendor,omitempty"`
 	Extension       map[string]string `json:"extension,omitempty"`
 	Plugin          string            `json:"plugin,omitempty"`
+}
+
+//Policy - JSON polciy definition
+type Policy struct {
+	// WalletRef is the customer ref ID for the wallet
+	WalletRef string `json:"walletRef"`
+	// NodeID as provided by the customer registration
+	NodeID string `json:"nodeId"`
+	// coinType is the coin type
+	// 0 - Bitcoin
+	// 1 - Bitcoin test
+	CoinType int `json:"coin"`
+	// Sharing groups. Each group defines a list of identities.
+	// The leader and the node are added automatically.
+	SharingGroups []SharingGroup `json:"sharingGroups"`
+	// The number of participants
+	ParticipantCount uint `json:"participantCount"`
+	// The required number of signatures
+	Threshold uint `json:"threshold"`
+	// Slice that points to signer's keys
+	Signers []uint `json:"signers"`
+	//Public Address for deposit
+	PublicAddress string `json:"publicaddress"`
+	//The beneficiary who is able to spend
+	BeneficiaryDocID string `json:"beneficiarydocid"`
+	//TimeStamps
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+// SharingGroup defines a list of identities that will hold
+// the secret after split
+type SharingGroup struct {
+	GroupID   int        `json:"groupId"`
+	GroupRef  string     `json:"groupref"`
+	IDs       []Identity `json:"ids"`
+	Threshold int        `json:"threshold"`
+	//Temporary store of pSig during withdrawal
+	Signature []byte    `json:"signature,omitempty"`
+	TimeStamp time.Time `json:"timeStamp"`
+	Status    string    `json:"status"`
+}
+
+// Identity of a sharing group
+type Identity struct {
+	// ID is a verifiable identity of IDType
+	ID string `json:"id"`
+	// IDRef is the identity reference
+	IDRef string `json:"idRef"`
+	// IDType is the identity type, e.g. "phone"
+	IDType string `json:"idType"`
+	//Temporary store of vss shares during withdrawal
+	Share     []byte    `json:"share,omitempty"`
+	Status    string    `json:"status"`
+	TimeStamp time.Time `json:"timeStamp"`
 }

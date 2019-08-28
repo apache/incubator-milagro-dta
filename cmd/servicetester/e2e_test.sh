@@ -2,6 +2,7 @@
 #End to End Test of Services using curl/bash
 
 apiVersion="v1"
+simplePolicy='{"policy":{ "example":"single fiduciary","walletRef": "CD-2367-227","beneficiarydocid":"","nodeId": "123","coin": 0,"sharingGroups": [{"groupref": "Back Office Team","threshold":1,"ids": [{"id": "alice","idType": "oidc","idRef": "Alice"}]}],"participantCount": 7}}'
 
 status () {
   #Determine if an extension is running
@@ -22,7 +23,7 @@ status () {
 execute_bitcoin () {
   #Run 2 Tests against the Bitcoin Extension
   echo "Bitcoin Plugin Tests [2 Tests]"
-  output1=$(curl -s -X POST "http://localhost:5556/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":\"\",\"extension\":{\"coin\":\"0\"}}")
+  output1=$(curl -s -X POST "http://localhost:5556/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json" -d "{\"policy\":$simplePolicy,\"beneficiaryIDDocumentCID\":\"\",\"extension\":{\"coin\":\"0\"}}")
   echo $output1
   op1=$(echo $output1 | jq .orderReference)
   commitment1=$(echo $output1 | jq .commitment)
@@ -108,7 +109,7 @@ execute_safeguardsecret () {
 execute_milagro () {
   echo "Milagro Tests [1 Test]"
   output1=$(curl -s -X POST "http://localhost:5556/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":$identity}")
-  echo $output1  
+  echo $output1
   op1=$(echo $output1 | jq .orderReference)
 
 

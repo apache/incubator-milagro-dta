@@ -31,6 +31,7 @@ import (
 	"github.com/apache/incubator-milagro-dta/libs/datastore"
 	"github.com/apache/incubator-milagro-dta/libs/documents"
 	"github.com/apache/incubator-milagro-dta/libs/ipfs"
+	"github.com/apache/incubator-milagro-dta/pkg/api"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 )
@@ -46,7 +47,7 @@ type IdentitySecrets struct {
 }
 
 // CreateNewDepositOrder - Generate an empty new Deposit Order with random reference
-func CreateNewDepositOrder(BeneficiaryIDDocumentCID string, nodeID string) (*documents.OrderDoc, error) {
+func CreateNewDepositOrder(BeneficiaryIDDocumentCID string, nodeID string, policy api.Policy) (*documents.OrderDoc, error) {
 	//Create a reference for this order
 	reference, err := uuid.NewUUID()
 	if err != nil {

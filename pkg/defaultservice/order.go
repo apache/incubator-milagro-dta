@@ -93,6 +93,7 @@ func (s *Service) Order(req *api.OrderRequest) (*api.OrderResponse, error) {
 
 	//Initialise values from Request object
 	beneficiaryIDDocumentCID := req.BeneficiaryIDDocumentCID
+	policy := req.Policy
 	iDDocID := s.NodeID()
 	recipientList, err := common.BuildRecipientList(s.Ipfs, iDDocID, s.MasterFiduciaryNodeID())
 	if err != nil {
@@ -105,7 +106,7 @@ func (s *Service) Order(req *api.OrderRequest) (*api.OrderResponse, error) {
 	}
 
 	//Create Order
-	order, err := common.CreateNewDepositOrder(beneficiaryIDDocumentCID, iDDocID)
+	order, err := common.CreateNewDepositOrder(beneficiaryIDDocumentCID, iDDocID, policy)
 	if err != nil {
 		return nil, err
 	}

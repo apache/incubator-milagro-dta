@@ -31,17 +31,7 @@ Milagro D-TA provides a basic set of services for creating identities for actors
 2. **SafeGuardSecret** Encrypts a string and decrypts it again
 
 ## Instalation
-To see Milagro D-TA in action clone this repo and run the build script. This has currently been tested on Ubuntu 18.04
-
-```
-git clone https://github.com/apache/incubator-milagro-dta.git
-
-cd incubator-milagro-dta
-
-./build_static.sh
-```
-
-Alternatively you can run Milagro D-TA in a docker container 
+To see Milagro D-TA in action you can run Milagro D-TA in a docker container
 
 ```
 git clone https://github.com/apache/incubator-milagro-dta.git
@@ -49,6 +39,8 @@ git clone https://github.com/apache/incubator-milagro-dta.git
 cd incubator-milagro-dta
 
 docker build -t mydta .
+
+docker run -p5556:5556 mydta
 ```
 
 ## Dependencies
@@ -66,7 +58,9 @@ sudo apt-get install -y --no-install-recommends \
      make \
      libtool \
      automake \
-     libssl-dev
+     libssl-dev \
+     jq \
+     curl
 sudo apt-get clean
 ```
 
@@ -98,7 +92,7 @@ git clone https://github.com/apache/incubator-milagro-crypto-c.git
 cd incubator-milagro-crypto-c
 mkdir build
 cd build
-cmake -D CMAKE_BUILD_TYPE=Release -D BUILD_SHARED_LIBS=ON -D AMCL_CHUNK=64 -D AMCL_CURVE="BLS381,SECP256K1" -D AMCL_RSA="" -D BUILD_PYTHON=OFF -D BUILD_BLS=ON -D BUILD_WCC=OFF -D BUILD_MPIN=OFF -D BUILD_X509=OFF -D CMAKE_INSTALL_PREFIX=/usr/local ..
+cmake -D CMAKE_BUILD_TYPE=Release -D BUILD_SHARED_LIBS=ON -D AMCL_CHUNK=64 -D AMCL_CURVE="BLS381,SECP256K1" -D AMCL_RSA="" -D BUILD_PYTHON=OFF -D BUILD_BLS=ON -D BUILD_WCC=OFF -D BUILD_MPIN=OFF -D BUILD_X509=OFF -D CMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_C_FLAGS="-fPIC" ..
 make
 make test
 sudo make install
@@ -120,6 +114,13 @@ Download and install [Golang](https://golang.org/dl/)
 
 
 ## Run service
+
+Set the library paths
+
+```
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+export C_INCLUDE_PATH=$C_INCLUDE_PATH:/usr/local/lib
+```
 
 This script will build the service
 

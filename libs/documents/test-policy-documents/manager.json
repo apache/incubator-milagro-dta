@@ -1,0 +1,45 @@
+{"policy":
+	{
+		    "example":"One Group And One Manager",
+			"walletRef": "998-CD2561",
+			"beneficiarydocid":"",
+			"nodeId": "123",
+			"coin": 1,
+			"sharingGroups": [
+					{
+							"groupref": "Back Office Team",
+							"threshold":2,
+							"ids": [
+									{
+											"id": "alice",
+											"idType": "oidc",
+											"idRef": "Alice"
+									},
+									{
+											"id": "bob",
+											"idType": "oidc",
+											"idRef": "Bob"
+									},
+									{
+											"id": "charlie",
+											"idType": "oidc",
+											"idRef": "Charlie"
+									}
+							]
+					},
+					{
+							"groupref": "Manager",
+							"threshold":1,
+							"ids": [
+									{
+											"id": "delores",
+											"idType": "oidc",
+											"idRef": "Delores = The Manager"
+									}
+							]
+					}
+					
+			],
+			"participantCount": 7
+	  }
+	}

@@ -1,0 +1,55 @@
+{"policy":
+	{
+		"example": "Two Groups - Two Out Of Three",
+		"walletRef":"BOFA-23789TY",
+		"beneficiarydocid":"",
+			"nodeId": "123",
+			"coin": 1,
+			"sharingGroups": [
+					{
+							"groupref": "Back Office Team",
+							"threshold":2,
+							"ids": [
+									{
+											"id": "alice",
+											"idType": "oidc",
+											"idRef": "Alice"
+									},
+									{
+											"id": "bob",
+											"idType": "oidc",
+											"idRef": "Bob"
+									},
+									{
+											"id": "charlie",
+											"idType": "oidc",
+											"idRef": "Charlie"
+									}
+							]
+					},
+					{
+							"groupref": "Compliance Team",
+							"threshold":2,
+							"ids": [
+									{
+											"id": "delores",
+											"idType": "oidc",
+											"idRef": "Delores"
+									},
+									{
+											"id": "ethel",
+											"idType": "oidc",
+											"idRef": "Ethel"
+									},
+									{
+											"id": "freda",
+											"idType": "oidc",
+											"idRef": "Freda"
+									}
+							]
+					}
+					
+			],
+			"participantCount": 7
+	  }
+	}

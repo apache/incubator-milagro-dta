@@ -85,6 +85,7 @@ message OrderDocument {
     OrderPart2 OrderPart2    = 7;
     OrderPart3 OrderPart3    = 8;
     OrderPart4 OrderPart4    = 9;
+    policy policy            = 10;
 }
 
 message OrderPart2 {
@@ -106,10 +107,42 @@ message OrderPart4 {
     int64 Timestamp         = 3 [(validator.field) = {int_gt:1564050341,int_lt:32521429541}];
 }
 
+message PolicyWrapper{
+    policy policy = 1;
+}
 
-message Policy{
-    float Version = 1;
-    string Name   = 2; 
+message policy{
+    string example                      = 2;
+    string walletRef                    = 3;
+    string nodeId                       = 4;
+    int64 coin                          = 5;
+    repeated sharingGroup sharingGroups = 6;
+    int64 participantCount              = 7;
+	int64 threshold                     = 8;
+	repeated int64 signers              = 9;
+	string publicAddress                = 10;
+	string beneficiarydocid             = 11;
+    int64 dateTime                      = 12 [(validator.field) = {int_gt:1564050341,int_lt:32521429541}];
+}
+
+message sharingGroup {
+	int64 groupid         = 1;  
+	string groupref       = 2;
+	repeated identity ids = 3;
+	int64 threshold       = 4;
+	bytes signature       = 5;
+	int64 timeStamp       = 6;
+	string status         = 7;
+}
+
+// Identity of a sharing group
+message identity {
+    string id       = 1;
+	string idRef    = 2;
+	string idType   = 3;
+	bytes share     = 4;
+	string status   = 5;
+	int64 timeStamp = 6;
 }
 
 message PlainTestMessage1 {

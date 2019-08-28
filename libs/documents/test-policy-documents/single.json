@@ -1,0 +1,23 @@
+{"policy":
+	{   "example":"single fiduciary",
+		"walletRef": "CD-2367-227",
+		"beneficiarydocid":"",
+		"nodeId": "123",
+		"coin": 0,
+		"sharingGroups": [
+					{
+							"groupref": "Back Office Team",
+							"threshold":1,
+							"ids": [
+									{
+											"id": "alice",
+											"idType": "oidc",
+											"idRef": "Alice"
+									}
+							]
+					}
+					
+			],
+		"participantCount": 7
+	  }
+	}

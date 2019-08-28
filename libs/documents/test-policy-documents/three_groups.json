@@ -1,0 +1,56 @@
+{
+    "policy": {
+        "example": "Three Groups - \"Follow The Sun\"",
+        "walletRef":"HNW-267377t",
+        "beneficiarydocid":"",
+        "nodeId": "123",
+        "coin": 1,
+        "sharingGroups": [
+            {
+                "groupref": "USA",
+                "threshold": 1,
+                "ids": [
+                    {
+                        "id": "alice",
+                        "idType": "oidc",
+                        "idRef": "Alice"
+                    }, {
+                        "id": "bob",
+                        "idType": "oidc",
+                        "idRef": "Bob"
+                    }
+                ]
+            }, {
+                "groupref": "Europe",
+                "threshold": 1,
+                "ids": [
+                    {
+                        "id": "charlie",
+                        "idType": "oidc",
+                        "idRef": "Charlie"
+                    }, {
+                        "id": "delores",
+                        "idType": "oidc",
+                        "idRef": "Delores"
+                    }
+                ]
+            }, {
+                "groupref": "Asia",
+                "threshold": 1,
+                "ids": [
+                	{
+                        "id": "ethel",
+                        "idType": "oidc",
+                        "idRef": "Ethel"
+                    }, {
+                        "id": "freda",
+                        "idType": "oidc",
+                        "idRef": "Freda"
+                    }
+                ]
+            }
+
+        ],
+        "participantCount": 7
+    }
+}

@@ -5,12 +5,12 @@ package documents
 
 import (
 	fmt "fmt"
-	_ "github.com/gogo/protobuf/gogoproto"
+	math "math"
 	proto "github.com/golang/protobuf/proto"
 	_ "github.com/mwitkow/go-proto-validators"
-	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
-	math "math"
+	_ "github.com/gogo/protobuf/gogoproto"
 	regexp "regexp"
+	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -115,6 +115,11 @@ func (this *OrderDocument) Validate() error {
 			return github_com_mwitkow_go_proto_validators.FieldError("OrderPart4", err)
 		}
 	}
+	if this.Policy != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Policy); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Policy", err)
+		}
+	}
 	return nil
 }
 
@@ -162,7 +167,41 @@ func (this *OrderPart4) Validate() error {
 	}
 	return nil
 }
+func (this *PolicyWrapper) Validate() error {
+	if this.Policy != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Policy); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Policy", err)
+		}
+	}
+	return nil
+}
 func (this *Policy) Validate() error {
+	for _, item := range this.SharingGroups {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("SharingGroups", err)
+			}
+		}
+	}
+	if !(this.DateTime > 1564050341) {
+		return github_com_mwitkow_go_proto_validators.FieldError("DateTime", fmt.Errorf(`value '%v' must be greater than '1564050341'`, this.DateTime))
+	}
+	if !(this.DateTime < 32521429541) {
+		return github_com_mwitkow_go_proto_validators.FieldError("DateTime", fmt.Errorf(`value '%v' must be less than '32521429541'`, this.DateTime))
+	}
+	return nil
+}
+func (this *SharingGroup) Validate() error {
+	for _, item := range this.Ids {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Ids", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *Identity) Validate() error {
 	return nil
 }
 func (this *PlainTestMessage1) Validate() error {

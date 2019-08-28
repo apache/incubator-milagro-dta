@@ -78,7 +78,7 @@ NIST round two submissions.
 
 ```
 git clone https://github.com/open-quantum-safe/liboqs.git
-cd liboq
+cd liboqs
 git checkout 7cb03c3ce9182790c77e69cd21a6901e270781d6 
 autoreconf -i
 ./configure --disable-shared --disable-aes-ni --disable-kem-bike --disable-kem-frodokem --disable-kem-newhope --disable-kem-kyber --disable-sig-qtesla 
@@ -98,7 +98,7 @@ git clone https://github.com/apache/incubator-milagro-crypto-c.git
 cd incubator-milagro-crypto-c
 mkdir build
 cd build
-cmake -D CMAKE_BUILD_TYPE=Release -D BUILD_SHARED_LIBS=OFF -D AMCL_CHUNK=64 -D AMCL_CURVE="BLS381,SECP256K1" -D AMCL_RSA="" -D BUILD_PYTHON=OFF -D BUILD_BLS=ON  -D BUILD_WCC=OFF -D BUILD_MPIN=OFF -D BUILD_X509=OFF -D CMAKE_INSTALL_PREFIX=/usr/local ..
+cmake -D CMAKE_BUILD_TYPE=Release -D BUILD_SHARED_LIBS=ON -D AMCL_CHUNK=64 -D AMCL_CURVE="BLS381,SECP256K1" -D AMCL_RSA="" -D BUILD_PYTHON=OFF -D BUILD_BLS=ON -D BUILD_WCC=OFF -D BUILD_MPIN=OFF -D BUILD_X509=OFF -D CMAKE_INSTALL_PREFIX=/usr/local ..
 make
 make test
 sudo make install
@@ -109,37 +109,15 @@ sudo make install
 cd incubator-milagro-dta/libs/crypto/libpqnist
 mkdir build
 cd build
-cmake -D CMAKE_INSTALL_PREFIX=/usr/local ..
+cmake -D CMAKE_INSTALL_PREFIX=/usr/local -D BUILD_SHARED_LIBS=ON ..
 make
 make test
 sudo make install
 
 ### golang
 
-The code is written in golang primarily with a wrapper around some C code.
+Download and install [Golang](https://golang.org/dl/)
 
-```
-wget https://dl.google.com/go/go1.12.linux-amd64.tar.gz
-tar -xzf go1.12.linux-amd64.tar.gz
-sudo cp -r go /usr/local
-echo 'export PATH=$PATH:/usr/local/go/bin' >> ${HOME}/.bashrc
-```
-
-#### configure GO
-
-```
-mkdir -p ${HOME}/go/bin 
-mkdir -p ${HGME}/go/pkg 
-mkdir -p ${HOME}/go/src 
-echo 'export GOPATH=${HOME}/go' >> ${HOME}/.bashrc 
-echo 'export PATH=$GOPATH/bin:$PATH' >> ${HOME}/.bashrc
-```
-
-This package is needed for testing.
-
-```
-go get github.com/stretchr/testify/assert
-```
 
 ## Run service
 

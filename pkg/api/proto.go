@@ -172,55 +172,56 @@ type StatusResponse struct {
 
 //Policy - JSON polciy definition
 type Policy struct {
+	Example string `json:"example" protobuf:"name=Example"`
 	// WalletRef is the customer ref ID for the wallet
-	WalletRef string `json:"walletRef"`
+	WalletRef string `json:"walletRef"  protobuf:"name=WalletRef"`
 	// NodeID as provided by the customer registration
-	NodeID string `json:"nodeId"`
+	NodeID string `json:"nodeId" protobuf:"name=NodeID"`
 	// coinType is the coin type
 	// 0 - Bitcoin
 	// 1 - Bitcoin test
-	CoinType int `json:"coin"`
+	CoinType int `json:"coin" protobuf:"name=CoinType"`
 	// Sharing groups. Each group defines a list of identities.
 	// The leader and the node are added automatically.
-	SharingGroups []SharingGroup `json:"sharingGroups"`
+	SharingGroups []SharingGroup `json:"sharingGroups" protobuf:"name=SharingGroups"`
 	// The number of participants
-	ParticipantCount uint `json:"participantCount"`
+	ParticipantCount uint `json:"participantCount" protobuf:"name=ParticipantCount"`
 	// The required number of signatures
-	Threshold uint `json:"threshold"`
+	Threshold uint `json:"threshold" protobuf:"name=Threshold"`
 	// Slice that points to signer's keys
-	Signers []uint `json:"signers"`
+	Signers []uint `json:"signers" protobuf:"name=Signers"`
 	//Public Address for deposit
-	PublicAddress string `json:"publicaddress"`
+	PublicAddress string `json:"publicaddress" protobuf:"name=PublicAddress"`
 	//The beneficiary who is able to spend
-	BeneficiaryDocID string `json:"beneficiarydocid"`
+	BeneficiaryDocID string `json:"beneficiarydocid" protobuf:"name=BeneficiaryDocCID"`
 	//TimeStamps
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	CreatedAt time.Time `json:"createdAt" protobuf:"name=CreatedAt"`
+	UpdatedAt time.Time `json:"updatedAt" protobuf:"name=UpdatedAt"`
 }
 
 // SharingGroup defines a list of identities that will hold
 // the secret after split
 type SharingGroup struct {
-	GroupID   int        `json:"groupId"`
-	GroupRef  string     `json:"groupref"`
-	IDs       []Identity `json:"ids"`
-	Threshold int        `json:"threshold"`
+	GroupID   int        `json:"groupId" protobuf:"name=GroupID"`
+	GroupRef  string     `json:"groupref" protobuf:"name=GroupRef"`
+	IDs       []Identity `json:"ids" protobuf:"name=IDs"`
+	Threshold int        `json:"threshold" protobuf:"name=Threshold"`
 	//Temporary store of pSig during withdrawal
-	Signature []byte    `json:"signature,omitempty"`
-	TimeStamp time.Time `json:"timeStamp"`
-	Status    string    `json:"status"`
+	Signature []byte    `json:"signature,omitempty" protobuf:"name=Signature"`
+	TimeStamp time.Time `json:"timeStamp" protobuf:"name=TimeStamp"`
+	Status    string    `json:"status" protobuf:"name=Status"`
 }
 
 // Identity of a sharing group
 type Identity struct {
 	// ID is a verifiable identity of IDType
-	ID string `json:"id"`
+	ID string `json:"id" protobuf:"name=ID"`
 	// IDRef is the identity reference
-	IDRef string `json:"idRef"`
+	IDRef string `json:"idRef" protobuf:"name=IDRef"`
 	// IDType is the identity type, e.g. "phone"
-	IDType string `json:"idType"`
+	IDType string `json:"idType" protobuf:"name=IDType"`
 	//Temporary store of vss shares during withdrawal
-	Share     []byte    `json:"share,omitempty"`
-	Status    string    `json:"status"`
-	TimeStamp time.Time `json:"timeStamp"`
+	Share     []byte    `json:"share,omitempty" protobuf:"name=Share"`
+	Status    string    `json:"status" protobuf:"name=Status"`
+	TimeStamp time.Time `json:"timeStamp" protobuf:"name=TimeStamp"`
 }

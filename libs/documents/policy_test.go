@@ -9,9 +9,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func Test_a(t *testing.T) {
+
+}
+
 //Test_PolicyReadSamples - read in sample JSON polcies and ensure they are correctly
 //parsed into JSON and then Protobuffer formats
-
 func Test_PolicyReadSamples(t *testing.T) {
 	var policy *Policy
 	var err error

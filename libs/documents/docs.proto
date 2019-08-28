@@ -30,6 +30,8 @@ syntax="proto3";
 package documents;
 import "github.com/mwitkow/go-proto-validators/validator.proto";
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
 //The Encrypted Envelope
 
 message SignedEnvelope {
@@ -85,7 +87,7 @@ message OrderDocument {
     OrderPart2 OrderPart2    = 7;
     OrderPart3 OrderPart3    = 8;
     OrderPart4 OrderPart4    = 9;
-    policy policy            = 10;
+    Policy policy            = 10;
 }
 
 message OrderPart2 {
@@ -108,41 +110,42 @@ message OrderPart4 {
 }
 
 message PolicyWrapper{
-    policy policy = 1;
+    Policy policy = 1;
 }
 
-message policy{
-    string example                      = 2;
-    string walletRef                    = 3;
-    string nodeId                       = 4;
-    int64 coin                          = 5;
-    repeated sharingGroup sharingGroups = 6;
-    int64 participantCount              = 7;
-	int64 threshold                     = 8;
-	repeated int64 signers              = 9;
-	string publicAddress                = 10;
-	string beneficiarydocid             = 11;
-    int64 dateTime                      = 12 [(validator.field) = {int_gt:1564050341,int_lt:32521429541}];
+message Policy{
+    string Example                      = 2 [json_name="example"];;
+    string WalletRef                    = 3 [json_name="walletRef"];;
+    string NodeId                       = 4 [json_name="nodeId"];;
+    int64 CoinType                      = 5 [json_name="coin"];;
+    repeated SharingGroup SharingGroups = 6 [json_name="sharingGroups"];;
+    int64 ParticipantCount              = 7 [json_name="participantCount"];;
+	int64 Threshold                     = 8 [json_name="threshold"];
+	repeated int64 Signers              = 9 [json_name="signers"];;
+	string PublicAddress                = 10 [json_name="publicaddress"];;
+	string BeneficiaryDocCID            = 11 [json_name="beneficiarydocid"];
+    google.protobuf.Timestamp UpdatedAt                     = 12 [json_name="updatedAt"];
+    google.protobuf.Timestamp  CreatedAt                     = 13 [json_name="createdAt"];
 }
 
-message sharingGroup {
-	int64 groupid         = 1;  
-	string groupref       = 2;
-	repeated identity ids = 3;
-	int64 threshold       = 4;
-	bytes signature       = 5;
-	int64 timeStamp       = 6;
-	string status         = 7;
+message SharingGroup {
+	int64 GroupID         = 1 [json_name="groupId"];  
+	string GroupRef       = 2 [json_name="groupref"];
+	repeated Identity IDs = 3 [json_name="ids"];
+	int64 Threshold       = 4 [json_name="threshold"];
+	bytes Signature       = 5 [json_name="signature"];
+	google.protobuf.Timestamp  TimeStamp       = 6 [json_name="timeStamp"];
+	string Status         = 7 [json_name="status"];
 }
 
 // Identity of a sharing group
-message identity {
-    string id       = 1;
-	string idRef    = 2;
-	string idType   = 3;
-	bytes share     = 4;
-	string status   = 5;
-	int64 timeStamp = 6;
+message Identity {
+    string ID       = 1 [json_name="id"];
+	string IDRef    = 2 [json_name="idRef"];
+	string IDType   = 3 [json_name="idType"];
+	bytes Share     = 4 [json_name="share"];
+	string Status   = 5 [json_name="status"];
+	google.protobuf.Timestamp  TimeStamp = 6 [json_name="timeStamp"];
 }
 
 message PlainTestMessage1 {

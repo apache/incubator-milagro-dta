@@ -2,7 +2,9 @@
 #End to End Test of Services using curl/bash
 
 apiVersion="v1"
-simplePolicy='{"policy":{ "example":"single fiduciary","walletRef": "CD-2367-227","beneficiarydocid":"","nodeId": "123","coin": 0,"sharingGroups": [{"groupref": "Back Office Team","threshold":1,"ids": [{"id": "alice","idType": "oidc","idRef": "Alice"}]}],"participantCount": 7}}'
+simplePolicy='{ "example":"single fiduciary","walletRef": "CD-2367-227","beneficiarydocid":"","nodeId": "123","coin": 0,"sharingGroups": [{"groupref": "Back Office Team","threshold":1,"ids": [{"id": "alice","idType": "oidc","idRef": "Alice"}]}],"participantCount": 7}'
+
+#simplePolicy='policy:{"example":"single fiduciary"}'
 
 status () {
   #Determine if an extension is running
@@ -23,6 +25,9 @@ status () {
 execute_bitcoin () {
   #Run 2 Tests against the Bitcoin Extension
   echo "Bitcoin Plugin Tests [2 Tests]"
+
+#  echo "http://localhost:5556/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json" -d                "{\"policy\":$simplePolicy,\"beneficiaryIDDocumentCID\":\"\",\"extension\":{\"coin\":\"0\"}}"
+
   output1=$(curl -s -X POST "http://localhost:5556/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json" -d "{\"policy\":$simplePolicy,\"beneficiaryIDDocumentCID\":\"\",\"extension\":{\"coin\":\"0\"}}")
   echo $output1
   op1=$(echo $output1 | jq .orderReference)
@@ -109,9 +114,7 @@ execute_safeguardsecret () {
 execute_milagro () {
   echo "Milagro Tests [1 Test]"
   output1=$(curl -s -X POST "http://localhost:5556/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":$identity}")
-  echo $output1
   op1=$(echo $output1 | jq .orderReference)
-
 
   commitment1=$(echo $output1 | jq .commitment)
   output2=$(curl -s -X POST "http://localhost:5556/$apiVersion/order/secret" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$op1,\"beneficiaryIDDocumentCID\":$identity}")
@@ -154,7 +157,7 @@ execute_orderlist () {
   #A simple smoke test to ensure some sort of order is returned
   hasSecret=`echo $outputOrder | grep "Secret"`
 
-  if [ -z $hasSecret ]; then
+  if [ -z "$hasSecret" ]; then
       echo "Failed Order has error"
       exit 1
   else

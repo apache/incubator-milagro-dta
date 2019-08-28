@@ -22,10 +22,13 @@ package common
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"sync"
 	"time"
+
+	"github.com/gogo/protobuf/jsonpb"
 
 	"github.com/apache/incubator-milagro-dta/libs/cryptowallet"
 	"github.com/apache/incubator-milagro-dta/libs/datastore"
@@ -47,12 +50,21 @@ type IdentitySecrets struct {
 }
 
 // CreateNewDepositOrder - Generate an empty new Deposit Order with random reference
-func CreateNewDepositOrder(BeneficiaryIDDocumentCID string, nodeID string, policy api.Policy) (*documents.OrderDoc, error) {
+func CreateNewDepositOrder(BeneficiaryIDDocumentCID string, nodeID string, jsonPolicy api.Policy) (*documents.OrderDoc, error) {
 	//Create a reference for this order
 	reference, err := uuid.NewUUID()
 	if err != nil {
 		return nil, err
 	}
+
+	//Generate ProtoBuffer Version of the Policy from the JSON version
+	policy := &documents.Policy{}
+	policyJSONString, err := json.Marshal(jsonPolicy)
+	err = jsonpb.UnmarshalString(string(policyJSONString), policy)
+	if err != nil {
+		return nil, errors.Wrap(err, "Invalid Policy")
+	}
+
 	order := documents.NewOrderDoc()
 	//oder.Type will be used to extend the things that an order can do.
 	order.Type = "Safeguard_Secret"
@@ -60,6 +72,7 @@ func CreateNewDepositOrder(BeneficiaryIDDocumentCID string, nodeID string, polic
 	order.Reference = reference.String()
 	order.BeneficiaryCID = BeneficiaryIDDocumentCID
 	order.Timestamp = time.Now().Unix()
+	order.Policy = policy
 	return &order, nil
 }
 

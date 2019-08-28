@@ -9,6 +9,7 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	_ "github.com/mwitkow/go-proto-validators"
 	_ "github.com/gogo/protobuf/gogoproto"
+	_ "github.com/golang/protobuf/ptypes/timestamp"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -183,25 +184,39 @@ func (this *Policy) Validate() error {
 			}
 		}
 	}
-	if !(this.DateTime > 1564050341) {
-		return github_com_mwitkow_go_proto_validators.FieldError("DateTime", fmt.Errorf(`value '%v' must be greater than '1564050341'`, this.DateTime))
+	if this.UpdatedAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.UpdatedAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("UpdatedAt", err)
+		}
 	}
-	if !(this.DateTime < 32521429541) {
-		return github_com_mwitkow_go_proto_validators.FieldError("DateTime", fmt.Errorf(`value '%v' must be less than '32521429541'`, this.DateTime))
+	if this.CreatedAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.CreatedAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("CreatedAt", err)
+		}
 	}
 	return nil
 }
 func (this *SharingGroup) Validate() error {
-	for _, item := range this.Ids {
+	for _, item := range this.IDs {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("Ids", err)
+				return github_com_mwitkow_go_proto_validators.FieldError("IDs", err)
 			}
+		}
+	}
+	if this.TimeStamp != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.TimeStamp); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("TimeStamp", err)
 		}
 	}
 	return nil
 }
 func (this *Identity) Validate() error {
+	if this.TimeStamp != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.TimeStamp); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("TimeStamp", err)
+		}
+	}
 	return nil
 }
 func (this *PlainTestMessage1) Validate() error {

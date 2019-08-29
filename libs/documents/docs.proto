@@ -109,43 +109,45 @@ message OrderPart4 {
     int64 Timestamp         = 3 [(validator.field) = {int_gt:1564050341,int_lt:32521429541}];
 }
 
+//This is a simple outer wrapper that can be discareded once the source has been read
+//And the polic object obtained
 message PolicyWrapper{
     Policy policy = 1;
 }
 
 message Policy{
-    string Example                      = 2 [json_name="example"];;
-    string WalletRef                    = 3 [json_name="walletRef"];;
-    string NodeId                       = 4 [json_name="nodeId"];;
-    int64 CoinType                      = 5 [json_name="coin"];;
-    repeated SharingGroup SharingGroups = 6 [json_name="sharingGroups"];;
-    int64 ParticipantCount              = 7 [json_name="participantCount"];;
-	int64 Threshold                     = 8 [json_name="threshold"];
-	repeated int64 Signers              = 9 [json_name="signers"];;
-	string PublicAddress                = 10 [json_name="publicaddress"];;
-	string BeneficiaryDocCID            = 11 [json_name="beneficiarydocid"];
-    google.protobuf.Timestamp UpdatedAt                     = 12 [json_name="updatedAt"];
-    google.protobuf.Timestamp  CreatedAt                     = 13 [json_name="createdAt"];
+    string Example                       = 2 [json_name="example"];;
+    string WalletRef                     = 3 [json_name="walletRef"];;
+    string NodeId                        = 4 [json_name="nodeId"];;
+    int64 CoinType                       = 5 [json_name="coin"];;
+    repeated SharingGroup SharingGroups  = 6 [json_name="sharingGroups"];;
+    int64 ParticipantCount               = 7 [json_name="participantCount"];;
+	int64 Threshold                      = 8 [json_name="threshold"];
+	repeated int64 Signers               = 9 [json_name="signers"];;
+	string PublicAddress                 = 10 [json_name="publicaddress"];;
+	string BeneficiaryDocCID             = 11 [json_name="beneficiarydocid"];
+    google.protobuf.Timestamp UpdatedAt  = 12 [json_name="updatedAt"];
+    google.protobuf.Timestamp  CreatedAt = 13 [json_name="createdAt"];
 }
 
 message SharingGroup {
-	int64 GroupID         = 1 [json_name="groupId"];  
-	string GroupRef       = 2 [json_name="groupref"];
-	repeated Identity IDs = 3 [json_name="ids"];
-	int64 Threshold       = 4 [json_name="threshold"];
-	bytes Signature       = 5 [json_name="signature"];
-	google.protobuf.Timestamp  TimeStamp       = 6 [json_name="timeStamp"];
-	string Status         = 7 [json_name="status"];
+	int64 GroupID                           = 1 [json_name="groupId"];  
+	string GroupRef                         = 2 [json_name="groupref"];
+	repeated Identity IDs                   = 3 [json_name="ids"];
+	int64 Threshold                         = 4 [json_name="threshold"];
+	bytes Signature                         = 5 [json_name="signature"];
+	google.protobuf.Timestamp  TimeStamp    = 6 [json_name="timeStamp"];
+	string Status                          = 7 [json_name="status"];
 }
 
 // Identity of a sharing group
 message Identity {
-    string ID       = 1 [json_name="id"];
-	string IDRef    = 2 [json_name="idRef"];
-	string IDType   = 3 [json_name="idType"];
-	bytes Share     = 4 [json_name="share"];
-	string Status   = 5 [json_name="status"];
-	google.protobuf.Timestamp  TimeStamp = 6 [json_name="timeStamp"];
+    string ID                            = 1 [json_name="id"];
+	string IDRef                         = 2 [json_name="idRef"];
+	string IDType                        = 3 [json_name="idType"];
+	bytes Share                          = 4 [json_name="share"];
+	string Status                        = 5 [json_name="status"];
+	google.protobuf.Timestamp TimeStamp  = 6 [json_name="timeStamp"];
 }
 
 message PlainTestMessage1 {

@@ -17,7 +17,9 @@
 
 package plugins
 
-import "github.com/apache/incubator-milagro-dta/pkg/defaultservice"
+import (
+	"github.com/apache/incubator-milagro-dta/pkg/defaultservice"
+)
 
 func init() {
 	registerPlugin(defaultservice.NewService())

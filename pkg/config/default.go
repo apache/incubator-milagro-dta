@@ -39,7 +39,7 @@ func defaultHTTPConfig() HTTPConfig {
 		OIDCProvider:  "",
 		OIDCClientID:  "",
 		OIDCClientKey: "",
-		CorsAllow:     "http://localhost:5556",
+		CorsAllow:     "*",
 	}
 }
 

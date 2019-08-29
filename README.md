@@ -116,7 +116,7 @@ go get github.com/stretchr/testify/assert
 
 ## Run Service
 
-This script will build the service 
+This script will build the service with default settings including an embeded IPFS node connected to a Public IPFS network. This will get you up and running quickly but will turn your D-TA into a public IPFS relay. **Not recommended for production use!**
 
 ```
 ./build.sh

@@ -114,40 +114,19 @@ This package is needed for testing.
 go get github.com/stretchr/testify/assert
 ```
 
-## Run service
+## Run Service
 
-This script will build the service
+This script will build the service 
 
 ```
 ./build.sh
 ```
 
-To run the service
+To run the service with default settings
 
 ```
 ./target/service
 ```
-
-## Developer Notes
-
-You need to install protobufs
-
-If you change the portobufs definition run 
-
-$ protoc -I=. --go_out=. ./docs.proto
-
-To add a new endpoint to the goKit Microservices framework
-
-1. First define the contract in milagro/pkg/milagroservice/proto.go
-
-Add structs for http transport
-Add responses to milagro/swagger/swagger.config,yaml
-
-2. Add an endpoint definition
-
-milagro/pkg/milagroendpoints/endpoints.go
-
-3. Create a handler factory
 
 
 ## Crypto Notice

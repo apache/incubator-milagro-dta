@@ -124,13 +124,15 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 export C_INCLUDE_PATH=$C_INCLUDE_PATH:/usr/local/lib
 ```
 
-This script will build the service
+## Run Service
+
+This script will build the service with default settings including an embeded IPFS node connected to a Public IPFS network. This will get you up and running quickly but will turn your D-TA into a public IPFS relay. **Not recommended for production use!**
 
 ```
 ./build.sh
 ```
 
-To run the service
+To run the service with default settings
 
 ```
 ./target/service

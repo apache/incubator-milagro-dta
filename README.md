@@ -21,7 +21,7 @@
 ---
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
 
-Milagro D-TA is a colaborative key management server 
+Milagro D-TA is a collaborative key management server 
 
 Milagro D-TA facilitates secure and auditable communication between people who to use key pairs (Principal) and service providers who can keep the secret keys safe (Master Fiduciary). It is written in Go and uses REST services based on the [GoKit microservices framework](https://gokit.io), it uses IPFS to create a shared immutable log of transactions and relies on Milagro-Crypto-C for it's crypto.
 
@@ -30,7 +30,7 @@ Milagro D-TA provides a basic set of services for creating identities for actors
 1. **BitcoinPlugin**  Generates a Bitcoin address and reveals the corresponding secret key
 2. **SafeGuardSecret** Encrypts a string and decrypts it again
 
-## Instalation
+## Installation
 To see Milagro D-TA in action you can run Milagro D-TA in a docker container
 
 ```
@@ -100,6 +100,7 @@ sudo make install
 
 ### Install pqnist
 
+```
 cd incubator-milagro-dta/libs/crypto/libpqnist
 mkdir build
 cd build
@@ -107,6 +108,7 @@ cmake -D CMAKE_INSTALL_PREFIX=/usr/local -D BUILD_SHARED_LIBS=ON ..
 make
 make test
 sudo make install
+```
 
 ### golang
 
@@ -143,7 +145,7 @@ Which includes a quick start guide that will show you how to get Milagro D-TA to
 
 ## Contributing
 
- Key pairs are becoming central to our online lives, and keeping secret keys safe is a growing industry, we hope to create an ecosystem of custodial service providers who colabroate to make the Internet a safer place for everyone. We are keen to get contributions and feedback from anyone in this space. This is a brand new project so our development processes are still being figured out, but if you have suggestions, questions or wish to make contributions please go ahead raise an issue and someone on the team will get right on it.
+ Key pairs are becoming central to our online lives, and keeping secret keys safe is a growing industry, we hope to create an ecosystem of custodial service providers who collaborate to make the Internet a safer place for everyone. We are keen to get contributions and feedback from anyone in this space. This is a brand new project so our development processes are still being figured out, but if you have suggestions, questions or wish to make contributions please go ahead raise an issue and someone on the team will get right on it.
 
 
 ## Crypto Notice

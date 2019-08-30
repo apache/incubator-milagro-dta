@@ -21,8 +21,7 @@ paths:
               type: object
               properties:
                 beneficiaryIDDocumentCID:
-                  type: string                  
-                  example: QmfWg5GffUEzwahd9hkvdnqTGQs5PfusoEpx3kSDSdG4ze
+                  type: string                                    
                 extension:
                   type: object
                   properties:
@@ -117,11 +116,9 @@ paths:
               type: object
               properties:
                 orderReference:
-                  type: string                  
-                  example: 087a8a28-c420-11e9-b960-acde48001122
+                  type: string                                    
                 beneficiaryIDDocumentCID:
-                  type: string                  
-                  example: QmfWg5GffUEzwahd9hkvdnqTGQs5PfusoEpx3kSDSdG4ze
+                  type: string                                    
       responses:
         '200':
           description: Succesful Operation
@@ -143,16 +140,17 @@ components:
       OrderResponse:
         type: object
         properties:
-          orderPart1CID:
-            type: string
-          orderPart2CID:
-            type: string
           orderReference:
             type: string
           commitment:
             type: string
           createdAt:
             type: string
+          extension:
+            type: object
+            properties:
+              address:
+                type: string
       OrderListResponse:
         type: object
         properties:
@@ -179,11 +177,14 @@ components:
             type: string
           orderReference:
             type: string
+          extension:
+            type: object
+            properties:
+              address:
+                type: string
 tags:
   - name: order
     description: Communication between Principals and Master Fiduciaries
     externalDocs:
       url: 'https://milagro.apache.org/docs/milagro-intro/'
       description: Apache Milagro Docs
-
-  

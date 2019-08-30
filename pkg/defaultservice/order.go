@@ -93,7 +93,7 @@ func (s *Service) ValidateOrderRequest(req *api.OrderRequest) error {
 }
 
 //ValidateOrderSecretRequest - Validate fields in the Order Secret
-func (s *Service) ValidateOrderSecretRequest(req *api.OrderRequest) error {
+func (s *Service) ValidateOrderSecretRequest(req *api.OrderSecretRequest, order documents.OrderDoc) error {
 	return nil
 }
 

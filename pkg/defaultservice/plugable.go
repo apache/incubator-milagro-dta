@@ -30,6 +30,7 @@ type Plugable interface {
 
 	// order
 	ValidateOrderRequest(req *api.OrderRequest) error
+	ValidateOrderSecretRequest(req *api.OrderSecretRequest, order documents.OrderDoc) error
 	PrepareOrderPart1(order *documents.OrderDoc, reqExtension map[string]string) (fulfillExtension map[string]string, err error)
 	PrepareOrderResponse(orderPart2 *documents.OrderDoc, reqExtension, fulfillExtension map[string]string) (commitment string, extension map[string]string, err error)
 	ProduceBeneficiaryEncryptedData(blsSK []byte, order *documents.OrderDoc, req *api.OrderSecretRequest) (encrypted []byte, extension map[string]string, err error)

@@ -66,6 +66,27 @@ func (s *Service) ValidateOrderRequest(req *api.OrderRequest) error {
 	return nil
 }
 
+//ValidateOrderSecretRequest - checks incoming OrderSecret fields for Error, comparing to the Original Order
+func (s *Service) ValidateOrderSecretRequest(req *api.OrderSecretRequest, order documents.OrderDoc) error {
+	//These are deliberately overly long winded, but it makes the case I'm trapping more obvious to the reader
+
+	//There is no beneficiary supplided in either the Deposit or Redemption
+	if order.BeneficiaryCID == "" && req.BeneficiaryIDDocumentCID == "" {
+		return errors.New("Beneficiary must be supplied")
+	}
+
+	//A beneficiary is specified in both, but they aren't the same
+	if order.BeneficiaryCID != "" && req.BeneficiaryIDDocumentCID != "" && order.BeneficiaryCID != req.BeneficiaryIDDocumentCID {
+		return errors.New("Beneficiaries in order & order/secret don't match")
+	}
+
+	//order & order/secret beneficiary are the same order/secret is not required - discard
+	if order.BeneficiaryCID != "" && req.BeneficiaryIDDocumentCID != "" && order.BeneficiaryCID == req.BeneficiaryIDDocumentCID {
+		req.BeneficiaryIDDocumentCID = ""
+	}
+	return nil
+}
+
 // PrepareOrderPart1 adds the coin type to the order
 func (s *Service) PrepareOrderPart1(order *documents.OrderDoc, reqExtension map[string]string) (fulfillExtension map[string]string, err error) {
 	coin, err := strconv.ParseInt(reqExtension["coin"], 10, 64)
@@ -87,10 +108,6 @@ func (s *Service) PrepareOrderResponse(orderPart2 *documents.OrderDoc, reqExtens
 
 // ProduceBeneficiaryEncryptedData -
 func (s *Service) ProduceBeneficiaryEncryptedData(blsSK []byte, order *documents.OrderDoc, req *api.OrderSecretRequest) (encrypted []byte, extension map[string]string, err error) {
-	//There is no beneficiary supplided in either the Deposit or Redemption
-	if order.BeneficiaryCID == "" && req.BeneficiaryIDDocumentCID == "" {
-		return nil, nil, errors.New("Beneficiary must be supplied")
-	}
 
 	enc, err := adhocEncryptedEnvelopeEncode(s, s.NodeID(), req.BeneficiaryIDDocumentCID, *order, blsSK)
 	return enc, nil, err

@@ -92,6 +92,11 @@ func (s *Service) ValidateOrderRequest(req *api.OrderRequest) error {
 	return nil
 }
 
+//ValidateOrderSecretRequest - Validate fields in the Order Secret
+func (s *Service) ValidateOrderSecretRequest(req *api.OrderRequest) error {
+	return nil
+}
+
 // PrepareOrderPart1 is called before the order is send
 func (s *Service) PrepareOrderPart1(order *documents.OrderDoc, reqExtension map[string]string) (fulfillExtension map[string]string, err error) {
 	return nil, nil
@@ -213,6 +218,12 @@ func (s *Service) OrderSecret(req *api.OrderSecretRequest) (*api.OrderSecretResp
 	if err != nil {
 		return nil, errors.Wrap(err, "Fail to retrieve Order from IPFS")
 	}
+
+	if err := s.Plugin.ValidateOrderSecretRequest(req, *order); err != nil {
+		return nil, err
+	}
+
+	//Create a piece of data that is destined for the beneficiary, passed via the Master Fiduciary
 
 	beneficiaryEncryptedData, extension, err := s.Plugin.ProduceBeneficiaryEncryptedData(blsSK, order, req)
 	if err != nil {

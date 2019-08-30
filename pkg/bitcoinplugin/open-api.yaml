@@ -1,103 +1,13 @@
 openapi: 3.0.0
 info:
   title: Apache Milagro D-TA Bitcoin Plugin
-  description: Returns a Bitcoin Address
+  description: Returns a Bitcoin Address. This specification only shows endpoints that vary from the standard Milagro REST API
   contact:
     email: dev@milagro.apache.org
   license:
     name: http://www.apache.org/licenses/LICENSE-2.0
   version: 1.0.0  
 paths:
-  # /1.0/identity:
-  #   post:
-  #     summary: Create an Identity Document
-  #     tags:
-  #       - identity      
-  #     requestBody:
-  #       content:
-  #         application/json:
-  #           schema:
-  #             type: object
-  #             properties:
-  #               Name:
-  #                 type: string
-  #                 example: ExampleNodeName             
-  #     responses:
-  #       '200':
-  #         description: Successful Operation
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: '#/components/schemas/CreateIdentityResponse'
-  #       '400':
-  #         description: Invalid Request
-  #         content:
-  #           text/plain:
-  #            schema:
-  #             type: string
-  #   get:
-  #     summary: Get a list of identity documents
-  #     tags:
-  #      - identity
-  #     parameters: 
-  #       - name: page
-  #         in: query
-  #         description: current page
-  #         schema:
-  #           type: integer
-  #           default: 0
-  #       - name: perPage
-  #         in: query
-  #         description: number of items to show
-  #         schema:
-  #           type: integer
-  #           default: 10
-  #       - name: sortBy
-  #         in: query
-  #         description: Sort By field. Prefix with "-" for descending
-  #         schema:
-  #           type: string
-  #           enum:
-  #             - dateCreatedAsc               
-  #             - dateCreatedDesc               
-  #     responses:
-  #       '200':
-  #         description: Successful Operation
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: '#/components/schemas/IdentityListResponse'
-  #       '400':
-  #         description: Invalid Request
-  #         content:
-  #           text/plain:
-  #             schema:
-  #               type: string
-  # /1.0/identity/{IDDocumentCID}:
-  #   get:
-  #     summary: Get Details of an Identity
-  #     tags:
-  #       - identity
-  #     parameters: 
-  #       - name: IDDocumentCID
-  #         in: path
-  #         description: IPFS hash address of Identity Document
-  #         required: true
-  #         schema:
-  #           type: string
-  #     responses:
-  #       '200':
-  #         description: Successful Operation
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: '#/components/schemas/Identity'
-  #       '400':
-  #         description: Invalid Request
-  #         content:
-  #           text/plain:
-  #             schema:
-  #               type: string
   /v1/order:
     post:
       summary: Create an order for a new BitCoin Address
@@ -111,13 +21,12 @@ paths:
               type: object
               properties:
                 beneficiaryIDDocumentCID:
-                  type: string                  
-                  example: QmfWg5GffUEzwahd9hkvdnqTGQs5PfusoEpx3kSDSdG4ze
+                  type: string                                    
                 extension:
                   type: object
                   properties:
                     coin:
-                      type: string
+                      type: string                    
                       example: "0"
       responses:
         '200':
@@ -131,70 +40,7 @@ paths:
           content:
             text/plain:
               schema:
-                type: string
-    get:
-      summary: Get a list of orders managed by this D-TA
-      tags: 
-      - order
-      parameters: 
-        - name: page
-          in: query
-          description: current page
-          schema:
-            type: integer
-            default: 0
-        - name: perPage
-          in: query
-          description: number of items to show
-          schema:
-            type: integer
-            default: 10
-        - name: sortBy
-          in: query
-          description: Sort By field. Prefix with "-" for descending
-          schema:
-            type: string
-            enum:
-              - dateCreatedAsc               
-              - dateCreatedDesc
-      responses:
-        '200':
-          description: Succesful Operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OrderListResponse'
-        '400':
-          description: Invalid Request
-          content:
-            text/plain:
-             schema:
-              type: string
-  /v1/order/{OrderReference}:
-    get:
-      summary: Get details of an order
-      tags:
-      - order
-      parameters:
-      - name: OrderReference
-        in: path
-        description: Reference for a single order
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          description: Succesful Operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetOrderResponse'
-        '400':
-          description: Invalid Request
-          content:
-            text/plain:
-             schema:
-              type: string
+                type: string    
   /v1/order/secret:
     post:
       summary: Returns the Bitcoin secret key that can be used to sign transactions
@@ -207,11 +53,9 @@ paths:
               type: object
               properties:
                 orderReference:
-                  type: string                  
-                  example: 087a8a28-c420-11e9-b960-acde48001122
+                  type: string                                    
                 beneficiaryIDDocumentCID:
-                  type: string                  
-                  example: QmfWg5GffUEzwahd9hkvdnqTGQs5PfusoEpx3kSDSdG4ze
+                  type: string                                    
       responses:
         '200':
           description: Succesful Operation
@@ -225,144 +69,25 @@ paths:
             text/plain:
              schema:
               type: string
-  # /1.0/fulfill/order:
-  #   post:
-  #     summary: Create Public Address
-  #     tags:
-  #       - fulfill      
-  #     requestBody:
-  #       content:
-  #         application/json:
-  #           schema:
-  #             type: object
-  #             properties:
-  #               OrderPart1CID:
-  #                 type: string
-  #                 example: Qme5S5xVfGYF46oftiLQDevPAGSKy1aggdtrZvvEdiXuqM
-  #               DocumentCID:
-  #                 type: string
-  #                 example: Qme5S5xVfGYF46oftiLQDevPAGSKy1aggdtrZvvEdiXuqM
-  #     responses:
-  #       '200':           
-  #         description: Succesful Operation
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: '#/components/schemas/FulfillOrderResponse'
-  #       '400':
-  #         description: Invalid Request
-  #         content:
-  #           text/plain:
-  #            schema:
-  #             type: string
-  # /1.0/fulfill/order/secret:
-  #   post:
-  #     summary: Return Private Key
-  #     tags:
-  #       - fulfill      
-  #     requestBody:
-  #       content:
-  #         application/json:
-  #           schema:
-  #             type: object
-  #             properties:
-  #               OrderPart3CID:
-  #                 type: string
-  #               SenderDocumentCID:
-  #                 type: string                                  
-  #     responses:
-  #       '200':
-  #         description: Succesful Operation
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: '#/components/schemas/FulfillOrderSecretResponse'
-  #       '400':
-  #         description: Invalid Request
-  #         content:
-  #           text/plain:
-  #            schema:
-  #             type: string
-  # /1.0/status:
-  #   get:
-  #     description: Test Server Health
-  #     tags:
-  #       - system      
-  #     responses:
-  #       '200':
-  #         description: Successful Operation
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: '#/components/schemas/StatusResponse'
-  #       '400':
-  #         description: Invalid Request
-  #         content:
-  #           text/plain:
-  #             schema:
-  #               type: string
 servers:
   - url: 'http://localhost:5556'
   - url: 'http://localhost:5558' 
 components:
   schemas:
-      # CreateIdentityResponse:
-      #   type: object
-      #   properties:
-      #     IDDocumentCID:
-      #       type: string      
-      # IdentityListResponse:
-      #   type: object
-      #   properties:
-      #     IDDocumentList:
-      #       type: array
-      #       items: 
-      #         $ref: '#/components/schemas/Identity'    
-      # Identity:
-      #   type: object
-      #   properties:
-      #     IDDocumentCID:
-      #       type: string
-      #     AuthenticationReference:  
-      #       type: string
-      #     BeneficiaryECPublicKey: 
-      #       type: string          
-      #     SikePublicKey:            
-      #       type: string
-      #     BlsPublicKey:
-      #       type: string                
-      #     Timestamp:
-      #       type: integer
       OrderResponse:
         type: object
         properties:
-          orderPart1CID:
-            type: string
-          orderPart2CID:
-            type: string
           orderReference:
             type: string
           commitment:
             type: string
           createdAt:
             type: string
-      OrderListResponse:
-        type: object
-        properties:
-          orderReference:
-            type: array
-            items:
-              type: string
-      GetOrderResponse:
-        type: object
-        properties:
-          order:
+          extension:
             type: object
             properties:
-              order: 
-                type: string
-              timeStamp:
-                type: integer                            
+              address:
+                type: string                               
       OrderSecretResponse:
         type: object
         properties:
@@ -372,48 +97,14 @@ components:
             type: string
           orderReference:
             type: string
-      # FulfillOrderResponse:
-      #   type: object
-      #   properties: 
-      #     OrderPart2CID:
-      #       type: string
-      # FulfillOrderSecretResponse:
-      #   type: object
-      #   properties:
-      #     OrderPart4CID:
-      #       type: string
-      # StatusResponse:
-      #   type: object
-      #   properties:
-      #     Application:
-      #       type: string
-      #     ExtensionVendor:
-      #       type: string
-      #     NodeCID:
-      #       type: string
-      #     TimeStamp:
-      #       type: string
-      #     Plugin:
-      #       type: string
+          extension:
+            type: object
+            properties:
+              address:
+                type: string
 tags:
-  # - name: identity
-  #   description: Actors in the system
-  #   externalDocs:
-  #     url: 'https://milagro.apache.org/docs/milagro-intro/'
-  #     description: Apache Milagro Docs
   - name: order
     description: Communication between Principals and Master Fiduciaries
     externalDocs:
       url: 'https://milagro.apache.org/docs/milagro-intro/'
       description: Apache Milagro Docs
-  # - name: fulfill
-  #   description: Actions performed by the Master Fiduciary
-  #   externalDocs:
-  #     url: 'https://milagro.apache.org/docs/milagro-intro/'
-  #     description: Apache Milagro Docs
-  # - name: system
-  #   description: Test Server Health
-  #   externalDocs:
-  #     url: 'https://milagro.apache.org/docs/milagro-intro/'
-  #     description: Apache Milagro Docs
-  

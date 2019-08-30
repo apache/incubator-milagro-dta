@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Apache Milagro Server
-  description: Milagro Secure - distributed / decentralized core security services. This is the HTTP API specification for the D-TA when it is running no plugins (or the plugin template).
+  description: Milagro Secure - distributed / decentralized core security services. This is the HTTP API specification for the D-TA when it is running no plugins.
   contact:
     email: dev@milagro.apache.org
   license:
@@ -297,7 +297,7 @@ paths:
                 type: string
 servers:
   - url: 'http://localhost:5556'
-  - url: 'http://localhost:5555' 
+  - url: 'http://localhost:5558' 
 components:
   schemas:
       CreateIdentityResponse:

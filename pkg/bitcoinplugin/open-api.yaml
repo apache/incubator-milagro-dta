@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Apache Milagro D-TA Bitcoin Plugin
-  description: Returns a Bitcoin Address
+  description: Returns a Bitcoin Address. This specification only shows endpoints that vary from the standard Milagro REST API
   contact:
     email: dev@milagro.apache.org
   license:
@@ -26,7 +26,7 @@ paths:
                   type: object
                   properties:
                     coin:
-                      type: string
+                      type: string                    
                       example: "0"
       responses:
         '200':
@@ -40,70 +40,7 @@ paths:
           content:
             text/plain:
               schema:
-                type: string
-    get:
-      summary: Get a list of orders managed by this D-TA
-      tags: 
-      - order
-      parameters: 
-        - name: page
-          in: query
-          description: current page
-          schema:
-            type: integer
-            default: 0
-        - name: perPage
-          in: query
-          description: number of items to show
-          schema:
-            type: integer
-            default: 10
-        - name: sortBy
-          in: query
-          description: Sort By field. Prefix with "-" for descending
-          schema:
-            type: string
-            enum:
-              - dateCreatedAsc               
-              - dateCreatedDesc
-      responses:
-        '200':
-          description: Succesful Operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OrderListResponse'
-        '400':
-          description: Invalid Request
-          content:
-            text/plain:
-             schema:
-              type: string
-  /v1/order/{OrderReference}:
-    get:
-      summary: Get details of an order
-      tags:
-      - order
-      parameters:
-      - name: OrderReference
-        in: path
-        description: Reference for a single order
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          description: Succesful Operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetOrderResponse'
-        '400':
-          description: Invalid Request
-          content:
-            text/plain:
-             schema:
-              type: string
+                type: string    
   /v1/order/secret:
     post:
       summary: Returns the Bitcoin secret key that can be used to sign transactions
@@ -150,24 +87,7 @@ components:
             type: object
             properties:
               address:
-                type: string
-      OrderListResponse:
-        type: object
-        properties:
-          orderReference:
-            type: array
-            items:
-              type: string
-      GetOrderResponse:
-        type: object
-        properties:
-          order:
-            type: object
-            properties:
-              order: 
-                type: string
-              timeStamp:
-                type: integer                            
+                type: string                               
       OrderSecretResponse:
         type: object
         properties:

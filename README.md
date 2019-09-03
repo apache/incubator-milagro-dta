@@ -176,17 +176,10 @@ To allow the additional packages below to be installed, [Brew](https://docs.brew
 #### Development Tools
 ```
 brew install \
-     ca-certificates \
      cmake \
-     g++ \
-     gcc \
-     git \
-     make \
-     libtool \
+     autoconf \
      automake \
-     libssl-dev \
-     jq \
-     curl
+     libtool 
 ```
 
 #### liboqs

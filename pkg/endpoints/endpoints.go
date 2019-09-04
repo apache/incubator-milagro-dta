@@ -176,7 +176,10 @@ func Endpoints(svc service.Service, corsAllow string, authorizer transport.Autho
 			ErrStatus: transport.ErrorStatus{
 				transport.ErrInvalidRequest: http.StatusUnprocessableEntity,
 			},
-		},
+		},		
+	}
+
+	statusEndPoints := transport.HTTPEndpoints{
 		"Status": {
 			Path:        "/" + apiVersion + "/status",
 			Method:      http.MethodGet,
@@ -194,11 +197,11 @@ func Endpoints(svc service.Service, corsAllow string, authorizer transport.Autho
 
 	switch strings.ToLower(nodeType) {
 	case "multi":
-		return concatEndpoints(masterFiduciaryEndpoints, identityEndpoints, principalEndpoints)
+		return concatEndpoints(masterFiduciaryEndpoints, identityEndpoints, principalEndpoints, statusEndPoints)
 	case "principal":
-		return concatEndpoints(identityEndpoints, principalEndpoints)
+		return concatEndpoints(identityEndpoints, principalEndpoints, statusEndPoints)
 	case "fiduciary", "masterfiduciary":
-		return concatEndpoints(masterFiduciaryEndpoints, identityEndpoints)
+		return concatEndpoints(masterFiduciaryEndpoints, identityEndpoints, statusEndPoints)
 	}
 
 	return nil

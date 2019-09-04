@@ -53,10 +53,10 @@ func deriveFinalPrivateKey(s *Service, order documents.OrderDoc, beneficiariesSi
 
 	//we are using the beneficiary specified in the order part 1
 	privateKeyPart2of2 := order.OrderDocument.OrderPart4.Secret
-	if order.OrderDocument.BeneficiaryCID != nodeID {
-		//need to forward this data to the beneficiary to complete redemption
-		return "", errors.New("Currently beneficiary must be the same as the Principal")
-	}
+	// if order.OrderDocument.BeneficiaryCID != nodeID {
+	// 	//need to forward this data to the beneficiary to complete redemption
+	// 	return "", errors.New("Currently beneficiary must be the same as the Principal")
+	// }
 	//restore the Seed
 	_, _, ecAddPrivateKey, err := cryptowallet.Bip44Address(beneficiariesSeed, cryptowallet.CoinTypeBitcoinMain, 0, 0, 0)
 	if err != nil {

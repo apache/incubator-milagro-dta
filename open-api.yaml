@@ -387,6 +387,8 @@ components:
             type: string
           plugin:
             type: string
+          nodeType:
+            type: string
 tags:
   - name: identity
     description: Actors in the system

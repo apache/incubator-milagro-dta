@@ -101,11 +101,12 @@ func (s *Service) SetMasterFiduciaryNodeID(masterFiduciaryNodeID string) {
 }
 
 // Status of the server
-func (s *Service) Status(apiVersion string) (*api.StatusResponse, error) {
+func (s *Service) Status(apiVersion, nodeType string) (*api.StatusResponse, error) {
 	return &api.StatusResponse{
 		Application:     "Milagro Distributed Trust",
 		APIVersion:      apiVersion,
 		ExtensionVendor: s.Vendor(),
+		NodeType:        nodeType,
 		NodeCID:         s.nodeID,
 		TimeStamp:       time.Now(),
 		Plugin:          s.Plugin.Name(),

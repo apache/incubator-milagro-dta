@@ -180,7 +180,7 @@ func Endpoints(svc service.Service, corsAllow string, authorizer transport.Autho
 		"Status": {
 			Path:        "/" + apiVersion + "/status",
 			Method:      http.MethodGet,
-			Endpoint:    MakeStatusEndpoint(svc),
+			Endpoint:    MakeStatusEndpoint(svc, nodeType),
 			NewResponse: func() interface{} { return &api.StatusResponse{} },
 			Options: transport.ServerOptions(
 				transport.SetCors(corsAllow),
@@ -352,9 +352,9 @@ func MakeFulfillOrderSecretEndpoint(m service.Service) endpoint.Endpoint {
 }
 
 //MakeStatusEndpoint -
-func MakeStatusEndpoint(m service.Service) endpoint.Endpoint {
+func MakeStatusEndpoint(m service.Service, nodeType string) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		return m.Status(apiVersion)
+		return m.Status(apiVersion, nodeType)
 	}
 }
 

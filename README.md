@@ -41,7 +41,7 @@ To see Milagro D-TA in action you can run Milagro D-TA in a docker container.  T
 #### Prerequisites
 [Docker](https://www.docker.com/)
 
-#### Build & Run Instructions
+#### Build & Run on Docker
 ```
 git clone https://github.com/apache/incubator-milagro-dta.git
 
@@ -52,31 +52,9 @@ docker build -t mydta .
 docker run -p5556:5556 mydta
 ```
 
-### Linux Static Build
-Note that this has only been tested on a clean build of Debian 10 and installs all required libraries statically
+### Build and run on development machine
 
-#### Prerequisites
-[Golang](https://golang.org/doc/install)
-
-#### Build & Run Instructions
-```
-sudo apt-get update
-sudo apt-get upgrade
-git clone https://github.com/apache/incubator-milagro-dta.git
-cd incubator-milagro-dta
-./build-static.sh
-cd bin
-./milagro init
-./milagro daemon
-```
-
-### Linux Dynamic Build
-Note that the static build above doesn't work on Ubuntu, so instead please use these instructions.  Note that these have only been tested on a clean build of Ubuntu 18.04.
-
-#### Prerequisites
-To correctly build the software on Ubuntu 18.04 you need to install the following packages:
-
-#### Development Tools
+#### Install development Tools on Ubuntu/Debian
 ```
 sudo apt-get update
 sudo apt-get install \
@@ -93,87 +71,7 @@ sudo apt-get install \
      curl
 ```
 
-#### liboqs
-
-[liboqs](https://github.com/open-quantum-safe/liboqs) is a C library for
-quantum-resistant cryptographic algorithms. It is a API level on top of the
-NIST round two submissions.
-
-```
-git clone https://github.com/open-quantum-safe/liboqs.git
-cd liboqs
-git checkout 7cb03c3ce9182790c77e69cd21a6901e270781d6 
-autoreconf -i
-./configure --disable-shared --disable-aes-ni --disable-kem-bike --disable-kem-frodokem --disable-kem-newhope --disable-kem-kyber --disable-sig-qtesla 
-make clean
-make -j
-sudo make install
-```
-
-#### AMCL
-
-[AMCL](https://github.com/apache/incubator-milagro-crypto-c) is required
-
-Build and install the AMCL library
-
-```
-git clone https://github.com/apache/incubator-milagro-crypto-c.git
-cd incubator-milagro-crypto-c
-mkdir build
-cd build
-cmake -D CMAKE_BUILD_TYPE=Release -D BUILD_SHARED_LIBS=ON -D AMCL_CHUNK=64 -D AMCL_CURVE="BLS381,SECP256K1" -D AMCL_RSA="" -D BUILD_PYTHON=OFF -D BUILD_BLS=ON -D BUILD_WCC=OFF -D BUILD_MPIN=OFF -D BUILD_X509=OFF -D CMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_C_FLAGS="-fPIC" ..
-make
-make test
-sudo make install
-```
-
-#### pqnist
-
-```
-git clone https://github.com/apache/incubator-milagro-dta.git
-cd incubator-milagro-dta/libs/crypto/libpqnist
-mkdir build
-cd build
-cmake -D CMAKE_INSTALL_PREFIX=/usr/local -D BUILD_SHARED_LIBS=ON ..
-make
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
-make test
-sudo make install
-```
-
-#### golang
-
-Download and install [Golang](https://golang.org/dl/)
-
-
-#### Set the library path
-```
-export C_INCLUDE_PATH=$C_INCLUDE_PATH:/usr/local/lib
-```
-
-#### Build & Run Instructions
-```
-./build.sh
-```
-
-To run the service with default settings:
-
-```
-./target/milagro init
-./target/milagro daemon 
-```
-
-### MacOS 
-
-These instructions have been tested on MaxOS Mojave 10.14.6
-
-#### Prerequisites
-To correctly build the software on MacOS you need to install the following packages:
-
-#### Brew
-To allow the additional packages below to be installed, [Brew](https://docs.brew.sh/Installation) is required.
-
-#### Development Tools
+#### Install development Tools on MacOS
 ```
 brew install \
      cmake \
@@ -182,6 +80,10 @@ brew install \
      libtool 
 ```
 
+#### golang
+
+Download and install [Golang](https://golang.org/dl/)
+
 #### liboqs
 
 [liboqs](https://github.com/open-quantum-safe/liboqs) is a C library for
@@ -230,14 +132,11 @@ make test
 sudo make install
 ```
 
-#### golang
-
-Download and install [Golang](https://golang.org/dl/)
-
 
 #### Set the library path
 ```
 export C_INCLUDE_PATH=$C_INCLUDE_PATH:/usr/local/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 ```
 
 #### Build & Run Instructions
@@ -251,6 +150,7 @@ To run the service with default settings:
 ./target/milagro init
 ./target/milagro daemon 
 ```
+
 
 ## Documentation
 

@@ -167,4 +167,5 @@ type StatusResponse struct {
 	ExtensionVendor string            `json:"extensionVendor,omitempty"`
 	Extension       map[string]string `json:"extension,omitempty"`
 	Plugin          string            `json:"plugin,omitempty"`
+	NodeType        string            `json:"nodeType,omitempty"`
 }

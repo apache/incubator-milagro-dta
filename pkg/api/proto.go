@@ -27,6 +27,22 @@ import (
 	"time"
 )
 
+const (
+	//OrderIn Types for the Blockchain
+	TXOrderRequest    = "v1/order1"
+	TXFulfillRequest  = "v1/fulfill/order"
+	TXFulfillResponse = "v1/order2"
+	TXOrderResponse   = "NONE"
+)
+
+//BlockChainTX - struct for on chain req/resp
+type BlockChainTX struct {
+	Processor   string
+	SenderID    string
+	RecipientID string
+	Payload     []byte
+}
+
 //CreateIdentityRequest -
 type CreateIdentityRequest struct {
 	Name      string            `json:"name,omitempty" validate:"required,alphanum"`

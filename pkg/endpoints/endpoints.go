@@ -107,6 +107,35 @@ func Endpoints(svc service.Service, corsAllow string, authorizer transport.Autho
 			// 	ErrCreatingOrderDoc: http.StatusInternalServerError,
 			// },
 		},
+		"Order1": {
+			Path:        "/" + apiVersion + "/order1",
+			Method:      http.MethodPost,
+			Endpoint:    MakeOrder1Endpoint(svc),
+			NewRequest:  func() interface{} { return &api.OrderRequest{} },
+			NewResponse: func() interface{} { return &api.OrderResponse{} },
+			Options: transport.ServerOptions(
+				transport.SetCors(corsAllow),
+				transport.AuthorizeOIDC(authorizer, false),
+			),
+			ErrStatus: transport.ErrorStatus{
+				transport.ErrInvalidRequest: http.StatusUnprocessableEntity,
+			},
+		},
+		"Order2": {
+			Path:        "/" + apiVersion + "/order2",
+			Method:      http.MethodPost,
+			Endpoint:    MakeOrder2Endpoint(svc),
+			NewRequest:  func() interface{} { return &api.FulfillOrderResponse{} },
+			NewResponse: func() interface{} { return &api.OrderResponse{} },
+			Options: transport.ServerOptions(
+				transport.SetCors(corsAllow),
+				transport.AuthorizeOIDC(authorizer, false),
+			),
+			ErrStatus: transport.ErrorStatus{
+				transport.ErrInvalidRequest: http.StatusUnprocessableEntity,
+			},
+		},
+
 		"GetOrder": {
 			Path:        "/" + apiVersion + "/order/{OrderReference}",
 			Method:      http.MethodGet,
@@ -306,6 +335,34 @@ func MakeOrderEndpoint(m service.Service) endpoint.Endpoint {
 			return "", err
 		}
 		return m.Order(req)
+	}
+}
+
+//MakeOrderEndpoint -
+func MakeOrder1Endpoint(m service.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		req, ok := request.(*api.OrderRequest)
+		if !ok {
+			return nil, transport.ErrInvalidRequest
+		}
+		if err := validateRequest(req); err != nil {
+			return "", err
+		}
+		return m.Order1(req)
+	}
+}
+
+//MakeOrderEndpoint -
+func MakeOrder2Endpoint(m service.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		req, ok := request.(*api.FulfillOrderResponse)
+		if !ok {
+			return nil, transport.ErrInvalidRequest
+		}
+		if err := validateRequest(req); err != nil {
+			return "", err
+		}
+		return m.Order2(req)
 	}
 }
 

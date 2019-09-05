@@ -31,8 +31,17 @@ Milagro D-TA provides a basic set of services for creating identities for actors
 2. **SafeGuardSecret** Encrypts a string and decrypts it again
 
 ## Installation
-To see Milagro D-TA in action you can run Milagro D-TA in a docker container
+Below are instructions on how to build and run the Milagro D-TA either using Docker, or static or dynamic builds for Linux.
 
+These instructions will build the service with default settings including an embeded IPFS node connected to a Public IPFS network. This will get you up and running quickly but will turn your D-TA into a public IPFS relay. **Not recommended for production use!**
+
+### Docker
+To see Milagro D-TA in action you can run Milagro D-TA in a docker container.  This is currently the preferred method to build and run the D-TA.  Tested on Ubuntu 19.04 and MacOS but should run in any Docker environment.
+
+#### Prerequisites
+[Docker](https://www.docker.com/)
+
+#### Build & Run on Docker
 ```
 git clone https://github.com/apache/incubator-milagro-dta.git
 
@@ -43,13 +52,12 @@ docker build -t mydta .
 docker run -p5556:5556 mydta
 ```
 
-## Dependencies
+### Build and run on development machine
 
-To correctly build the software on Ubuntu 18.04 you need to install the following packages;
-
+#### Install development Tools on Ubuntu/Debian
 ```
 sudo apt-get update
-sudo apt-get install -y --no-install-recommends \
+sudo apt-get install \
      ca-certificates \
      cmake \
      g++ \
@@ -61,10 +69,22 @@ sudo apt-get install -y --no-install-recommends \
      libssl-dev \
      jq \
      curl
-sudo apt-get clean
 ```
 
-### liboqs
+#### Install development Tools on MacOS
+```
+brew install \
+     cmake \
+     autoconf \
+     automake \
+     libtool 
+```
+
+#### golang
+
+Download and install [Golang](https://golang.org/dl/)
+
+#### liboqs
 
 [liboqs](https://github.com/open-quantum-safe/liboqs) is a C library for
 quantum-resistant cryptographic algorithms. It is a API level on top of the
@@ -81,7 +101,7 @@ make -j
 sudo make install
 ```
 
-### AMCL
+#### AMCL
 
 [AMCL](https://github.com/apache/incubator-milagro-crypto-c) is required
 
@@ -98,45 +118,39 @@ make test
 sudo make install
 ```
 
-### Install pqnist
+#### pqnist
 
 ```
+git clone https://github.com/apache/incubator-milagro-dta.git
 cd incubator-milagro-dta/libs/crypto/libpqnist
 mkdir build
 cd build
 cmake -D CMAKE_INSTALL_PREFIX=/usr/local -D BUILD_SHARED_LIBS=ON ..
 make
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 make test
 sudo make install
 ```
 
-### golang
 
-Download and install [Golang](https://golang.org/dl/)
-
-
-## Run service
-
-Set the library paths
-
+#### Set the library path
 ```
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 export C_INCLUDE_PATH=$C_INCLUDE_PATH:/usr/local/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 ```
 
-## Run Service
-
-This script will build the service with default settings including an embeded IPFS node connected to a Public IPFS network. This will get you up and running quickly but will turn your D-TA into a public IPFS relay. **Not recommended for production use!**
-
+#### Build & Run Instructions
 ```
 ./build.sh
 ```
 
-To run the service with default settings
+To run the service with default settings:
 
 ```
-./target/service
+./target/milagro init
+./target/milagro daemon 
 ```
+
 
 ## Documentation
 

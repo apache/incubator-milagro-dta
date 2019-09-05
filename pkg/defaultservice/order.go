@@ -208,7 +208,7 @@ func (s *Service) OrderSecret(req *api.OrderSecretRequest) (*api.OrderSecretResp
 		return nil, err
 	}
 
-	_, seed, blsSK, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
+	_, _, blsSK, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
 	if err != nil {
 		return nil, err
 	}
@@ -217,6 +217,20 @@ func (s *Service) OrderSecret(req *api.OrderSecretRequest) (*api.OrderSecretResp
 	order, err := common.RetrieveOrderFromIPFS(s.Ipfs, orderPart2CID, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
 	if err != nil {
 		return nil, errors.Wrap(err, "Fail to retrieve Order from IPFS")
+	}
+
+	var beneficiariesSikeSK []byte
+	var beneficiaryCID string
+
+	if req.BeneficiaryIDDocumentCID != "" {
+		beneficiaryCID = req.BeneficiaryIDDocumentCID
+	} else {
+		beneficiaryCID = order.BeneficiaryCID
+	}
+
+	_, beneficiariesSeed, _, beneficiariesSikeSK, err := common.RetrieveIdentitySecrets(s.Store, beneficiaryCID)
+	if err != nil {
+		return nil, err
 	}
 
 	if err := s.Plugin.ValidateOrderSecretRequest(req, *order); err != nil {
@@ -253,7 +267,7 @@ func (s *Service) OrderSecret(req *api.OrderSecretRequest) (*api.OrderSecretResp
 		return nil, err
 	}
 
-	finalPrivateKey, finalPublicKey, ext, err := s.Plugin.ProduceFinalSecret(seed, sikeSK, order, orderPart4, req, response)
+	finalPrivateKey, finalPublicKey, ext, err := s.Plugin.ProduceFinalSecret(beneficiariesSeed, beneficiariesSikeSK, order, orderPart4, req, response)
 	if err != nil {
 		return nil, err
 	}

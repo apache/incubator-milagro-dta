@@ -47,5 +47,5 @@ type Service interface {
 	SetMasterFiduciaryNodeID(masterFiduciaryNodeID string)
 
 	//System
-	Status(apiVersion string) (*api.StatusResponse, error)
+	Status(apiVersion, nopdeType string) (*api.StatusResponse, error)
 }

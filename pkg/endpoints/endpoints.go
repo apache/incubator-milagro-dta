@@ -176,11 +176,14 @@ func Endpoints(svc service.Service, corsAllow string, authorizer transport.Autho
 			ErrStatus: transport.ErrorStatus{
 				transport.ErrInvalidRequest: http.StatusUnprocessableEntity,
 			},
-		},
+		},		
+	}
+
+	statusEndPoints := transport.HTTPEndpoints{
 		"Status": {
 			Path:        "/" + apiVersion + "/status",
 			Method:      http.MethodGet,
-			Endpoint:    MakeStatusEndpoint(svc),
+			Endpoint:    MakeStatusEndpoint(svc, nodeType),
 			NewResponse: func() interface{} { return &api.StatusResponse{} },
 			Options: transport.ServerOptions(
 				transport.SetCors(corsAllow),
@@ -194,11 +197,11 @@ func Endpoints(svc service.Service, corsAllow string, authorizer transport.Autho
 
 	switch strings.ToLower(nodeType) {
 	case "multi":
-		return concatEndpoints(masterFiduciaryEndpoints, identityEndpoints, principalEndpoints)
+		return concatEndpoints(masterFiduciaryEndpoints, identityEndpoints, principalEndpoints, statusEndPoints)
 	case "principal":
-		return concatEndpoints(identityEndpoints, principalEndpoints)
+		return concatEndpoints(identityEndpoints, principalEndpoints, statusEndPoints)
 	case "fiduciary", "masterfiduciary":
-		return concatEndpoints(masterFiduciaryEndpoints, identityEndpoints)
+		return concatEndpoints(masterFiduciaryEndpoints, identityEndpoints, statusEndPoints)
 	}
 
 	return nil
@@ -352,9 +355,9 @@ func MakeFulfillOrderSecretEndpoint(m service.Service) endpoint.Endpoint {
 }
 
 //MakeStatusEndpoint -
-func MakeStatusEndpoint(m service.Service) endpoint.Endpoint {
+func MakeStatusEndpoint(m service.Service, nodeType string) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		return m.Status(apiVersion)
+		return m.Status(apiVersion, nodeType)
 	}
 }
 

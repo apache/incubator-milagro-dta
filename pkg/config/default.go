@@ -17,10 +17,6 @@
 
 package config
 
-import (
-	ipfsCfg "github.com/ipfs/go-ipfs-config"
-)
-
 // DefaultConfig -
 func DefaultConfig() *Config {
 	return &Config{
@@ -54,7 +50,9 @@ func defaultLogConfig() LogConfig {
 // IPFSConfig -
 func defaultIPFSConfig() IPFSConfig {
 	return IPFSConfig{
-		Bootstrap:     ipfsCfg.DefaultBootstrapAddresses,
+		Bootstrap: []string{
+			"/ip4/34.252.47.231/tcp/4001/ipfs/QmcEPkctfqQs6vbvTD8EdJmzy4zouAtrV8AwjLbGhbURep",
+		},
 		Connector:     "embedded",
 		ListenAddress: "/ip4/0.0.0.0/tcp/4001",
 		APIAddress:    "http://localhost:5001",

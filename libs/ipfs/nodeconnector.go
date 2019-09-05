@@ -109,9 +109,9 @@ func NewNodeConnector(options ...NodeConnectorOption) (Connector, error) {
 	conf.Routing.Type = "dht"
 	conf.Swarm.ConnMgr = cfg.ConnMgr{
 		Type:        "basic",
-		LowWater:    600,
-		HighWater:   900,
-		GracePeriod: "20s",
+		LowWater:    20,
+		HighWater:   100,
+		GracePeriod: "30s",
 	}
 
 	appRepo := &repo.Mock{
@@ -142,7 +142,9 @@ func NewNodeConnector(options ...NodeConnectorOption) (Connector, error) {
 
 // Add adds a data to the IPFS network and returns the ipfs path
 func (c *NodeConnector) Add(data []byte) (string, error) {
-	r, err := c.api.Unixfs().Add(c.ctx, files.NewBytesFile(data))
+	f := files.NewBytesFile(data)
+	defer f.Close()
+	r, err := c.api.Unixfs().Add(c.ctx, f)
 	if err != nil {
 		return "", err
 	}
@@ -157,11 +159,13 @@ func (c *NodeConnector) Get(ipfsPath string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer node.Close()
 
 	f := files.ToFile(node)
 	if f == nil {
 		return nil, errors.New("not a file")
 	}
+	defer f.Close()
 
 	b, err := ioutil.ReadAll(f)
 	if err != nil {
@@ -169,7 +173,6 @@ func (c *NodeConnector) Get(ipfsPath string) ([]byte, error) {
 	}
 
 	// TODO: Pin the document
-
 	return b, nil
 }
 

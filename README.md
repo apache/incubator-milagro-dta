@@ -33,7 +33,7 @@ Milagro D-TA provides a basic set of services for creating identities for actors
 ## Installation
 Below are instructions on how to build and run the Milagro D-TA either using Docker, or static or dynamic builds for Linux.
 
-These instructions will build the service with default settings including an embeded IPFS node connected to a Public IPFS network. This will get you up and running quickly but will turn your D-TA into a public IPFS relay. **Not recommended for production use!**
+These instructions will build the service with default settings including an embeded IPFS node connected to a private IPFS network and an embedded "Bolt" database. This will get you up and running quickly **but is not recommended for production use!**
 
 ### Docker
 To see Milagro D-TA in action you can run Milagro D-TA in a docker container.  This is currently the preferred method to build and run the D-TA.  Tested on Ubuntu 19.04 and MacOS but should run in any Docker environment.
@@ -53,6 +53,7 @@ docker run -p5556:5556 mydta
 ```
 
 ### Build and run on development machine
+Tested on Ubuntu 19, MacOS 10.14 Mojave & Debian 10
 
 #### Install development Tools on Ubuntu/Debian
 ```
@@ -156,7 +157,7 @@ To run the service with default settings:
 
 You can find documentation for Milagro D-TA in the main [Milagro docs site](https://milagro.apache.org/) 
 
-Which includes a quick start guide that will show you how to get Milagro D-TA to "do stuff"
+This includes a quick start guide that will show you how to get Milagro D-TA to "do stuff"
 
 
 ## Contributing

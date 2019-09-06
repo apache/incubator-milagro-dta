@@ -21,7 +21,6 @@ Package main - handles config, initialisation and starts the service daemon
 package main
 
 import (
-	"context"
 	"crypto/rand"
 	"fmt"
 	"net/http"
@@ -38,16 +37,12 @@ import (
 	"github.com/apache/incubator-milagro-dta/pkg/api"
 	"github.com/apache/incubator-milagro-dta/pkg/config"
 	"github.com/apache/incubator-milagro-dta/pkg/endpoints"
+	"github.com/apache/incubator-milagro-dta/pkg/tendermint"
 	"github.com/apache/incubator-milagro-dta/plugins"
 	"github.com/go-kit/kit/metrics/prometheus"
 	"github.com/pkg/errors"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-
-	log2 "github.com/tendermint/tendermint/libs/log"
-	tmclient "github.com/tendermint/tendermint/rpc/client"
-	tmtypes "github.com/tendermint/tendermint/types"
-	"github.com/tendermint/tmlibs/log"
 )
 
 func initConfig(args []string) error {
@@ -149,6 +144,11 @@ func startDaemon(args []string) error {
 
 	if err != nil {
 		return errors.Wrap(err, "init logger")
+	}
+
+	go tendermint.Subscribe(logger)
+	if err != nil {
+		return errors.Wrap(err, "init Tendermint Blockchain")
 	}
 
 	// Create KV store
@@ -284,7 +284,7 @@ func initDataStore(ds string) (*datastore.Store, error) {
 
 func main() {
 	var err error
-	go listenTendermint()
+
 	cmd, args := parseCommand()
 	switch cmd {
 	default:
@@ -298,39 +298,5 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
-	}
-}
-
-func connectTendermintWS() {
-
-	logger := log2.NewTMLogger(log.NewSyncWriter(os.Stdout))
-
-	client := tmclient.NewHTTP("tcp://localhost:26657", "/websocket")
-	client.SetLogger(logger)
-	err := client.Start()
-	if err != nil {
-		logger.Error("Failed to start a client", "err", err)
-		os.Exit(1)
-	}
-	defer client.Stop()
-
-	query := "tm.event = 'Tx'"
-	out, err := client.Subscribe(context.Background(), "test", query, 1000)
-	if err != nil {
-		logger.Error("Failed to subscribe to query", "err", err, "query", query)
-		os.Exit(1)
-	}
-
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
-
-	for {
-		select {
-		case result := <-out:
-			logger.Info("got tx",
-				"index", result.Data.(tmtypes.EventDataTx).Index)
-		case <-quit:
-			os.Exit(0)
-		}
 	}
 }

@@ -35,8 +35,7 @@ func Test_DumpTXID(t *testing.T) {
 //curl -s -X POST "http://localhost:5556/v1/order1" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":\"\",\"extension\":{\"coin\":\"0\"}}"
 
 func Test_All(t *testing.T) {
-	DumpTXID("473407b069ff917b110f38c36d5b9e5246b5ace5d82df38c5a188d5ac868cfec")
-	DumpTXID("586bc14b15a31999571c8188241beef046d3b78a9481ecee984e7c76a1d95112")
+	DumpTXID("8a47801e99b29e48a38c74495573e1eb68fa675b294826ce0580dabcadce3b0e")
 
 }
 

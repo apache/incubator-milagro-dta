@@ -433,7 +433,5 @@ func (s *Service) Order2(req *api.FulfillOrderResponse) (string, error) {
 		Payload:     marshaledRequest,
 	}
 	//curl --data-binary '{"jsonrpc":"2.0","id":"anything","method":"broadcast_tx_commit","params": {"tx": "YWFhcT1hYWFxCg=="}}' -H 'content-type:text/plain;' http://localhost:26657
-
 	return tendermint.PostToChain(chainTX, "Order2")
-
 }

@@ -6,11 +6,13 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"strings"
 
+	"github.com/TylerBrock/colorjson"
 	"github.com/apache/incubator-milagro-dta/pkg/api"
 )
 
@@ -44,7 +46,7 @@ func PostToChain(payload *api.BlockChainTX, method string) (string, error) {
 	TXIDhex := hex.EncodeToString(TXID[:])
 	fullTx := fmt.Sprintf("%s=%s", TXIDhex, string(serializedTX))
 
-	fmt.Printf(" **** %s Block TX: %s\n", method, TXIDhex)
+	//fmt.Printf(" **** %s Block TX: %s\n", method, TXIDhex)
 	base64EncodedTX := base64.StdEncoding.EncodeToString([]byte(fullTx))
 	body := strings.NewReader("{\"jsonrpc\":\"2.0\",\"id\":\"anything\",\"method\":\"broadcast_tx_commit\",\"params\": {\"tx\": \"" + base64EncodedTX + "\"}}")
 	req, err := http.NewRequest("POST", "http://localhost:26657", body)
@@ -69,12 +71,6 @@ func HandleChainTX(myID string, tx string) error {
 	if err != nil {
 		return err
 	}
-
-	if blockChainTX.Processor == "NONE" {
-		print("Process Complete")
-		print(string(blockChainTX.Payload))
-		return nil
-	}
 	err = callNextTX(blockChainTX)
 	if err != nil {
 		return err
@@ -94,11 +90,31 @@ func decodeChainTX(payload string) (*api.BlockChainTX, error) {
 	return tx, nil
 }
 
+//DecodeChainTX - Decode the On Chain TX into a BlockChainTX object
+func decodeTX(payload string) (*api.BlockChainTX, string, error) {
+	tx := &api.BlockChainTX{}
+	parts := strings.SplitN(payload, "=", 2)
+	if len(parts) != 2 {
+		return &api.BlockChainTX{}, "", errors.New("Invalid TX payload")
+	}
+	hash := string(parts[0])
+	err := json.Unmarshal([]byte(parts[1]), tx)
+	if err != nil {
+		return &api.BlockChainTX{}, "", err
+	}
+	return tx, hash, nil
+}
+
 func callNextTX(tx *api.BlockChainTX) error {
 	// recipient := tx.RecipientID
 	// sender := tx.SenderID
 	//payloadJSON := tx.Payload
 	payloadString := string(tx.Payload)
+
+	if tx.Processor == "NONE" {
+		//The TX is information and doesn't require any further processing
+		return nil
+	}
 
 	desintationURL := fmt.Sprintf("http://localhost:5556/%s", tx.Processor)
 
@@ -122,9 +138,22 @@ func callNextTX(tx *api.BlockChainTX) error {
 		t += scanner.Text()
 		///fmt.Print(scanner.Text())
 	}
-	print(t)
-
 	return nil
+}
+
+//Decode the Payload into JSON and displays the entire Blockchain TX unencoded
+func DumpTX(bctx *api.BlockChainTX) {
+	f := colorjson.NewFormatter()
+	f.Indent = 4
+	var payloadObj map[string]interface{}
+	payload := bctx.Payload
+	json.Unmarshal([]byte(payload), &payloadObj)
+	jsonstring, _ := json.Marshal(bctx)
+	var obj map[string]interface{}
+	json.Unmarshal([]byte(jsonstring), &obj)
+	obj["Payload"] = payloadObj
+	s, _ := f.Marshal(obj)
+	fmt.Println(string(s))
 }
 
 func DumpTXID(txid string) {

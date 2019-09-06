@@ -71,7 +71,7 @@ RUN mkdir -p pqnist/build && \
 	make && make install
 
 
-FROM golang:1.12 as go_builder
+FROM golang:1.13 as go_builder
 
 ENV LIBS_PATH=/tmp/milagro-dta-build
 ENV LIBRARY_PATH=$LIBS_PATH/lib

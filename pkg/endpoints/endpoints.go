@@ -176,6 +176,34 @@ func Endpoints(svc service.Service, corsAllow string, authorizer transport.Autho
 				transport.ErrInvalidRequest: http.StatusUnprocessableEntity,
 			},
 		},
+		"OrderSecret1": {
+			Path:        "/" + apiVersion + "/order/secret1",
+			Method:      http.MethodPost,
+			Endpoint:    MakeOrderSecret1Endpoint(svc),
+			NewRequest:  func() interface{} { return &api.OrderSecretRequest{} },
+			NewResponse: func() interface{} { return &api.OrderSecretResponse{} },
+			Options: transport.ServerOptions(
+				transport.SetCors(corsAllow),
+				transport.AuthorizeOIDC(authorizer, false),
+			),
+			ErrStatus: transport.ErrorStatus{
+				transport.ErrInvalidRequest: http.StatusUnprocessableEntity,
+			},
+		},
+		"OrderSecret2": {
+			Path:        "/" + apiVersion + "/order/secret2",
+			Method:      http.MethodPost,
+			Endpoint:    MakeOrderSecret2Endpoint(svc),
+			NewRequest:  func() interface{} { return &api.FulfillOrderSecretResponse{} },
+			NewResponse: func() interface{} { return &api.OrderSecretResponse{} },
+			Options: transport.ServerOptions(
+				transport.SetCors(corsAllow),
+				transport.AuthorizeOIDC(authorizer, false),
+			),
+			ErrStatus: transport.ErrorStatus{
+				transport.ErrInvalidRequest: http.StatusUnprocessableEntity,
+			},
+		},
 	}
 	masterFiduciaryEndpoints := transport.HTTPEndpoints{
 		"FulfillOrder": {
@@ -338,7 +366,7 @@ func MakeOrderEndpoint(m service.Service) endpoint.Endpoint {
 	}
 }
 
-//MakeOrderEndpoint -
+//MakeOrder1Endpoint -
 func MakeOrder1Endpoint(m service.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req, ok := request.(*api.OrderRequest)
@@ -352,7 +380,7 @@ func MakeOrder1Endpoint(m service.Service) endpoint.Endpoint {
 	}
 }
 
-//MakeOrderEndpoint -
+//MakeOrder2Endpoint -
 func MakeOrder2Endpoint(m service.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req, ok := request.(*api.FulfillOrderResponse)
@@ -377,6 +405,34 @@ func MakeOrderSecretEndpoint(m service.Service) endpoint.Endpoint {
 			return "", err
 		}
 		return m.OrderSecret(req)
+	}
+}
+
+//MakeOrderSecret1Endpoint -
+func MakeOrderSecret1Endpoint(m service.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		req, ok := request.(*api.OrderSecretRequest)
+		if !ok {
+			return nil, transport.ErrInvalidRequest
+		}
+		if err := validateRequest(req); err != nil {
+			return "", err
+		}
+		return m.OrderSecret1(req)
+	}
+}
+
+//MakeOrderSecret2Endpoint -
+func MakeOrderSecret2Endpoint(m service.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		req, ok := request.(*api.FulfillOrderSecretResponse)
+		if !ok {
+			return nil, transport.ErrInvalidRequest
+		}
+		if err := validateRequest(req); err != nil {
+			return "", err
+		}
+		return m.OrderSecret2(req)
 	}
 }
 

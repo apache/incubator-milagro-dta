@@ -89,51 +89,64 @@ func (s *Service) FulfillOrder(req *api.FulfillOrderRequest) (string, error) {
 }
 
 // FulfillOrderSecret -
-func (s *Service) FulfillOrderSecret(req *api.FulfillOrderSecretRequest) (*api.FulfillOrderSecretResponse, error) {
+func (s *Service) FulfillOrderSecret(req *api.FulfillOrderSecretRequest) (string, error) {
 	//Initialise values from Request object
 	orderPart3CID := req.OrderPart3CID
 	nodeID := s.NodeID()
 	remoteIDDocCID := req.SenderDocumentCID
 	_, _, _, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	remoteIDDoc, err := common.RetrieveIDDocFromIPFS(s.Ipfs, remoteIDDocCID)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	//Retrieve the order from IPFS
 	order, err := common.RetrieveOrderFromIPFS(s.Ipfs, orderPart3CID, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	recipientList, err := common.BuildRecipientList(s.Ipfs, nodeID, nodeID)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	//Retrieve the Seed
 	seed, err := common.RetrieveSeed(s.Store, order.Reference)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	//Generate the Secert from the Seed
 	commitmentPrivateKey, err := cryptowallet.RedeemSecret(seed)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	//Create an order response in IPFS
 	orderPart4ID, err := common.CreateAndStoreOrderPart4(s.Ipfs, s.Store, order, commitmentPrivateKey, orderPart3CID, nodeID, recipientList)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	return &api.FulfillOrderSecretResponse{
+	response := &api.FulfillOrderSecretResponse{
 		OrderPart4CID: orderPart4ID,
-	}, nil
+	}
+
+	marshaledRequest, _ := json.Marshal(response)
+
+	//Write the requests to the chain
+	chainTX := &api.BlockChainTX{
+		Processor:   api.TXFulfillOrderSecretResponse,
+		SenderID:    nodeID,
+		RecipientID: s.MasterFiduciaryNodeID(),
+		Payload:     marshaledRequest,
+	}
+	//curl --data-binary '{"jsonrpc":"2.0","id":"anything","method":"broadcast_tx_commit","params": {"tx": "YWFhcT1hYWFxCg=="}}' -H 'content-type:text/plain;' http://localhost:26657
+	return tendermint.PostToChain(chainTX, "FulfillOrderSecret")
+
 }

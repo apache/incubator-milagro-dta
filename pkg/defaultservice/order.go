@@ -185,7 +185,7 @@ func (s *Service) ProduceBeneficiaryEncryptedData(blsSK []byte, order *documents
 }
 
 // ProduceFinalSecret -
-func (s *Service) ProduceFinalSecret(seed, sikeSK []byte, order, orderPart4 *documents.OrderDoc, req *api.OrderSecretRequest, fulfillSecretRespomse *api.FulfillOrderSecretResponse) (secret, commitment string, extension map[string]string, err error) {
+func (s *Service) ProduceFinalSecret(seed, sikeSK []byte, order, orderPart4 *documents.OrderDoc, beneficiaryIDDocumentCID string) (secret, commitment string, extension map[string]string, err error) {
 	finalPrivateKey := orderPart4.OrderDocument.OrderPart4.Secret
 	//Derive the Public key from the supplied Private Key
 	finalPublicKey, _, err := cryptowallet.PublicKeyFromPrivate(finalPrivateKey)
@@ -269,7 +269,7 @@ func (s *Service) OrderSecret(req *api.OrderSecretRequest) (*api.OrderSecretResp
 		return nil, err
 	}
 
-	finalPrivateKey, finalPublicKey, ext, err := s.Plugin.ProduceFinalSecret(beneficiariesSeed, beneficiariesSikeSK, order, orderPart4, req, response)
+	finalPrivateKey, finalPublicKey, ext, err := s.Plugin.ProduceFinalSecret(beneficiariesSeed, beneficiariesSikeSK, order, orderPart4, beneficiaryCID)
 	if err != nil {
 		return nil, err
 	}
@@ -336,8 +336,8 @@ func (s *Service) Order1(req *api.OrderRequest) (string, error) {
 	}
 	//curl --data-binary '{"jsonrpc":"2.0","id":"anything","method":"broadcast_tx_commit","params": {"tx": "YWFhcT1hYWFxCg=="}}' -H 'content-type:text/plain;' http://localhost:26657
 
-	return tendermint.PostToChain(chainTX, "Order1")
-
+	tendermint.PostToChain(chainTX, "Order1")
+	return order.Reference, nil
 }
 
 // Order -
@@ -427,11 +427,139 @@ func (s *Service) Order2(req *api.FulfillOrderResponse) (string, error) {
 
 	//Write the requests to the chain
 	chainTX := &api.BlockChainTX{
-		Processor:   api.TXOrderResponse,
+		Processor:   api.TXOrderSecretResponse,
 		SenderID:    iDDocID,
 		RecipientID: s.MasterFiduciaryNodeID(),
 		Payload:     marshaledRequest,
 	}
 	//curl --data-binary '{"jsonrpc":"2.0","id":"anything","method":"broadcast_tx_commit","params": {"tx": "YWFhcT1hYWFxCg=="}}' -H 'content-type:text/plain;' http://localhost:26657
 	return tendermint.PostToChain(chainTX, "Order2")
+
+}
+
+// OrderSecret -
+func (s *Service) OrderSecret1(req *api.OrderSecretRequest) (string, error) {
+	orderReference := req.OrderReference
+	var orderPart2CID string
+	if err := s.Store.Get("order", orderReference, &orderPart2CID); err != nil {
+		return "", err
+	}
+
+	nodeID := s.NodeID()
+	recipientList, err := common.BuildRecipientList(s.Ipfs, nodeID, s.MasterFiduciaryNodeID())
+	if err != nil {
+		return "", err
+	}
+	remoteIDDoc, err := common.RetrieveIDDocFromIPFS(s.Ipfs, s.MasterFiduciaryNodeID())
+	if err != nil {
+		return "", err
+	}
+
+	_, _, blsSK, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
+	if err != nil {
+		return "", err
+	}
+
+	//Retrieve the order from IPFS
+	order, err := common.RetrieveOrderFromIPFS(s.Ipfs, orderPart2CID, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
+	if err != nil {
+		return "", errors.Wrap(err, "Fail to retrieve Order from IPFS")
+	}
+
+	if err := s.Plugin.ValidateOrderSecretRequest(req, *order); err != nil {
+		return "", err
+	}
+
+	//Create a piece of data that is destined for the beneficiary, passed via the Master Fiduciary
+
+	beneficiaryEncryptedData, extension, err := s.Plugin.ProduceBeneficiaryEncryptedData(blsSK, order, req)
+	if err != nil {
+		return "", err
+	}
+
+	if req.BeneficiaryIDDocumentCID != "" {
+		order.BeneficiaryCID = req.BeneficiaryIDDocumentCID
+	}
+
+	//Create a request Object in IPFS
+	orderPart3CID, err := common.CreateAndStorePart3(s.Ipfs, s.Store, order, orderPart2CID, nodeID, beneficiaryEncryptedData, recipientList)
+	if err != nil {
+		return "", err
+	}
+
+	//Post the address of the updated doc to the custody node
+	request := &api.FulfillOrderSecretRequest{
+		SenderDocumentCID: nodeID,
+		OrderPart3CID:     orderPart3CID,
+		Extension:         extension,
+	}
+
+	marshaledRequest, _ := json.Marshal(request)
+
+	//Write the requests to the chain
+	chainTX := &api.BlockChainTX{
+		Processor:   api.TXFulfillOrderSecretRequest,
+		SenderID:    nodeID,
+		RecipientID: s.MasterFiduciaryNodeID(),
+		Payload:     marshaledRequest,
+	}
+	//curl --data-binary '{"jsonrpc":"2.0","id":"anything","method":"broadcast_tx_commit","params": {"tx": "YWFhcT1hYWFxCg=="}}' -H 'content-type:text/plain;' http://localhost:26657
+
+	return tendermint.PostToChain(chainTX, "OrderSecret1")
+}
+
+// OrderSecret -
+func (s *Service) OrderSecret2(req *api.FulfillOrderSecretResponse) (string, error) {
+	nodeID := s.NodeID()
+	_, _, _, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
+	if err != nil {
+		return "", err
+	}
+
+	remoteIDDoc, err := common.RetrieveIDDocFromIPFS(s.Ipfs, s.MasterFiduciaryNodeID())
+	if err != nil {
+		return "", err
+	}
+
+	//Retrieve the response Order from IPFS
+	orderPart4, err := common.RetrieveOrderFromIPFS(s.Ipfs, req.OrderPart4CID, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
+	if err != nil {
+		return "", err
+	}
+
+	var beneficiariesSikeSK []byte
+	var beneficiaryCID string
+
+	beneficiaryCID = orderPart4.BeneficiaryCID
+
+	_, beneficiariesSeed, _, beneficiariesSikeSK, err := common.RetrieveIdentitySecrets(s.Store, beneficiaryCID)
+	if err != nil {
+		return "", err
+	}
+
+	finalPrivateKey, finalPublicKey, ext, err := s.Plugin.ProduceFinalSecret(beneficiariesSeed, beneficiariesSikeSK, orderPart4, orderPart4, beneficiaryCID)
+	if err != nil {
+		return "", err
+	}
+
+	request := &api.OrderSecretResponse{
+		Secret:         finalPrivateKey,
+		Commitment:     finalPublicKey,
+		OrderReference: orderPart4.Reference,
+		Extension:      ext,
+	}
+
+	marshaledRequest, _ := json.Marshal(request)
+
+	//Write the requests to the chain
+	chainTX := &api.BlockChainTX{
+		Processor:   api.TXOrderSecretResponse,
+		SenderID:    nodeID,
+		RecipientID: s.MasterFiduciaryNodeID(),
+		Payload:     marshaledRequest,
+	}
+	//curl --data-binary '{"jsonrpc":"2.0","id":"anything","method":"broadcast_tx_commit","params": {"tx": "YWFhcT1hYWFxCg=="}}' -H 'content-type:text/plain;' http://localhost:26657
+
+	return tendermint.PostToChain(chainTX, "OrderSecret2")
+
 }

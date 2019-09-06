@@ -114,14 +114,14 @@ func (s *Service) ProduceBeneficiaryEncryptedData(blsSK []byte, order *documents
 }
 
 // ProduceFinalSecret -
-func (s *Service) ProduceFinalSecret(seed, sikeSK []byte, order, orderPart4 *documents.OrderDoc, req *api.OrderSecretRequest, fulfillSecretRespomse *api.FulfillOrderSecretResponse) (secret, commitment string, extension map[string]string, err error) {
+func (s *Service) ProduceFinalSecret(seed, sikeSK []byte, order, orderPart4 *documents.OrderDoc, beneficiaryIDDocumentCID string) (secret, commitment string, extension map[string]string, err error) {
 	//retrieve principal IDDoc
 	principalDocID, err := common.RetrieveIDDocFromIPFS(s.Ipfs, order.PrincipalCID)
 	if err != nil {
 		return "", "", nil, err
 	}
 
-	finalPrivateKey, err := deriveFinalPrivateKey(s, *orderPart4, sikeSK, seed, req.BeneficiaryIDDocumentCID, s.NodeID(), principalDocID.BLSPublicKey)
+	finalPrivateKey, err := deriveFinalPrivateKey(s, *orderPart4, sikeSK, seed, beneficiaryIDDocumentCID, s.NodeID(), principalDocID.BLSPublicKey)
 	if err != nil {
 		return "", "", nil, err
 	}

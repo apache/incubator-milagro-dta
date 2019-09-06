@@ -31,43 +31,43 @@ import (
 )
 
 func deriveFinalPrivateKey(s *Service, order documents.OrderDoc, beneficiariesSikeSK []byte, beneficiariesSeed []byte, beneficiaryIDDocumentCID string, nodeID string, signingBlsPK []byte) (string, error) {
-	if beneficiaryIDDocumentCID != "" {
-		//we are using the beneficiary specified in order Part 3
-		beneficiaryBlob := order.OrderPart3.BeneficiaryEncryptedData
+	//if beneficiaryIDDocumentCID != "" {
+	//we are using the beneficiary specified in order Part 3
+	beneficiaryBlob := order.OrderPart3.BeneficiaryEncryptedData
 
-		//Decrypt the Envelope intented for the Beneficiary
-		privateKeyPart1of1, err := adhocEncryptedEnvelopeDecode(s, beneficiariesSikeSK, beneficiaryBlob, beneficiaryIDDocumentCID, signingBlsPK)
-		if err != nil {
-			return "", err
-		}
-		//Calculate the final private key by Eliptical Key addition of both parts
-		privateKeyPart2of2 := order.OrderDocument.OrderPart4.Secret
-
-		finalPrivateKey, err := addPrivateKeys(privateKeyPart1of1, privateKeyPart2of2)
-
-		if err != nil {
-			return "", err
-		}
-		return finalPrivateKey, err
-	}
-
-	//we are using the beneficiary specified in the order part 1
-	privateKeyPart2of2 := order.OrderDocument.OrderPart4.Secret
-	// if order.OrderDocument.BeneficiaryCID != nodeID {
-	// 	//need to forward this data to the beneficiary to complete redemption
-	// 	return "", errors.New("Currently beneficiary must be the same as the Principal")
-	// }
-	//restore the Seed
-	_, _, ecAddPrivateKey, err := cryptowallet.Bip44Address(beneficiariesSeed, cryptowallet.CoinTypeBitcoinMain, 0, 0, 0)
+	//Decrypt the Envelope intented for the Beneficiary
+	privateKeyPart1of1, err := adhocEncryptedEnvelopeDecode(s, beneficiariesSikeSK, beneficiaryBlob, beneficiaryIDDocumentCID, signingBlsPK)
 	if err != nil {
 		return "", err
 	}
-	privateKeyPart1of1 := hex.EncodeToString(ecAddPrivateKey.Serialize())
+	//Calculate the final private key by Eliptical Key addition of both parts
+	privateKeyPart2of2 := order.OrderDocument.OrderPart4.Secret
+
 	finalPrivateKey, err := addPrivateKeys(privateKeyPart1of1, privateKeyPart2of2)
+
 	if err != nil {
 		return "", err
 	}
 	return finalPrivateKey, err
+	//}
+
+	// //we are using the beneficiary specified in the order part 1
+	// privateKeyPart2of2 := order.OrderDocument.OrderPart4.Secret
+	// // if order.OrderDocument.BeneficiaryCID != nodeID {
+	// // 	//need to forward this data to the beneficiary to complete redemption
+	// // 	return "", errors.New("Currently beneficiary must be the same as the Principal")
+	// // }
+	// //restore the Seed
+	// _, _, ecAddPrivateKey, err := cryptowallet.Bip44Address(beneficiariesSeed, cryptowallet.CoinTypeBitcoinMain, 0, 0, 0)
+	// if err != nil {
+	// 	return "", err
+	// }
+	// privateKeyPart1of1 := hex.EncodeToString(ecAddPrivateKey.Serialize())
+	// finalPrivateKey, err := addPrivateKeys(privateKeyPart1of1, privateKeyPart2of2)
+	// if err != nil {
+	// 	return "", err
+	// }
+	// return finalPrivateKey, err
 
 }
 

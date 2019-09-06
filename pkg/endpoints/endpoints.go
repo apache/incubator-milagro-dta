@@ -176,7 +176,7 @@ func Endpoints(svc service.Service, corsAllow string, authorizer transport.Autho
 			ErrStatus: transport.ErrorStatus{
 				transport.ErrInvalidRequest: http.StatusUnprocessableEntity,
 			},
-		},		
+		},
 	}
 
 	statusEndPoints := transport.HTTPEndpoints{

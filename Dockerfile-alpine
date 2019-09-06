@@ -1,4 +1,4 @@
-FROM golang:alpine as builder
+FROM golang:1.12-alpine as builder
 
 RUN apk update && apk add --no-cache \
     ca-certificates \
@@ -74,21 +74,28 @@ RUN mkdir -p pqnist/build && \
 	make && make install
 
 
+RUN go get -u golang.org/x/lint/golint
+
 RUN echo Building Milagro DTA
 
 ENV PROJECT_PATH=/src/github.com/apache/incubator-milagro-dta
 ENV CGO_LDFLAGS="-L $LIBRARY_PATH"
 ENV CGO_CPPFLAGS="-I $C_INCLUDE_PATH"
 
-ADD . $PROJECT_PATH
 WORKDIR $PROJECT_PATH
+ADD . $PROJECT_PATH
+
+RUN GO111MODULES=on go mod vendor
+
+RUN ./lint.sh
 
 RUN CGO_ENABLED=1 \
-    GO111MODULES=on \
     go build \
       -ldflags '-w -linkmode external -extldflags "-static"' \
       -o $GOPATH/bin/milagro \
       github.com/apache/incubator-milagro-dta/cmd/service
+
+RUN go test -cover `go list ./...`
 
 RUN $GOPATH/bin/milagro init
 

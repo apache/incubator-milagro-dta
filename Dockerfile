@@ -21,7 +21,6 @@ WORKDIR /root
 RUN echo Building Milagro Crypt C library && \
 	git clone https://github.com/apache/incubator-milagro-crypto-c.git && \
 	cd incubator-milagro-crypto-c && \
-    git checkout 1.0.0 && \
     mkdir build && \
     cd build && \
     cmake \

@@ -39,13 +39,13 @@ func (s *Service) CreateIdentity(req *api.CreateIdentityRequest) (*api.CreateIde
 		return nil, errors.Wrap(err, "Failed to Generate random seed")
 	}
 
-        //Generate SIKE keys
+	//Generate SIKE keys
 	rc1, sikePublicKey, sikeSecretKey := crypto.SIKEKeys(seed)
 	if rc1 != 0 {
 		return nil, errors.New("Failed to generate SIKE keys")
 	}
 
-        //Generate BLS keys
+	//Generate BLS keys
 	rc1, blsPublicKey, blsSecretKey := crypto.BLSKeys(seed, nil)
 	if rc1 != 0 {
 		return nil, errors.New("Failed to generate BLS keys")

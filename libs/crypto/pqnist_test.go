@@ -269,7 +269,7 @@ func TestBLS(t *testing.T) {
 	seedHex := "3370f613c4fe81130b846483c99c032c17dcc1904806cc719ed824351c87b0485c05089aa34ba1e1c6bfb6d72269b150"
 	seed, _ := hex.DecodeString(seedHex)
 
-        messageStr := "test message"
+	messageStr := "test message"
 	message := []byte(messageStr)
 
 	RC1, pk1, sk1 := BLSKeys(seed, nil)
@@ -283,7 +283,7 @@ func TestBLS(t *testing.T) {
 	RC2, sig1 := BLSSign(message, sk1)
 	assert.Equal(t, 0, RC2, "Should be equal")
 
-        sig1Hex := hex.EncodeToString(sig1)
+	sig1Hex := hex.EncodeToString(sig1)
 	fmt.Printf("sig1: %s \n", sig1Hex)
 
 	want := 0
@@ -296,15 +296,15 @@ func TestBLSADD(t *testing.T) {
 	seed1Hex := "3370f613c4fe81130b846483c99c032c17dcc1904806cc719ed824351c87b0485c05089aa34ba1e1c6bfb6d72269b150"
 	seed2Hex := "46389f32b7cdebbbc46b7165d8fae888c9de444898390a939977e1a066256a6f465e7d76307178aef81ae0c6841f9b7c"
 	seed1, _ := hex.DecodeString(seed1Hex)
-	seed2, _ := hex.DecodeString(seed2Hex)	
+	seed2, _ := hex.DecodeString(seed2Hex)
 
-        messageStr := "test message"
+	messageStr := "test message"
 	message := []byte(messageStr)
 
-        pk12GoldenHex := "0fff41dc3b28fee38f564158f9e391a5c6ac42179fcccdf5ee4513030b6d59900a832f9a886b2407dc8b0a3b51921326123d3974bd1864fb22f5a84e83f1f9f611ee082ed5bd6ca896d464f12907ba8acdf15c44f9cff2a2dbb3b32259a1fe4f11d470158066087363df20a11144d6521cf72dca1a7514154a95c7fe73b219989cc40d7fc7e0b97854fc3123c0cf50ae0452730996a5cb24641aff7102fcbb2af705d0f32d5787ca1c3654e4ae6aa59106e1e22e29018ba7c341f1e6472f800f"
-        sig12GoldenHex := "0203799dc2941b810985d9eb694a5be4a1ad5817f9e5d7c31870bb9fb471f7353eafacdc548544f9e7b78a0a9372c63ab0"
+	pk12GoldenHex := "0fff41dc3b28fee38f564158f9e391a5c6ac42179fcccdf5ee4513030b6d59900a832f9a886b2407dc8b0a3b51921326123d3974bd1864fb22f5a84e83f1f9f611ee082ed5bd6ca896d464f12907ba8acdf15c44f9cff2a2dbb3b32259a1fe4f11d470158066087363df20a11144d6521cf72dca1a7514154a95c7fe73b219989cc40d7fc7e0b97854fc3123c0cf50ae0452730996a5cb24641aff7102fcbb2af705d0f32d5787ca1c3654e4ae6aa59106e1e22e29018ba7c341f1e6472f800f"
+	sig12GoldenHex := "0203799dc2941b810985d9eb694a5be4a1ad5817f9e5d7c31870bb9fb471f7353eafacdc548544f9e7b78a0a9372c63ab0"
 	pk12Golden, _ := hex.DecodeString(pk12GoldenHex)
-	sig12Golden, _ := hex.DecodeString(sig12GoldenHex)	
+	sig12Golden, _ := hex.DecodeString(sig12GoldenHex)
 
 	RC1, pktmp, sktmp := BLSKeys(seed1, nil)
 	assert.Equal(t, 0, RC1, "Should be equal")
@@ -313,10 +313,10 @@ func TestBLSADD(t *testing.T) {
 	assert.Equal(t, 0, RC1, "Should be equal")
 
 	assert.Equal(t, pktmp, pk1, "Should be equal")
-	assert.Equal(t, sktmp, sk1, "Should be equal")	
+	assert.Equal(t, sktmp, sk1, "Should be equal")
 
 	RC2, pk2, sk2 := BLSKeys(seed2, nil)
-	assert.Equal(t, 0, RC2, "Should be equal")	
+	assert.Equal(t, 0, RC2, "Should be equal")
 
 	RC3, sig1 := BLSSign(message, sk1)
 	assert.Equal(t, 0, RC3, "Should be equal")
@@ -326,7 +326,7 @@ func TestBLSADD(t *testing.T) {
 
 	RC5 := BLSVerify(message, pk1, sig1)
 	assert.Equal(t, 0, RC5, "Should be equal")
-	
+
 	RC6 := BLSVerify(message, pk2, sig2)
 	assert.Equal(t, 0, RC6, "Should be equal")
 
@@ -338,7 +338,7 @@ func TestBLSADD(t *testing.T) {
 
 	RC9 := BLSVerify(message, pk12, sig12)
 	assert.Equal(t, 0, RC9, "Should be equal")
-	
+
 	pk12Hex := hex.EncodeToString(pk12)
 	fmt.Printf("pk12Hex: %s \n", pk12Hex)
 	fmt.Printf("pk12GoldenHex: %s \n", pk12GoldenHex)
@@ -348,29 +348,29 @@ func TestBLSADD(t *testing.T) {
 	fmt.Printf("sig12GoldenHex: %s \n", sig12GoldenHex)
 
 	assert.Equal(t, pk12, pk12Golden, "Should be equal")
-	assert.Equal(t, sig12, sig12Golden, "Should be equal")	
+	assert.Equal(t, sig12, sig12Golden, "Should be equal")
 }
 
 func TestBLSSSS(t *testing.T) {
 	seed1Hex := "3370f613c4fe81130b846483c99c032c17dcc1904806cc719ed824351c87b0485c05089aa34ba1e1c6bfb6d72269b150"
 	seed2Hex := "46389f32b7cdebbbc46b7165d8fae888c9de444898390a939977e1a066256a6f465e7d76307178aef81ae0c6841f9b7c"
 	seed1, _ := hex.DecodeString(seed1Hex)
-	seed2, _ := hex.DecodeString(seed2Hex)	
+	seed2, _ := hex.DecodeString(seed2Hex)
 
-        messageStr := "test message"
+	messageStr := "test message"
 	message := []byte(messageStr)
 
-        const k int = 3
+	const k int = 3
 	const n int = 4
 
-        sigGoldenHex := "03108b67f20b138e3080208efae105e31868ac34212bf03d80050d01de13a2c52b8bc3eafa3589045aebf11ec00dcf91f3 "
-        xGoldenHex := "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004"
-        yGoldenHex := "0000000000000000000000000000000069f67565fd82de218a8b743b5516f948a72500ac3beb3ba072908cad2a146a91000000000000000000000000000000005f6f919d81a63fd53406794ae714b95a705c51de8001ef16f3f869dc515dcb3d000000000000000000000000000000005ce9d01ed92320a6d7aa195ca74db9735cdbe1ed55a3d026b4736792ee08852500000000000000000000000000000000626530ea03f980967576547095c1f9936ca3b0d8bcd0decfb40185d100149849"
-        ysigsGoldenHex := "0202982b889c082f159a7d8720d8d33a42005f13af0906763383fdce13607d9c0a2672f04c4600b36dd8a7f272c03908760210c06e79b26ee842c31d4ff8ce68d30da4247c7ab1c6162c011dada87b211f7172628ef78a39e61549c9f7b05245a7010316518c690e15de48fdb512bd47180925da7b3320bc52bdb5a239fad77cb975ede4aea20bef0bd570c50dc27240864564030ad08e4a60a0f330588f60f0a6535e79a99dd3c74af22f7b1137a01db65c95bd100745a2c0d5968e1a8ea5b4f3ce3736"
+	sigGoldenHex := "03108b67f20b138e3080208efae105e31868ac34212bf03d80050d01de13a2c52b8bc3eafa3589045aebf11ec00dcf91f3 "
+	xGoldenHex := "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004"
+	yGoldenHex := "0000000000000000000000000000000069f67565fd82de218a8b743b5516f948a72500ac3beb3ba072908cad2a146a91000000000000000000000000000000005f6f919d81a63fd53406794ae714b95a705c51de8001ef16f3f869dc515dcb3d000000000000000000000000000000005ce9d01ed92320a6d7aa195ca74db9735cdbe1ed55a3d026b4736792ee08852500000000000000000000000000000000626530ea03f980967576547095c1f9936ca3b0d8bcd0decfb40185d100149849"
+	ysigsGoldenHex := "0202982b889c082f159a7d8720d8d33a42005f13af0906763383fdce13607d9c0a2672f04c4600b36dd8a7f272c03908760210c06e79b26ee842c31d4ff8ce68d30da4247c7ab1c6162c011dada87b211f7172628ef78a39e61549c9f7b05245a7010316518c690e15de48fdb512bd47180925da7b3320bc52bdb5a239fad77cb975ede4aea20bef0bd570c50dc27240864564030ad08e4a60a0f330588f60f0a6535e79a99dd3c74af22f7b1137a01db65c95bd100745a2c0d5968e1a8ea5b4f3ce3736"
 	sigGolden, _ := hex.DecodeString(sigGoldenHex)
 	xGolden, _ := hex.DecodeString(xGoldenHex)
 	yGolden, _ := hex.DecodeString(yGoldenHex)
-	ysigsGolden, _ := hex.DecodeString(ysigsGoldenHex)			
+	ysigsGolden, _ := hex.DecodeString(ysigsGoldenHex)
 
 	RC1, pki, ski := BLSKeys(seed1, nil)
 	assert.Equal(t, 0, RC1, "Should be equal")
@@ -381,12 +381,12 @@ func TestBLSSSS(t *testing.T) {
 	RC3 := BLSVerify(message, pki, sigi)
 	assert.Equal(t, 0, RC3, "Should be equal")
 
-        // y is an array of BLS secret keys
-        RC4, x, y, sko := BLSMakeShares(k, n, seed2, ski)
+	// y is an array of BLS secret keys
+	RC4, x, y, sko := BLSMakeShares(k, n, seed2, ski)
 	assert.Equal(t, 0, RC4, "Should be equal")
 
 	assert.Equal(t, ski, sko, "Should be equal")
-	
+
 	xHex := hex.EncodeToString(x)
 	fmt.Printf("xHex: %s \n", xHex)
 	fmt.Printf("xGoldenHex: %s \n", xGoldenHex)
@@ -398,32 +398,32 @@ func TestBLSSSS(t *testing.T) {
 	assert.Equal(t, x, xGolden, "Should be equal")
 	assert.Equal(t, y, yGolden, "Should be equal")
 
-        var ys [n][]byte
-	for i := 0;  i<n; i++ {
-	        ys[i] = y[(i*BGSBLS381):((i+1)*BGSBLS381)]
-                ysHex := hex.EncodeToString(ys[i])
-        	fmt.Printf("ys[%d]: %s \n", i, ysHex)
+	var ys [n][]byte
+	for i := 0; i < n; i++ {
+		ys[i] = y[(i * BGSBLS381):((i + 1) * BGSBLS381)]
+		ysHex := hex.EncodeToString(ys[i])
+		fmt.Printf("ys[%d]: %s \n", i, ysHex)
 	}
 
-        // Generate signatures from shares
+	// Generate signatures from shares
 	var sigs [n][]byte
 	var RC5 int
-	var ysigs []byte	
-	for i := 0;  i<n; i++ {
+	var ysigs []byte
+	for i := 0; i < n; i++ {
 		RC5, sigs[i] = BLSSign(message, ys[i])
-        	assert.Equal(t, 0, RC5, "Should be equal")
-                sigsHex := hex.EncodeToString(sigs[i])
-        	fmt.Printf("sigs[%d]: %s \n", i, sigsHex)
+		assert.Equal(t, 0, RC5, "Should be equal")
+		sigsHex := hex.EncodeToString(sigs[i])
+		fmt.Printf("sigs[%d]: %s \n", i, sigsHex)
 		ysigs = append(ysigs, sigs[i]...)
 	}
-        ysigsHex := hex.EncodeToString(ysigs)
-        fmt.Printf("ysigs %s \n", ysigsHex)
+	ysigsHex := hex.EncodeToString(ysigs)
+	fmt.Printf("ysigs %s \n", ysigsHex)
 
 	assert.Equal(t, ysigs, ysigsGolden, "Should be equal")
-	
-        RC7, sigr := BLSRecoverSignature(k, x, ysigs)
+
+	RC7, sigr := BLSRecoverSignature(k, x, ysigs)
 	assert.Equal(t, 0, RC7, "Should be equal")
-	
+
 	sigrHex := hex.EncodeToString(sigr)
 	fmt.Printf("sigr: %s \n", sigrHex)
 

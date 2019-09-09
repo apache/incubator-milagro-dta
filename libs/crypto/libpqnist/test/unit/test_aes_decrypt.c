@@ -47,7 +47,7 @@
 #include <string.h>
 #include <amcl/utils.h>
 #include <amcl/randapi.h>
-#include <pqnist/pqnist.h>
+#include <amcl/pqnist.h>
 
 #define LINE_LEN 500
 //#define DEBUG

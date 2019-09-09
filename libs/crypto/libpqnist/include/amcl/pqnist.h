@@ -20,7 +20,7 @@
 /**
  * @file pqnist.h
  * @author Kealan McCusker
- * @brief envelope crypto function declarations
+ * @brief crypto function declarations
  *
  */
 
@@ -36,50 +36,17 @@
 extern "C" {
 #endif
 
-/**  @brief Generate SIKE and BLS keys
+/**  @brief Generate BLS keys
 
-     Generate SIKE and BLS key public and private key pairs
+     Generate BLS public and private key
 
-     @param seed             seed value for CSPRNG - 48 bytes
-     @param SIKEpk           SIKE public key
-     @param SIKEsk           SIKE secret key
+     @param seed             seed value for CSPRNG
      @param BLSpk            BLS public key
-     @param BLSsk            BLS secret key
+     @param BLSsk            BLS secret key. Generated externally if seed set to NULL
      @return                 Zero for success or else an error code
  */
-int pqnist_keys(char* seed, char* SIKEpk, char* SIKEsk, char* BLSpk, char* BLSsk);
+int pqnist_bls_keys(char* seed, char* BLSpk, char* BLSsk);
 
-/**  @brief Encrypt a message and encapsulate the AES Key for
-     a recipient.
-
-     The  message is encrypted using AES-256. The key
-     is generated inside this function as an output
-     from the encapsulation function. The ciphertext
-     is returned using the P paramter.
-
-     @param P            Plaintext to be encrypted / Ciphertext. Padded with zero.
-     @param Plen         Plaintext length in bytes must be a multiple of the block size (16)
-     @param IV           Initialization vector IV (16 bytes)
-     @param pk           SIKE public key
-     @param ek           Encapsulated key
-     @return             Zero for success or else an error code
- */
-int pqnist_encapsulate_encrypt(char* P, int Plen, char* IV, char* pk, char* ek);
-
-/**  @brief Decapsulate the AES Key and decrypt the message
-
-     Decapsulate the AES key and use it to decrypt the
-     ciphertext. The plaintext is returned using the C
-     parameter.
-
-     @param C            Ciphertext to be decrypted / Plaintext
-     @param Clen         Ciphertext length in bytes must be a multiple of the block size (16)
-     @param IV           Initialization vector IV
-     @param sk           SIKE secret key
-     @param ek           Encapsulated key
-     @return             Zero for success or else an error code
- */
-int pqnist_decapsulate_decrypt(char* C, int Clen, char* IV, char* sk, char* ek);
 
 /**  @brief Sign a message
 
@@ -90,7 +57,7 @@ int pqnist_decapsulate_decrypt(char* C, int Clen, char* IV, char* sk, char* ek);
      @param S            Signature
      @return             Zero for success or else an error code
  */
-int pqnist_sign(char* M, char* sk, char* S);
+int pqnist_bls_sign(char* M, char* sk, char* S);
 
 /**  @brief Verify a signature
 
@@ -101,7 +68,59 @@ int pqnist_sign(char* M, char* sk, char* S);
      @param S            Signature
      @return             Zero for success or else an error code
  */
-int pqnist_verify(char* M, char* pk, char* S);
+int pqnist_bls_verify(char* M, char* pk, char* S);
+
+/**	@brief Add two members from the group G1
+ *
+	@param  r1  member of G1
+	@param  r2  member of G1
+	@param  r   member of G1. r = r1+r2
+	@return     Zero for success or else an error code
+ */
+int pqnist_bls_addg1(char* r1, char* r2, char* r);
+
+/**	@brief Add two members from the group G2
+ *
+	@param  r1  member of G2
+	@param  r2  member of G2
+	@param  r   member of G2. r = r1+r2
+	@return     Zero for success or else an error code
+ */
+int pqnist_bls_addg2(char* r1, char* r2, char* r);
+
+
+/**	@brief Use Shamir's secret sharing to distribute BLS secret keys
+ *
+	@param  k       Threshold
+	@param  n       Number of shares
+        @param  pSEED   seed value for CSPRNG - 48 bytes
+	@param  pX      X values
+	@param  pY      Y values. Valid BLS secret keys
+	@param  pSKI    Input secret key to be shared. Ignored if set to NULL
+	@param  pSKO    Secret key that is shared
+	@return         Zero for success or else an error code
+ */
+int pqnist_bls_make_shares(int k, int n,  char* pSEED, char* pX, char* pY, char* pSKI, char* pSKO);
+
+/**	@brief Use Shamir's secret sharing to recover a BLS secret key
+ *
+	@param  k    Threshold
+	@param  pX   X values
+	@param  pY   Y values. Valid BLS secret keys
+	@param  pSK  Secret key that is recovered
+	@return      Zero for success or else an error code
+ */
+int pqnist_bls_recover_secret(int k, char* pX, char* pY, char* pSK);
+
+/**	@brief Use Shamir's secret sharing to recover a BLS signature
+ *
+	@param  k     Threshold
+	@param  pX    X values
+	@param  pY    Y values. Valid BLS signatures
+	@param  pSIG  Signature that is recovered
+	@return       Zero for success or else an error code
+ */
+int pqnist_bls_recover_signature(int k, char* pX, char* pY, char* pSIG);
 
 /**  @brief AES-GCM Encryption
 
@@ -160,6 +179,49 @@ void pqnist_aes_cbc_encrypt(char* K, int Klen, char* IV, char* P, int Plen);
      @param Clen         Ciphertext length in bytes
  */
 void pqnist_aes_cbc_decrypt(char* K, int Klen, char* IV, char* C, int Clen);
+
+/**  @brief Generate SIKE keys
+
+     Generate SIKE public and private key
+
+     @param seed             seed value for CSPRNG - 48 bytes
+     @param SIKEpk           SIKE public key
+     @param SIKEsk           SIKE secret key
+     @return                 Zero for success or else an error code
+ */
+int pqnist_sike_keys(char* seed, char* SIKEpk, char* SIKEsk);
+
+/**  @brief Encrypt a message and encapsulate the AES Key for
+     a recipient.
+
+     The  message is encrypted using AES-256. The key
+     is generated inside this function as an output
+     from the encapsulation function. The ciphertext
+     is returned using the P paramter.
+
+     @param P            Plaintext to be encrypted / Ciphertext. Padded with zero.
+     @param Plen         Plaintext length in bytes must be a multiple of the block size (16)
+     @param IV           Initialization vector IV (16 bytes)
+     @param pk           SIKE public key
+     @param ek           Encapsulated key
+     @return             Zero for success or else an error code
+ */
+int pqnist_encapsulate_encrypt(char* P, int Plen, char* IV, char* pk, char* ek);
+
+/**  @brief Decapsulate the AES Key and decrypt the message
+
+     Decapsulate the AES key and use it to decrypt the
+     ciphertext. The plaintext is returned using the C
+     parameter.
+
+     @param C            Ciphertext to be decrypted / Plaintext
+     @param Clen         Ciphertext length in bytes must be a multiple of the block size (16)
+     @param IV           Initialization vector IV
+     @param sk           SIKE secret key
+     @param ek           Encapsulated key
+     @return             Zero for success or else an error code
+ */
+int pqnist_decapsulate_decrypt(char* C, int Clen, char* IV, char* sk, char* ek);
 
 #ifdef __cplusplus
 }

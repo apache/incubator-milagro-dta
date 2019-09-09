@@ -23,3 +23,8 @@ install(TARGETS ${target} DESTINATION lib PERMISSIONS
         GROUP_READ GROUP_EXECUTE
         WORLD_READ WORLD_EXECUTE)
 
+message(STATUS "Copy ${target} library to go for testing")
+add_custom_command(TARGET ${target} POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                          "${CMAKE_CURRENT_BINARY_DIR}/lib*"
+                          "${PROJECT_BINARY_DIR}/go/")

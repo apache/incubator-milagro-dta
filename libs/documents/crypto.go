@@ -112,7 +112,7 @@ func sign(envelope Envelope, blsSK []byte, signerNodeID string) (SignedEnvelope,
 	if err != nil {
 		return SignedEnvelope{}, errors.Wrap(err, "Failed to serialize envelope in SignBLS")
 	}
-	rc, signature := crypto.Sign(envelopeBytes, blsSK)
+	rc, signature := crypto.BLSSign(envelopeBytes, blsSK)
 	if rc != 0 {
 		return SignedEnvelope{}, errors.Wrap(err, "Failed to sign envelope in in SignBLS")
 	}
@@ -128,7 +128,7 @@ func Verify(signedEnvelope SignedEnvelope, blsPK []byte) error {
 	message := signedEnvelope.Message
 	signature := signedEnvelope.Signature
 
-	rc := crypto.Verify(message, blsPK, signature)
+	rc := crypto.BLSVerify(message, blsPK, signature)
 	if rc == 0 {
 		return nil
 	}

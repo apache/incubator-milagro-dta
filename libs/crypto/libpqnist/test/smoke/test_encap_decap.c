@@ -29,7 +29,7 @@
 #include <amcl/randapi.h>
 #include <amcl/bls_BLS381.h>
 #include <oqs/oqs.h>
-#include <pqnist/pqnist.h>
+#include <amcl/pqnist.h>
 
 #define NTHREADS 8
 #define MAXSIZE 256
@@ -82,14 +82,10 @@ int main()
     uint8_t SIKEpk[NTHREADS][OQS_KEM_sike_p751_length_public_key];
     uint8_t SIKEsk[NTHREADS][OQS_KEM_sike_p751_length_secret_key];
 
-    // Alice's BLS keys (not used)
-    char BLSpk[NTHREADS][G2LEN];
-    char BLSsk[NTHREADS][BGS_BLS381];
-
     #pragma omp parallel for
     for(i=0; i<NTHREADS; i++)
     {
-        rc = pqnist_keys(seedkeys[i], SIKEpk[i], SIKEsk[i], BLSpk[i], BLSsk[i]);
+        rc = pqnist_sike_keys(seedkeys[i], SIKEpk[i], SIKEsk[i]);
         if (rc)
         {
             fprintf(stderr, "FAILURE pqnist_keys rc: %d\n", rc);

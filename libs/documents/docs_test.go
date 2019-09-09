@@ -117,7 +117,7 @@ func Test_EncodeDecode(t *testing.T) {
 	}
 	seed, _ := cryptowallet.RandomBytes(16)
 	//Now generate a test Document & use some temp keys, as once made, we needs the TestID above to decode
-	_, _, _, blsPK, blsSK := crypto.Keys(seed)
+	_, blsPK, blsSK := crypto.BLSKeys(seed, nil)
 	secretBody := &SimpleString{Content: "B"}
 	plainText := &SimpleString{Content: "A"}
 	header := &Header{}
@@ -184,7 +184,11 @@ func BuildTestOrderDoc() (OrderDoc, error) {
 func BuildTestIDDoc() (IDDoc, string, []byte, []byte, []byte, []byte) {
 	//make some test ID docs
 	seed, _ := cryptowallet.RandomBytes(16)
-	_, sikePK, sikeSK, blsPK, blsSK := crypto.Keys(seed)
+
+	_, sikePK, sikeSK := crypto.SIKEKeys(seed)
+
+	_, blsPK, blsSK := crypto.BLSKeys(seed, nil)
+
 	//id := []byte("TestID1")
 	envelope := Envelope{}
 	header := Header{}

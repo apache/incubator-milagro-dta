@@ -78,7 +78,7 @@ func initConfig(args []string) error {
 		return errors.Wrap(err, "init datastore")
 	}
 
-	logger.Info("IPFS connectort type: %s", cfg.IPFS.Connector)
+	logger.Info("IPFS connector type: %s", cfg.IPFS.Connector)
 	var ipfsConnector ipfs.Connector
 	switch cfg.IPFS.Connector {
 	case "api":
@@ -152,7 +152,7 @@ func startDaemon(args []string) error {
 		return errors.Wrap(err, "init datastore")
 	}
 
-	logger.Info("IPFS connectort type: %s", cfg.IPFS.Connector)
+	logger.Info("IPFS connector type: %s", cfg.IPFS.Connector)
 	var ipfsConnector ipfs.Connector
 	switch cfg.IPFS.Connector {
 	case "api":

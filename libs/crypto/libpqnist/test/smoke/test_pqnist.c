@@ -28,7 +28,7 @@
 #include <amcl/randapi.h>
 #include <amcl/bls_BLS381.h>
 #include <oqs/oqs.h>
-#include <pqnist/pqnist.h>
+#include <amcl/pqnist.h>
 
 #define G2LEN 4*BFS_BLS381
 #define SIGLEN BFS_BLS381+1
@@ -92,10 +92,18 @@ int main()
     char BLSsk[BGS_BLS381];
     char BLSpk[G2LEN];
 
-    rc = pqnist_keys(seed, SIKEpk, SIKEsk, BLSpk, BLSsk);
+    rc = pqnist_sike_keys(seed, SIKEpk, SIKEsk);
     if (rc)
     {
-        fprintf(stderr, "FAILURE pqnist_keys rc: %d\n", rc);
+        fprintf(stderr, "FAILURE pqnist_sike_keys rc: %d\n", rc);
+        printf("FAILURE\n");
+        exit(EXIT_FAILURE);
+    }
+
+    rc = pqnist_bls_keys(seed, BLSpk, BLSsk);
+    if (rc)
+    {
+        fprintf(stderr, "FAILURE pqnist_bls_keys rc: %d\n", rc);
         printf("FAILURE\n");
         exit(EXIT_FAILURE);
     }
@@ -189,15 +197,15 @@ int main()
     // Sign message
 
     // Alice signs message
-    rc = pqnist_sign(P.val, BLSsk, S);
+    rc = pqnist_bls_sign(P.val, BLSsk, S);
     if(rc)
     {
-        fprintf(stderr, "FAILURE pqnist_sign rc: %d\n", rc);
+        fprintf(stderr, "FAILURE pqnist_bls_sign rc: %d\n", rc);
         exit(EXIT_FAILURE);
     }
 
     // Bob verifies message
-    rc = pqnist_verify(P.val, BLSpk, S);
+    rc = pqnist_bls_verify(P.val, BLSpk, S);
     if (rc)
     {
         fprintf(stderr, "FAILURE: verify failed!\n errorCode %d", rc);

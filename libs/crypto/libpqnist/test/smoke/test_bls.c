@@ -27,8 +27,7 @@
 #include <amcl/utils.h>
 #include <amcl/randapi.h>
 #include <amcl/bls_BLS381.h>
-#include <oqs/oqs.h>
-#include <pqnist/pqnist.h>
+#include <amcl/pqnist.h>
 
 #define NTHREADS 8
 #define MAXSIZE 256
@@ -60,11 +59,7 @@ int main()
         }
     }
 
-    // Generate SIKE and BLS keys
-
-    // Bob's SIKE keys (not used)
-    uint8_t SIKEpk[NTHREADS][OQS_KEM_sike_p751_length_public_key];
-    uint8_t SIKEsk[NTHREADS][OQS_KEM_sike_p751_length_secret_key];
+    // Generate BLS keys
 
     // Alice's BLS keys
     char BLSsk[NTHREADS][BGS_BLS381];
@@ -74,7 +69,7 @@ int main()
     for(i=0; i<NTHREADS; i++)
     {
 
-        rc = pqnist_keys(seed[i], SIKEpk[i], SIKEsk[i], BLSpk[i], BLSsk[i]);
+        rc = pqnist_bls_keys(seed[i], BLSpk[i], BLSsk[i]);
         if (rc)
         {
             fprintf(stderr, "FAILURE pqnist_keys rc: %d\n", rc);
@@ -113,10 +108,10 @@ int main()
     for(i=0; i<NTHREADS; i++)
     {
         // Alice signs message
-        rc = pqnist_sign(P[i].val, BLSsk[i], S[i].val);
+        rc = pqnist_bls_sign(P[i].val, BLSsk[i], S[i].val);
         if(rc)
         {
-            fprintf(stderr, "FAILURE pqnist_sign rc: %d\n", rc);
+            fprintf(stderr, "FAILURE pqnist_bls_sign rc: %d\n", rc);
             exit(EXIT_FAILURE);
         }
         printf("Alice SIGlen %d  SIG", S[i].len);
@@ -128,15 +123,15 @@ int main()
     for(i=0; i<NTHREADS; i++)
     {
         // Bob verifies message
-        rc = pqnist_verify(P[i].val, BLSpk[i], S[i].val);
+        rc = pqnist_bls_verify(P[i].val, BLSpk[i], S[i].val);
         if (rc)
         {
-            fprintf(stderr, "FAILURE pqnist_verify rc: %d\n", rc);
+            fprintf(stderr, "FAILURE pqnist_bls_verify rc: %d\n", rc);
             exit(EXIT_FAILURE);
         }
         else
         {
-            printf("Test %d pqnist_verify rc: %d\n", i, rc);
+            printf("Test %d pqnist_bls_verify rc: %d\n", i, rc);
             OCT_output_string(&P[i]);
             printf("\n");
         }
@@ -145,7 +140,6 @@ int main()
     // clear memory
     for(i=0; i<NTHREADS; i++)
     {
-        OQS_MEM_cleanse(SIKEsk[i], OQS_KEM_sike_p751_length_secret_key);
         OCT_clear(&P[i]);
         OCT_clear(&S[i]);
     }

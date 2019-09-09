@@ -2,7 +2,7 @@
 file(GLOB_RECURSE SRCS *.c)
 
 # List of multithreaded examples 
-SET (SRCSTHREAD test_encap_decap.c test_sign_verify.c)
+SET (SRCSTHREAD test_encap_decap.c test_bls.c)
 
 # Add the binary tree directory to the search path for linking and include files
 link_directories (${PROJECT_BINARY_DIR}/src

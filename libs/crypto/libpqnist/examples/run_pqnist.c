@@ -28,7 +28,7 @@
 #include <amcl/randapi.h>
 #include <amcl/bls_BLS381.h>
 #include <oqs/oqs.h>
-#include <pqnist/pqnist.h>
+#include <amcl/pqnist.h>
 
 #define G2LEN 4*BFS_BLS381
 #define SIGLEN BFS_BLS381+1
@@ -105,10 +105,17 @@ int main()
     char BLSsk[BGS_BLS381];
     char BLSpk[G2LEN];
 
-    rc = pqnist_keys(seed, SIKEpk, SIKEsk, BLSpk, BLSsk);
+    rc = pqnist_sike_keys(seed, SIKEpk, SIKEsk);
     if (rc)
     {
-        fprintf(stderr, "ERROR pqnist_keys rc: %d\n", rc);
+        fprintf(stderr, "ERROR pqnist_sike_keys rc: %d\n", rc);
+        exit(EXIT_FAILURE);
+    }
+
+    rc = pqnist_bls_keys(seed, BLSpk, BLSsk);
+    if (rc)
+    {
+        fprintf(stderr, "ERROR pqnist_bls_keys rc: %d\n", rc);
         exit(EXIT_FAILURE);
     }
 
@@ -223,10 +230,10 @@ int main()
     // Sign message
 
     // Alice signs message
-    rc = pqnist_sign(P.val, BLSsk, S);
+    rc = pqnist_bls_sign(P.val, BLSsk, S);
     if(rc)
     {
-        fprintf(stderr, "ERROR pqnist_sign rc: %d\n", rc);
+        fprintf(stderr, "ERROR pqnist_bls_sign rc: %d\n", rc);
         printf("FAILURE\n");
         exit(EXIT_FAILURE);
     }
@@ -236,7 +243,7 @@ int main()
     printf("\n");
 
     // Bob verifies message
-    rc = pqnist_verify(P.val, BLSpk, S);
+    rc = pqnist_bls_verify(P.val, BLSpk, S);
     if (rc == BLS_OK)
     {
         printf("BOB SUCCESS: signature verified\n");
@@ -255,7 +262,7 @@ int main()
     // Bob verifies corrupted message
     char tmp = P.val[0];
     P.val[0] = 0;
-    rc = pqnist_verify(P.val, BLSpk, S);
+    rc = pqnist_bls_verify(P.val, BLSpk, S);
     if (rc == BLS_OK)
     {
         printf("BOB SUCCESS: signature verified\n");
@@ -272,7 +279,7 @@ int main()
     printf("\n");
 
     // Check signature is correct
-    rc = pqnist_verify(P.val, BLSpk, S);
+    rc = pqnist_bls_verify(P.val, BLSpk, S);
     if (rc == BLS_OK)
     {
         printf("BOB SUCCESS: signature verified\n");
@@ -284,7 +291,7 @@ int main()
 
     // Bob verifies corrupted signature
     S[0] = 0;
-    rc = pqnist_verify(P.val, BLSpk, S);
+    rc = pqnist_bls_verify(P.val, BLSpk, S);
     if (rc == BLS_OK)
     {
         printf("BOB SUCCESS: signature verified\n");

@@ -18,7 +18,7 @@
 */
 
 /*
-   Sign a message and verify the signature. Introduce errors.
+   BLS sign a message and verify the signature. Introduce errors.
 */
 
 #include <stdio.h>
@@ -27,8 +27,7 @@
 #include <amcl/utils.h>
 #include <amcl/randapi.h>
 #include <amcl/bls_BLS381.h>
-#include <oqs/oqs.h>
-#include <pqnist/pqnist.h>
+#include <amcl/pqnist.h>
 
 #define G2LEN 4*BFS_BLS381
 #define SIGLEN BFS_BLS381+1
@@ -41,9 +40,8 @@ int main()
     char seed[PQNIST_SEED_LENGTH];
 
     // Message to be sent to Bob
-    char p[256];
+    char p[] = "Hello Bob! This is a message from Alice";
     octet P = {0, sizeof(p), p};
-    OCT_jstring(&P,"Hello Bob! This is a message from Alice");
 
     // non random seed value
     for (i=0; i<PQNIST_SEED_LENGTH; i++) seed[i]=i+1;
@@ -51,17 +49,13 @@ int main()
     amcl_print_hex(seed, PQNIST_AES_KEY_LENGTH);
     printf("\n");
 
-    // Generate SIKE and BLS keys
-
-    // Bob's SIKE keys (not used)
-    uint8_t SIKEpk[OQS_KEM_sike_p751_length_public_key];
-    uint8_t SIKEsk[OQS_KEM_sike_p751_length_secret_key];
+    // Generate BLS keys
 
     // Alice's BLS keys
     char BLSsk[BGS_BLS381];
     char BLSpk[G2LEN];
 
-    rc = pqnist_keys(seed, SIKEpk, SIKEsk, BLSpk, BLSsk);
+    rc = pqnist_bls_keys(seed, BLSpk, BLSsk);
     if (rc)
     {
         fprintf(stderr, "ERROR pqnist_keys rc: %d\n", rc);
@@ -78,10 +72,10 @@ int main()
     char S[SIGLEN];
 
     // Alice signs message
-    rc = pqnist_sign(P.val, BLSsk, S);
+    rc = pqnist_bls_sign(P.val, BLSsk, S);
     if(rc != BLS_OK)
     {
-        fprintf(stderr, "ERROR pqnist_sign rc: %d\n", rc);
+        fprintf(stderr, "ERROR pqnist_bls_sign rc: %d\n", rc);
         printf("FAILURE\n");
         exit(EXIT_FAILURE);
     }
@@ -91,14 +85,14 @@ int main()
     printf("\n");
 
     // Bob verifies message
-    rc = pqnist_verify(P.val, BLSpk, S);
+    rc = pqnist_bls_verify(P.val, BLSpk, S);
     if (rc == BLS_OK)
     {
-        printf("SUCCESS pqnist_verify rc: %d\n", rc);
+        printf("SUCCESS pqnist_bls_verify rc: %d\n", rc);
     }
     else
     {
-        fprintf(stderr, "ERROR pqnist_verify rc: %d\n", rc);
+        fprintf(stderr, "ERROR pqnist_bls_verify rc: %d\n", rc);
         exit(EXIT_FAILURE);
     }
 
@@ -110,14 +104,14 @@ int main()
     // Bob verifies corrupted message. This should fail
     char tmp = P.val[0];
     P.val[0] = 5;
-    rc = pqnist_verify(P.val, BLSpk, S);
+    rc = pqnist_bls_verify(P.val, BLSpk, S);
     if (rc == BLS_FAIL)
     {
-        fprintf(stderr, "ERROR pqnist_verify rc: %d\n", rc);
+        fprintf(stderr, "ERROR pqnist_bls_verify rc: %d\n", rc);
     }
     else
     {
-        printf("SUCCESS pqnist_verify rc: %d\n", rc);
+        printf("SUCCESS pqnist_bls_verify rc: %d\n", rc);
         printf("TEST FAILED\n");
         exit(EXIT_FAILURE);
     }
@@ -129,36 +123,34 @@ int main()
     printf("\n");
 
     // Check signature is correct
-    rc = pqnist_verify(P.val, BLSpk, S);
+    rc = pqnist_bls_verify(P.val, BLSpk, S);
     if (rc == BLS_OK)
     {
-        printf("SUCCESS pqnist_verify rc: %d\n", rc);
+        printf("SUCCESS pqnist_bls_verify rc: %d\n", rc);
     }
     else
     {
-        fprintf(stderr, "ERROR pqnist_verify rc: %d\n", rc);
+        fprintf(stderr, "ERROR pqnist_bls_verify rc: %d\n", rc);
         printf("TEST FAILED\n");
         exit(EXIT_FAILURE);
     }
 
     // Bob verifies corrupted signature. This should fail
     S[0] = 0;
-    rc = pqnist_verify(P.val, BLSpk, S);
+    rc = pqnist_bls_verify(P.val, BLSpk, S);
     if (rc == BLS_INVALID_G1)
     {
 
-        fprintf(stderr, "ERROR pqnist_verify rc: %d\n", rc);
+        fprintf(stderr, "ERROR pqnist_bls_verify rc: %d\n", rc);
     }
     else
     {
-        printf("SUCCESS pqnist_verify rc: %d\n", rc);
+        printf("SUCCESS pqnist_bls_verify rc: %d\n", rc);
         printf("TEST FAILED\n");
         exit(EXIT_FAILURE);
     }
 
     // clear memory
-    OQS_MEM_cleanse(SIKEsk, OQS_KEM_sike_p751_length_secret_key);
-    OQS_MEM_cleanse(BLSsk, OQS_SIG_picnic_L5_FS_length_secret_key);
     OCT_clear(&P);
 
     printf("TEST PASSED\n");

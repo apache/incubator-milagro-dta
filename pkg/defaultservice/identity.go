@@ -38,15 +38,19 @@ func (s *Service) CreateIdentity(req *api.CreateIdentityRequest) (*api.CreateIde
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to Generate random seed")
 	}
-	//Generate SIKE and BLS keys
-	rc, sikePublicKey, sikeSecretKey, blsPublicKey, blsSecretKey := crypto.Keys(seed)
 
-	if rc != 0 {
-		return nil, errors.New("Failed to generate SIKE and BLS keys")
+	//Generate SIKE keys
+	rc1, sikePublicKey, sikeSecretKey := crypto.SIKEKeys(seed)
+	if rc1 != 0 {
+		return nil, errors.New("Failed to generate SIKE keys")
 	}
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to Initialise Beneficary in Cryptowallet Library")
+
+	//Generate BLS keys
+	rc1, blsPublicKey, blsSecretKey := crypto.BLSKeys(seed, nil)
+	if rc1 != 0 {
+		return nil, errors.New("Failed to generate BLS keys")
 	}
+
 	ecPubKey, err := common.InitECKeys(seed)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to Generate EC Pub Key from random seed")

@@ -26,7 +26,7 @@
 #include <string.h>
 #include <amcl/utils.h>
 #include <amcl/randapi.h>
-#include <pqnist/pqnist.h>
+#include <amcl/pqnist.h>
 
 #define Keylen 32
 #define IVlen 12

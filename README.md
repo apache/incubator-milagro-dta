@@ -31,7 +31,7 @@ The Milagro D-TA provides a basic set of services for creating identities for ac
 2. **SafeGuardSecret** Encrypts a string and decrypts it again
 
 ## Installation
-Below are instructions on how to build and run the Milagro D-TA either using Docker or developments builds for Linux and Mac.
+Below are instructions on how to build and run the Milagro D-TA either using Docker or as developments builds for Linux and Mac.
 
 These instructions will build the service with default settings including an embeded IPFS node connected to a private IPFS network and an embedded "Bolt" database. This will get you up and running quickly **but is not recommended for production use!**
 

@@ -282,7 +282,7 @@ func (s *Service) OrderSecret(req *api.OrderSecretRequest) (*api.OrderSecretResp
 	}, nil
 }
 
-// Order -
+// Order1 -
 func (s *Service) Order1(req *api.OrderRequest) (string, error) {
 	if err := s.Plugin.ValidateOrderRequest(req); err != nil {
 		return "", err
@@ -340,7 +340,7 @@ func (s *Service) Order1(req *api.OrderRequest) (string, error) {
 	return order.Reference, nil
 }
 
-// Order -
+// Order2 -
 func (s *Service) Order2(req *api.FulfillOrderResponse) (string, error) {
 	// if err := s.Plugin.ValidateOrderRequest(req); err != nil {
 	// 	return "", err
@@ -437,7 +437,7 @@ func (s *Service) Order2(req *api.FulfillOrderResponse) (string, error) {
 
 }
 
-// OrderSecret -
+// OrderSecret1 -
 func (s *Service) OrderSecret1(req *api.OrderSecretRequest) (string, error) {
 	orderReference := req.OrderReference
 	var orderPart2CID string
@@ -508,7 +508,7 @@ func (s *Service) OrderSecret1(req *api.OrderSecretRequest) (string, error) {
 	return tendermint.PostToChain(chainTX, "OrderSecret1")
 }
 
-// OrderSecret -
+// OrderSecret2 -
 func (s *Service) OrderSecret2(req *api.FulfillOrderSecretResponse) (string, error) {
 	nodeID := s.NodeID()
 	_, _, _, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)

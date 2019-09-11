@@ -17,26 +17,26 @@
     under the License.
 -->
 
-# Milagro Distributed Trust Authority
+# Apache Milagro (Incubating) Decentralized Trust Authority
 ---
-[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/apache/incubator-milagro-dta/graphs/commit-activity)
 
-Milagro D-TA is a collaborative key management server 
+The Apache Milagro (Incubating) Decentralized Trust Authority (D-TA) is a collaborative key management server. 
 
-Milagro D-TA facilitates secure and auditable communication between people who to use key pairs (Principal) and service providers who can keep the secret keys safe (Master Fiduciary). It is written in Go and uses REST services based on the [GoKit microservices framework](https://gokit.io), it uses IPFS to create a shared immutable log of transactions and relies on Milagro-Crypto-C for it's crypto.
+The D-TA facilitates secure and auditable communication between people who to use key pairs (Principal) and service providers who can keep the secret keys safe (Master Fiduciary). It is written in Go and uses REST services based on the [GoKit microservices framework](https://gokit.io), it uses IPFS to create a shared immutable log of transactions and relies on Milagro-Crypto-C for it's crypto.
 
 ## Plugins
-Milagro D-TA provides a basic set of services for creating identities for actors in the system, and passing encrypted communication between them but it assumes that different service providers will have their own "special sauce" for securely storing secret keys, so the vanilla services can be extended using a plugin framework. Two basic plugins are included in this release to give you an idea of how this can be done.
+The Milagro D-TA provides a basic set of services for creating identities for actors in the system, and passing encrypted communication between them but it assumes that different service providers will have their own "special sauce" for securely storing secret keys, so the vanilla services can be extended using a plugin framework. Two basic plugins are included in this release to give you an idea of how this can be done.
 1. **BitcoinPlugin**  Generates a Bitcoin address and reveals the corresponding secret key
 2. **SafeGuardSecret** Encrypts a string and decrypts it again
 
 ## Installation
-Below are instructions on how to build and run the Milagro D-TA either using Docker, or static or dynamic builds for Linux.
+Below are instructions on how to build and run the Milagro D-TA either using Docker or as developments builds for Linux and Mac.
 
-These instructions will build the service with default settings including an embeded IPFS node connected to a Public IPFS network. This will get you up and running quickly but will turn your D-TA into a public IPFS relay. **Not recommended for production use!**
+These instructions will build the service with default settings including an embeded IPFS node connected to a private IPFS network and an embedded "Bolt" database. This will get you up and running quickly **but is not recommended for production use!**
 
 ### Docker
-To see Milagro D-TA in action you can run Milagro D-TA in a docker container.  This is currently the preferred method to build and run the D-TA.  Tested on Ubuntu 19.04 and MacOS but should run in any Docker environment.
+To see the Milagro D-TA in action you can run the Milagro D-TA in a docker container.  This is currently the preferred method to build and run the D-TA.  Tested on Ubuntu 19.04 and MacOS but should run in any Docker environment.
 
 #### Prerequisites
 [Docker](https://www.docker.com/)
@@ -53,6 +53,7 @@ docker run -p5556:5556 mydta
 ```
 
 ### Build and run on development machine
+Tested on Ubuntu 19, MacOS 10.14 Mojave & Debian 10
 
 #### Install development Tools on Ubuntu/Debian
 ```
@@ -156,7 +157,7 @@ To run the service with default settings:
 
 You can find documentation for Milagro D-TA in the main [Milagro docs site](https://milagro.apache.org/) 
 
-Which includes a quick start guide that will show you how to get Milagro D-TA to "do stuff"
+This includes a quick start guide that will show you how to get Milagro D-TA to "do stuff"
 
 
 ## Contributing

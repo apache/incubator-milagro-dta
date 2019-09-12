@@ -1,0 +1,13 @@
+language: go
+go:
+  - "1.12.x"
+
+services:
+  - docker
+
+install:
+  - docker build -t milagro-test -f Dockerfile-alpine .
+  - docker run -d -p 127.0.0.1:5556:5556 --name milagro milagro-test
+
+script:
+  - docker ps | grep -q milagro

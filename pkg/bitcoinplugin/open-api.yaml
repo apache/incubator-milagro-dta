@@ -1,0 +1,110 @@
+openapi: 3.0.0
+info:
+  title: Apache Milagro D-TA Bitcoin Plugin
+  description: Returns a Bitcoin Address. This specification only shows endpoints that vary from the standard Milagro REST API
+  contact:
+    email: dev@milagro.apache.org
+  license:
+    name: http://www.apache.org/licenses/LICENSE-2.0
+  version: 1.0.0  
+paths:
+  /v1/order:
+    post:
+      summary: Create an order for a new BitCoin Address
+      description: This request will return a Bitcoin Public Address. Coin type 0 = testnet Coint type 1 = Mainnet
+      tags:
+      - order
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                beneficiaryIDDocumentCID:
+                  type: string                                    
+                extension:
+                  type: object
+                  properties:
+                    coin:
+                      type: string                    
+                      example: "0"
+      responses:
+        '200':
+          description: Successful Operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '400':
+          description: Invalid Request
+          content:
+            text/plain:
+              schema:
+                type: string    
+  /v1/order/secret:
+    post:
+      summary: Returns the Bitcoin secret key that can be used to sign transactions
+      tags:
+        - order
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                orderReference:
+                  type: string                                    
+                beneficiaryIDDocumentCID:
+                  type: string                                    
+      responses:
+        '200':
+          description: Succesful Operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderSecretResponse'
+        '400':
+          description: Invalid Request
+          content:
+            text/plain:
+             schema:
+              type: string
+servers:
+  - url: 'http://localhost:5556'
+  - url: 'http://localhost:5558' 
+components:
+  schemas:
+      OrderResponse:
+        type: object
+        properties:
+          orderReference:
+            type: string
+          commitment:
+            type: string
+          createdAt:
+            type: string
+          extension:
+            type: object
+            properties:
+              address:
+                type: string                               
+      OrderSecretResponse:
+        type: object
+        properties:
+          secret:
+            type: string
+          commitment:
+            type: string
+          orderReference:
+            type: string
+          extension:
+            type: object
+            properties:
+              address:
+                type: string
+tags:
+  - name: order
+    description: Communication between Principals and Master Fiduciaries
+    externalDocs:
+      url: 'https://milagro.apache.org/docs/milagro-intro/'
+      description: Apache Milagro Docs

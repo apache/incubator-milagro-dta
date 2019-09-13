@@ -22,6 +22,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/apache/incubator-milagro-dta/libs/logger"
@@ -36,6 +37,7 @@ var (
 type ClientService interface {
 	FulfillOrder(req *FulfillOrderRequest) (*FulfillOrderResponse, error)
 	FulfillOrderSecret(req *FulfillOrderSecretRequest) (*FulfillOrderSecretResponse, error)
+	Status() (*StatusResponse, error)
 }
 
 // MilagroClientService - implements Service Interface
@@ -57,6 +59,11 @@ func ClientEndpoints() transport.HTTPEndpoints {
 			Method:      http.MethodPost,
 			NewRequest:  func() interface{} { return &FulfillOrderSecretRequest{} },
 			NewResponse: func() interface{} { return &FulfillOrderSecretResponse{} },
+		},
+		"Status": {
+			Path:        "/" + apiVersion + "/status",
+			Method:      http.MethodGet,
+			NewResponse: func() interface{} { return &StatusResponse{} },
 		},
 	}
 }
@@ -87,5 +94,18 @@ func (c MilagroClientService) FulfillOrderSecret(req *FulfillOrderSecretRequest)
 		return nil, err
 	}
 	r := d.(*FulfillOrderSecretResponse)
+	return r, nil
+}
+
+//Status - Allows a client to see the status of the server that it is connecting too
+func (c MilagroClientService) Status() (*StatusResponse, error) {
+	endpoint := c.endpoints["Status"]
+	
+	s, err := endpoint(context.Background(), nil)
+	if err != nil {
+		return nil, err
+	}
+	r := s.(*StatusResponse)
+	fmt.Println("got status request")
 	return r, nil
 }

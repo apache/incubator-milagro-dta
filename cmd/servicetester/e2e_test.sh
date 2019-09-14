@@ -233,6 +233,10 @@ if [ $plugin == "bitcoinwallet" ]; then
    execute_bitcoin
 fi
 
+if [ $plugin == "qredoplugin" ]; then
+   execute_bitcoin
+fi
+
 if [ $plugin == "milagro"  ]; then
    execute_milagro
 fi

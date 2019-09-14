@@ -20,7 +20,10 @@ Package service - defines core Milagro D-TA interface
 */
 package service
 
-import "github.com/apache/incubator-milagro-dta/pkg/api"
+import (
+	"github.com/apache/incubator-milagro-dta/libs/transport"
+	"github.com/apache/incubator-milagro-dta/pkg/api"
+)
 
 // Service is the CustodyService interface
 type Service interface {
@@ -48,4 +51,9 @@ type Service interface {
 
 	//System
 	Status(apiVersion, nopdeType string) (*api.StatusResponse, error)
+}
+
+// Endpoints interface to register plugin specific endpoints
+type Endpoints interface {
+	Endpoints() (namespace string, endpoints transport.HTTPEndpoints)
 }

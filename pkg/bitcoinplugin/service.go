@@ -37,12 +37,12 @@ var (
 	pluginName      = "bitcoinwallet"
 )
 
-// Service is the Milagro bitcoin service
+// Service is the Milagro Bitcoin service
 type Service struct {
 	defaultservice.Service
 }
 
-// NewService returns a Milagro implementation of Service
+// NewService returns a Bitcoin implementation of Service
 func NewService() *Service {
 	return &Service{}
 }

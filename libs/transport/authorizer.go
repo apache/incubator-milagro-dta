@@ -143,6 +143,13 @@ func parseJWTToken(p string, v interface{}) error {
 	return nil
 }
 
+// SetJWTAuthHeader sets the Bearer Authorization header to the http client context
+func SetJWTAuthHeader(ctx context.Context, jwtToken string) context.Context {
+	h := http.Header{}
+	h.Set("Authorization", "Bearer "+jwtToken)
+	return AddClientHeader(ctx, h)
+}
+
 // EmptyAuthorizer implements empty Authorizer
 type EmptyAuthorizer struct{}
 

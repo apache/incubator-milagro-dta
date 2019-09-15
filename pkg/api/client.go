@@ -71,7 +71,9 @@ func NewHTTPClient(instance string, logger *logger.Logger) (ClientService, error
 //FulfillOrder -
 func (c MilagroClientService) FulfillOrder(req *FulfillOrderRequest) (*FulfillOrderResponse, error) {
 	endpoint := c.endpoints["FulfillOrder"]
-	d, err := endpoint(context.Background(), req)
+	ctx := context.Background()
+
+	d, err := endpoint(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +84,9 @@ func (c MilagroClientService) FulfillOrder(req *FulfillOrderRequest) (*FulfillOr
 //FulfillOrderSecret -
 func (c MilagroClientService) FulfillOrderSecret(req *FulfillOrderSecretRequest) (*FulfillOrderSecretResponse, error) {
 	endpoint := c.endpoints["FulfillOrderSecret"]
-	d, err := endpoint(context.Background(), req)
+	ctx := context.Background()
+
+	d, err := endpoint(ctx, req)
 	if err != nil {
 		return nil, err
 	}

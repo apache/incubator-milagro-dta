@@ -338,24 +338,6 @@ func parseHTTPHeaders(s *httptransport.Server) {
 	)(s)
 }
 
-func encodeJSONRequest(_ context.Context, r *http.Request, request interface{}) error {
-	if request == nil {
-		return nil
-	}
-
-	if urlV, ok := request.(url.Values); ok {
-		r.URL.RawQuery = urlV.Encode()
-		return nil
-	}
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(request); err != nil {
-		return err
-	}
-	r.Body = ioutil.NopCloser(&buf)
-	return nil
-}
-
 func decodeJSONRequest(e HTTPEndpoint) httptransport.DecodeRequestFunc {
 	return func(ctx context.Context, r *http.Request) (interface{}, error) {
 		if e.Method != r.Method {
@@ -403,24 +385,6 @@ func decodeOptionsRequest(ctx context.Context, r *http.Request) (interface{}, er
 	}
 
 	return nil, nil
-}
-
-func decodeJSONResponse(e HTTPEndpoint) httptransport.DecodeResponseFunc {
-	return func(_ context.Context, r *http.Response) (interface{}, error) {
-		if r.StatusCode != http.StatusOK {
-			strBody, _ := ioutil.ReadAll(r.Body)
-			defer r.Body.Close()
-
-			return nil, errors.Wrapf(ErrHTTPClientError, "status: %v (%s)", r.Status, decodeError(string(strBody)))
-		}
-
-		if e.NewResponse == nil {
-			return nil, nil
-		}
-		resp := e.NewResponse()
-		err := json.NewDecoder(r.Body).Decode(resp)
-		return resp, err
-	}
 }
 
 func errorEncoder(errorStatus ErrorStatus, logger *logger.Logger) httptransport.ErrorEncoder {
@@ -497,6 +461,59 @@ type errorWrapper struct {
 	Error string `json:"error"`
 }
 
+// HTTP Client
+
+// addHeader adds the content of http.Header to an existing http.Header
+// to ensure it keeps the headers that are already set
+func addHeader(dst, src http.Header) {
+	for k, v := range src {
+		for _, hv := range v {
+			dst.Add(k, hv)
+		}
+	}
+}
+
+func encodeJSONRequest(ctx context.Context, r *http.Request, request interface{}) error {
+	headers, ok := ctx.Value(contextHTTPHeaders).(http.Header)
+	if ok {
+		addHeader(r.Header, headers)
+	}
+
+	if request == nil {
+		return nil
+	}
+
+	if urlV, ok := request.(url.Values); ok {
+		r.URL.RawQuery = urlV.Encode()
+		return nil
+	}
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(request); err != nil {
+		return err
+	}
+	r.Body = ioutil.NopCloser(&buf)
+	return nil
+}
+
+func decodeJSONResponse(e HTTPEndpoint) httptransport.DecodeResponseFunc {
+	return func(_ context.Context, r *http.Response) (interface{}, error) {
+		if r.StatusCode != http.StatusOK {
+			strBody, _ := ioutil.ReadAll(r.Body)
+			defer r.Body.Close()
+
+			return nil, errors.Wrapf(ErrHTTPClientError, "status: %v (%s)", r.Status, decodeError(string(strBody)))
+		}
+
+		if e.NewResponse == nil {
+			return nil, nil
+		}
+		resp := e.NewResponse()
+		err := json.NewDecoder(r.Body).Decode(resp)
+		return resp, err
+	}
+}
+
 // NewHTTPClient returns an HTTP handler that makes a set of endpoints
 func NewHTTPClient(instance string, endpoints HTTPEndpoints, logger *logger.Logger) (ClientEndpoints, error) {
 	if !strings.HasPrefix(instance, "http") {
@@ -519,6 +536,18 @@ func NewHTTPClient(instance string, endpoints HTTPEndpoints, logger *logger.Logg
 	}
 
 	return ce, nil
+}
+
+// AddClientHeader adds header to the http client context
+func AddClientHeader(ctx context.Context, header http.Header) context.Context {
+	currentHeader, ok := ctx.Value(contextHTTPHeaders).(http.Header)
+	if !ok {
+		currentHeader = http.Header{}
+	}
+
+	addHeader(currentHeader, header)
+
+	return context.WithValue(ctx, contextHTTPHeaders, currentHeader)
 }
 
 func copyURL(base *url.URL, path string) *url.URL {

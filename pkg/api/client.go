@@ -102,10 +102,12 @@ func (c MilagroClientService) FulfillOrderSecret(req *FulfillOrderSecretRequest)
 }
 
 //Status - Allows a client to see the status of the server that it is connecting too
-func (c MilagroClientService) Status() (*StatusResponse, error) {
+func (c MilagroClientService) Status(token string) (*StatusResponse, error) {
 	endpoint := c.endpoints["Status"]
-	
-	s, err := endpoint(context.Background(), nil)
+	ctx := context.Background()
+	ctx = transport.SetJWTAuthHeader(ctx, token)
+
+	s, err := endpoint(ctx, nil)
 	if err != nil {
 		return nil, err
 	}

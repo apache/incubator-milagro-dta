@@ -37,7 +37,7 @@ var (
 type ClientService interface {
 	FulfillOrder(req *FulfillOrderRequest) (*FulfillOrderResponse, error)
 	FulfillOrderSecret(req *FulfillOrderSecretRequest) (*FulfillOrderSecretResponse, error)
-	Status() (*StatusResponse, error)
+	Status(token string) (*StatusResponse, error)
 }
 
 // MilagroClientService - implements Service Interface
@@ -103,6 +103,7 @@ func (c MilagroClientService) FulfillOrderSecret(req *FulfillOrderSecretRequest)
 
 //Status - Allows a client to see the status of the server that it is connecting too
 func (c MilagroClientService) Status(token string) (*StatusResponse, error) {
+	fmt.Printf("\njwtToken: %v\n", token)
 	endpoint := c.endpoints["Status"]
 	ctx := context.Background()
 	ctx = transport.SetJWTAuthHeader(ctx, token)

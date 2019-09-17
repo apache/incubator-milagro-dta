@@ -36,6 +36,7 @@ var (
 type ClientService interface {
 	FulfillOrder(req *FulfillOrderRequest) (*FulfillOrderResponse, error)
 	FulfillOrderSecret(req *FulfillOrderSecretRequest) (*FulfillOrderSecretResponse, error)
+	Status(token string) (*StatusResponse, error)
 }
 
 // MilagroClientService - implements Service Interface
@@ -57,6 +58,11 @@ func ClientEndpoints() transport.HTTPEndpoints {
 			Method:      http.MethodPost,
 			NewRequest:  func() interface{} { return &FulfillOrderSecretRequest{} },
 			NewResponse: func() interface{} { return &FulfillOrderSecretResponse{} },
+		},
+		"Status": {
+			Path:        "/" + apiVersion + "/status",
+			Method:      http.MethodGet,
+			NewResponse: func() interface{} { return &StatusResponse{} },
 		},
 	}
 }
@@ -91,5 +97,19 @@ func (c MilagroClientService) FulfillOrderSecret(req *FulfillOrderSecretRequest)
 		return nil, err
 	}
 	r := d.(*FulfillOrderSecretResponse)
+	return r, nil
+}
+
+//Status - Allows a client to see the status of the server that it is connecting too
+func (c MilagroClientService) Status(token string) (*StatusResponse, error) {
+	endpoint := c.endpoints["Status"]
+	ctx := context.Background()
+	ctx = transport.SetJWTAuthHeader(ctx, token)
+
+	s, err := endpoint(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	r := s.(*StatusResponse)
 	return r, nil
 }

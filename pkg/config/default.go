@@ -32,8 +32,8 @@ func defaultHTTPConfig() HTTPConfig {
 	return HTTPConfig{
 		ListenAddr:    ":5556",
 		MetricsAddr:   ":5557",
-		OIDCProvider:  "https://cognito-idp.eu-west-1.amazonaws.com/eu-west-1_m8yeNWVGg",
-		OIDCClientID:  "b6mbvm7sr62f7oc72bu69h6if",
+		OIDCProvider:  "",
+		OIDCClientID:  "",
 		OIDCClientKey: "",
 		CorsAllow:     "*",
 	}

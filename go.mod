@@ -1,11 +1,13 @@
 module github.com/apache/incubator-milagro-dta
 
 require (
-	code.qredo.net/qredodtaplugin v0.0.0-00010101000000-000000000000
+	github.com/VividCortex/gohistogram v1.0.0 // indirect
 	github.com/btcsuite/btcd v0.0.0-20190824003749-130ea5bddde3
 	github.com/btcsuite/btcutil v0.0.0-20190425235716-9e5f4b9a998d
 	github.com/coreos/go-oidc v2.0.0+incompatible
 	github.com/go-kit/kit v0.8.0
+	github.com/go-playground/locales v0.12.1 // indirect
+	github.com/go-playground/universal-translator v0.16.0 // indirect
 	github.com/go-test/deep v1.0.2
 	github.com/go-yaml/yaml v2.1.0+incompatible
 	github.com/gogo/protobuf v1.2.1
@@ -19,16 +21,20 @@ require (
 	github.com/ipfs/go-ipfs-config v0.0.3
 	github.com/ipfs/go-ipfs-files v0.0.3
 	github.com/ipfs/interface-go-ipfs-core v0.0.8
+	github.com/leodido/go-urn v1.1.0 // indirect
 	github.com/libp2p/go-libp2p-crypto v0.0.2
 	github.com/libp2p/go-libp2p-peer v0.1.1
 	github.com/multiformats/go-multihash v0.0.5
 	github.com/mwitkow/go-proto-validators v0.1.0
 	github.com/pkg/errors v0.8.1
+	github.com/pquerna/cachecontrol v0.0.0-20180517163645-1555304b9b35 // indirect
 	github.com/prometheus/client_golang v0.9.3
 	github.com/stretchr/testify v1.4.0
 	github.com/tyler-smith/go-bip39 v1.0.0
 	go.etcd.io/bbolt v1.3.3
+	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.29.1
+	gopkg.in/square/go-jose.v2 v2.3.1 // indirect
 )
 
 replace github.com/golangci/golangci-lint => github.com/golangci/golangci-lint v1.18.0

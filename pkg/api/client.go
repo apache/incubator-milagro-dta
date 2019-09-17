@@ -22,7 +22,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/apache/incubator-milagro-dta/libs/logger"
@@ -103,7 +102,6 @@ func (c MilagroClientService) FulfillOrderSecret(req *FulfillOrderSecretRequest)
 
 //Status - Allows a client to see the status of the server that it is connecting too
 func (c MilagroClientService) Status(token string) (*StatusResponse, error) {
-	fmt.Printf("\njwtToken: %v\n", token)
 	endpoint := c.endpoints["Status"]
 	ctx := context.Background()
 	ctx = transport.SetJWTAuthHeader(ctx, token)
@@ -113,6 +111,5 @@ func (c MilagroClientService) Status(token string) (*StatusResponse, error) {
 		return nil, err
 	}
 	r := s.(*StatusResponse)
-	fmt.Println("got status request")
 	return r, nil
 }

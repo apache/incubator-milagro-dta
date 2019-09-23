@@ -284,6 +284,7 @@ func initDataStore(ds string) (*datastore.Store, error) {
 
 func main() {
 	var err error
+
 	cmd, args := parseCommand()
 	switch cmd {
 	default:

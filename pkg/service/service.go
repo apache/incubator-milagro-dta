@@ -35,11 +35,16 @@ type Service interface {
 
 	//Order processing
 	OrderSecret(req *api.OrderSecretRequest) (*api.OrderSecretResponse, error)
+	OrderSecret1(req *api.OrderSecretRequest) (string, error)
+	OrderSecret2(req *api.FulfillOrderSecretResponse) (string, error)
+
 	Order(req *api.OrderRequest) (*api.OrderResponse, error)
+	Order1(req *api.OrderRequest) (string, error)
+	Order2(req *api.FulfillOrderResponse) (string, error)
 
 	//Fullfill processing
-	FulfillOrder(req *api.FulfillOrderRequest) (*api.FulfillOrderResponse, error)
-	FulfillOrderSecret(req *api.FulfillOrderSecretRequest) (*api.FulfillOrderSecretResponse, error)
+	FulfillOrder(req *api.FulfillOrderRequest) (string, error)
+	FulfillOrderSecret(req *api.FulfillOrderSecretRequest) (string, error)
 
 	NodeID() string
 	MasterFiduciaryNodeID() string

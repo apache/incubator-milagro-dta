@@ -37,6 +37,7 @@ import (
 	"github.com/apache/incubator-milagro-dta/pkg/api"
 	"github.com/apache/incubator-milagro-dta/pkg/config"
 	"github.com/apache/incubator-milagro-dta/pkg/endpoints"
+	"github.com/apache/incubator-milagro-dta/pkg/tendermint"
 	"github.com/apache/incubator-milagro-dta/plugins"
 	"github.com/go-kit/kit/metrics/prometheus"
 	"github.com/pkg/errors"
@@ -143,6 +144,11 @@ func startDaemon(args []string) error {
 
 	if err != nil {
 		return errors.Wrap(err, "init logger")
+	}
+
+	go tendermint.Subscribe(logger)
+	if err != nil {
+		return errors.Wrap(err, "init Tendermint Blockchain")
 	}
 
 	// Create KV store

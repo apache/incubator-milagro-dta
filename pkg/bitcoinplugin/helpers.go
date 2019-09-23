@@ -31,7 +31,9 @@ import (
 )
 
 func deriveFinalPrivateKey(s *Service, order documents.OrderDoc, beneficiariesSikeSK []byte, beneficiariesSeed []byte, beneficiaryIDDocumentCID string, nodeID string, signingBlsPK []byte) (string, error) {
-	if beneficiaryIDDocumentCID != "" {
+
+	switch order.BeneficiaryType {
+	case documents.OrderDocument_Beneficiary_Unknown_at_Start:
 		//we are using the beneficiary specified in order Part 3
 		beneficiaryBlob := order.OrderPart3.BeneficiaryEncryptedData
 
@@ -49,26 +51,28 @@ func deriveFinalPrivateKey(s *Service, order documents.OrderDoc, beneficiariesSi
 			return "", err
 		}
 		return finalPrivateKey, err
-	}
 
-	//we are using the beneficiary specified in the order part 1
-	privateKeyPart2of2 := order.OrderDocument.OrderPart4.Secret
-	// if order.OrderDocument.BeneficiaryCID != nodeID {
-	// 	//need to forward this data to the beneficiary to complete redemption
-	// 	return "", errors.New("Currently beneficiary must be the same as the Principal")
-	// }
-	//restore the Seed
-	_, _, ecAddPrivateKey, err := cryptowallet.Bip44Address(beneficiariesSeed, cryptowallet.CoinTypeBitcoinMain, 0, 0, 0)
-	if err != nil {
-		return "", err
+	case documents.OrderDocument_Beneficiary_Known_at_start:
+		//we are using the beneficiary specified in the order part 1
+		privateKeyPart2of2 := order.OrderDocument.OrderPart4.Secret
+		// if order.OrderDocument.BeneficiaryCID != nodeID {
+		// 	//need to forward this data to the beneficiary to complete redemption
+		// 	return "", errors.New("Currently beneficiary must be the same as the Principal")
+		// }
+		//restore the Seed
+		_, _, ecAddPrivateKey, err := cryptowallet.Bip44Address(beneficiariesSeed, cryptowallet.CoinTypeBitcoinMain, 0, 0, 0)
+		if err != nil {
+			return "", err
+		}
+		privateKeyPart1of1 := hex.EncodeToString(ecAddPrivateKey.Serialize())
+		finalPrivateKey, err := addPrivateKeys(privateKeyPart1of1, privateKeyPart2of2)
+		if err != nil {
+			return "", err
+		}
+		return finalPrivateKey, err
+	default:
+		return "", errors.New("Critical Error Unknown Beneficiary Type")
 	}
-	privateKeyPart1of1 := hex.EncodeToString(ecAddPrivateKey.Serialize())
-	finalPrivateKey, err := addPrivateKeys(privateKeyPart1of1, privateKeyPart2of2)
-	if err != nil {
-		return "", err
-	}
-	return finalPrivateKey, err
-
 }
 
 func adhocEncryptedEnvelopeEncode(s *Service, nodeID string, beneficiaryIDDocumentCID string, order documents.OrderDoc, blsSK []byte) ([]byte, error) {

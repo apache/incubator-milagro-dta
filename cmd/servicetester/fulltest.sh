@@ -28,9 +28,10 @@ test_plugin () {
     cd ../..
     start_server $1
     popd 
-    ./e2e_test.sh > /dev/null
+    ./e2e_test.sh #> /dev/null
     res=$?
     report "$1" $res 
+    
     kill -s int $pid
 }
 

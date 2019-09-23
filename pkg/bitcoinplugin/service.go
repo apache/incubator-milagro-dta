@@ -71,7 +71,7 @@ func (s *Service) ValidateOrderSecretRequest(req *api.OrderSecretRequest, order 
 	//These are deliberately overly long winded, but it makes the case I'm trapping more obvious to the reader
 
 	//There is no beneficiary supplided in either the Deposit or Redemption
-	if order.BeneficiaryCID == "" && req.BeneficiaryIDDocumentCID == "" {
+	if order.BeneficiaryType == documents.OrderDocument_Unspecified && req.BeneficiaryIDDocumentCID == "" {
 		return errors.New("Beneficiary must be supplied")
 	}
 

@@ -9,6 +9,9 @@ apiURL="${1:-$defaultURL}"
 status () {
   #Determine if an extension is running
   statusOutput=$(curl -s -X GET "$apiURL/$apiVersion/status" -H "accept: */*" -H "Content-Type: application/json")
+
+echo "$apiURL/$apiVersion/status"
+
   identity=$(echo $statusOutput | jq .nodeCID)
   extensionVendor=$(echo $statusOutput | jq -r .extensionVendor)
   plugin=$(echo $statusOutput | jq -r .plugin)

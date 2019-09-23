@@ -214,9 +214,14 @@ func (s *Service) OrderSecret(req *api.OrderSecretRequest) (*api.OrderSecretResp
 	}
 
 	//Retrieve the order from IPFS
+
 	order, err := common.RetrieveOrderFromIPFS(s.Ipfs, orderPart2CID, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
 	if err != nil {
 		return nil, errors.Wrap(err, "Fail to retrieve Order from IPFS")
+	}
+
+	if err := s.Plugin.ValidateOrderSecretRequest(req, *order); err != nil {
+		return nil, err
 	}
 
 	var beneficiariesSikeSK []byte
@@ -230,10 +235,6 @@ func (s *Service) OrderSecret(req *api.OrderSecretRequest) (*api.OrderSecretResp
 
 	_, beneficiariesSeed, _, beneficiariesSikeSK, err := common.RetrieveIdentitySecrets(s.Store, beneficiaryCID)
 	if err != nil {
-		return nil, err
-	}
-
-	if err := s.Plugin.ValidateOrderSecretRequest(req, *order); err != nil {
 		return nil, err
 	}
 

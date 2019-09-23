@@ -76,15 +76,23 @@ message IDDocument {
 
 
 message OrderDocument {
-    string Type              = 1; //This can be used to extend the types of things that an order can do.
-    int64 Coin               = 2 [(validator.field) = {int_gt: -1, int_lt: 999}];
-    string PrincipalCID      = 3 [(validator.field) = {regex: "^Q[[:alnum:]]{45}$|^$"}];  //empty if ok
-    string BeneficiaryCID    = 4 [(validator.field) = {regex: "^Q[[:alnum:]]{45}$|^$"}];  //empty if ok
-    string Reference         = 5 [(validator.field) = {string_not_empty:true}]; //an id for this order e.g. walletID
-    int64 Timestamp          = 6 [(validator.field) = {int_gt:1564050341,int_lt:32521429541}];
-    OrderPart2 OrderPart2    = 7;
-    OrderPart3 OrderPart3    = 8;
-    OrderPart4 OrderPart4    = 9;
+    enum OrderBeneficiaryType {
+        Unspecified = 0;
+        Beneficiary_Known_at_start = 1;
+        Beneficiary_Unknown_at_Start = 2;
+    }
+
+
+    string Type           = 1; //This can be used to extend the types of things that an order can do.
+    OrderBeneficiaryType BeneficiaryType = 2;
+    int64 Coin               = 3 [(validator.field) = {int_gt: -1, int_lt: 999}];
+    string PrincipalCID      = 4 [(validator.field) = {regex: "^Q[[:alnum:]]{45}$|^$"}];  //empty if ok
+    string BeneficiaryCID    = 5 [(validator.field) = {regex: "^Q[[:alnum:]]{45}$|^$"}];  //empty if ok
+    string Reference         = 6 [(validator.field) = {string_not_empty:true}]; //an id for this order e.g. walletID
+    int64 Timestamp          = 7 [(validator.field) = {int_gt:1564050341,int_lt:32521429541}];
+    OrderPart2 OrderPart2    = 8;
+    OrderPart3 OrderPart3    = 9;
+    OrderPart4 OrderPart4    = 10;
 }
 
 message OrderPart2 {

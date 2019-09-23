@@ -53,6 +53,13 @@ func CreateNewDepositOrder(BeneficiaryIDDocumentCID string, nodeID string) (*doc
 		return nil, err
 	}
 	order := documents.NewOrderDoc()
+
+	if BeneficiaryIDDocumentCID == "" {
+		order.BeneficiaryType = documents.OrderDocument_Beneficiary_Unknown_at_Start
+	} else {
+		order.BeneficiaryType = documents.OrderDocument_Beneficiary_Known_at_start
+	}
+
 	//oder.Type will be used to extend the things that an order can do.
 	order.Type = "Safeguard_Secret"
 	order.PrincipalCID = nodeID

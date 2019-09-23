@@ -27,8 +27,8 @@ import (
 	"github.com/apache/incubator-milagro-dta/libs/datastore"
 	"github.com/apache/incubator-milagro-dta/libs/ipfs"
 	"github.com/apache/incubator-milagro-dta/libs/logger"
+	"github.com/apache/incubator-milagro-dta/libs/transport"
 	"github.com/apache/incubator-milagro-dta/pkg/api"
-	"github.com/apache/incubator-milagro-dta/pkg/config"
 )
 
 var (
@@ -53,21 +53,6 @@ type Service struct {
 func NewService() *Service {
 	s := &Service{}
 	return s
-}
-
-// Init sets-up the service options. It's called when the plugin gets registered
-func (s *Service) Init(plugin Plugable, logger *logger.Logger, rng io.Reader, store *datastore.Store, ipfsConnector ipfs.Connector, masterFiduciaryServer api.ClientService, cfg *config.Config) error {
-	s.Plugin = plugin
-	s.Logger = logger
-	s.Rng = rng
-	s.Store = store
-	s.Ipfs = ipfsConnector
-	s.MasterFiduciaryServer = masterFiduciaryServer
-
-	s.SetNodeID(cfg.Node.NodeID)
-	s.SetMasterFiduciaryNodeID(cfg.Node.MasterFiduciaryNodeID)
-
-	return nil
 }
 
 // Name of the plugin
@@ -111,4 +96,9 @@ func (s *Service) Status(apiVersion, nodeType string) (*api.StatusResponse, erro
 		TimeStamp:       time.Now(),
 		Plugin:          s.Plugin.Name(),
 	}, nil
+}
+
+// Endpoints for extending the plugin endpoints
+func (s *Service) Endpoints() (namespace string, endpoints transport.HTTPEndpoints) {
+	return s.Name(), nil
 }

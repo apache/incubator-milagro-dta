@@ -45,7 +45,7 @@ var (
 )
 
 // Endpoints returns all the exported endpoints
-func Endpoints(svc service.Service, corsAllow string, authorizer transport.Authorizer, logger *logger.Logger, nodeType string) transport.HTTPEndpoints {
+func Endpoints(svc service.Service, corsAllow string, authorizer transport.Authorizer, logger *logger.Logger, nodeType string, pluginEndpoints service.Endpoints) transport.HTTPEndpoints {
 	identityEndpoints := transport.HTTPEndpoints{
 		"CreateIdentity": {
 			Path:        "/" + apiVersion + "/identity",
@@ -195,16 +195,41 @@ func Endpoints(svc service.Service, corsAllow string, authorizer transport.Autho
 		},
 	}
 
+	endpoints := transport.HTTPEndpoints{}
 	switch strings.ToLower(nodeType) {
 	case "multi":
-		return concatEndpoints(masterFiduciaryEndpoints, identityEndpoints, principalEndpoints, statusEndPoints)
+		endpoints = concatEndpoints(masterFiduciaryEndpoints, identityEndpoints, principalEndpoints, statusEndPoints)
 	case "principal":
-		return concatEndpoints(identityEndpoints, principalEndpoints, statusEndPoints)
+		endpoints = concatEndpoints(identityEndpoints, principalEndpoints, statusEndPoints)
 	case "fiduciary", "masterfiduciary":
-		return concatEndpoints(masterFiduciaryEndpoints, identityEndpoints, statusEndPoints)
+		endpoints = concatEndpoints(masterFiduciaryEndpoints, identityEndpoints, statusEndPoints)
 	}
 
-	return nil
+	plugNamespace, plugEndpoints := pluginEndpoints.Endpoints()
+	endpoints = concatPluginEndpoints(logger, endpoints, plugNamespace, plugEndpoints)
+
+	return endpoints
+}
+
+func concatEndpoints(endpoints ...transport.HTTPEndpoints) transport.HTTPEndpoints {
+	var res = make(transport.HTTPEndpoints)
+	for _, endpoint := range endpoints {
+		for k, v := range endpoint {
+			res[k] = v
+		}
+	}
+	return res
+}
+
+func concatPluginEndpoints(logger *logger.Logger, dst transport.HTTPEndpoints, namespace string, endpoints ...transport.HTTPEndpoints) transport.HTTPEndpoints {
+	for _, endpoint := range endpoints {
+		for k, v := range endpoint {
+			v.Path = "/" + apiVersion + "/ext/" + namespace + v.Path
+			logger.Info("Registering plugin endpoint %v", v.Path)
+			dst["namespace."+k] = v
+		}
+	}
+	return dst
 }
 
 //MakeCreateIdentityEndpoint -
@@ -368,14 +393,4 @@ func validateRequest(req interface{}) error {
 		return errors.Wrap(transport.ErrInvalidRequest, err.Error())
 	}
 	return nil
-}
-
-func concatEndpoints(endpoints ...transport.HTTPEndpoints) transport.HTTPEndpoints {
-	var res = make(transport.HTTPEndpoints)
-	for _, endpoint := range endpoints {
-		for k, v := range endpoint {
-			res[k] = v
-		}
-	}
-	return res
 }

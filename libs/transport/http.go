@@ -54,6 +54,7 @@ const (
 	contextAuthorized        contextKey = 10005
 	contextAuthorizeError    contextKey = 10006
 	contextUserInfo          contextKey = 10007
+	contextReqID             contextKey = 10008
 )
 
 var (
@@ -333,6 +334,8 @@ func parseURLParams(s *httptransport.Server) {
 func parseHTTPHeaders(s *httptransport.Server) {
 	httptransport.ServerBefore(
 		func(ctx context.Context, r *http.Request) context.Context {
+			reqID := getReqID(ctx)
+			ctx = context.WithValue(ctx, contextReqID, reqID)
 			return context.WithValue(ctx, contextHTTPHeaders, r.Header)
 		},
 	)(s)
@@ -340,6 +343,7 @@ func parseHTTPHeaders(s *httptransport.Server) {
 
 func decodeJSONRequest(e HTTPEndpoint) httptransport.DecodeRequestFunc {
 	return func(ctx context.Context, r *http.Request) (interface{}, error) {
+
 		if e.Method != r.Method {
 			return nil, ErrMethodNotAllowed
 		}
@@ -390,8 +394,12 @@ func decodeOptionsRequest(ctx context.Context, r *http.Request) (interface{}, er
 func errorEncoder(errorStatus ErrorStatus, logger *logger.Logger) httptransport.ErrorEncoder {
 	return func(ctx context.Context, err error, w http.ResponseWriter) {
 		statusCode, statusText := errorStatus.ResponseStatus(err)
+		method := getContextStr(ctx, httptransport.ContextKeyRequestMethod)
+		path := getContextStr(ctx, httptransport.ContextKeyRequestPath)
+		reqID := getReqID(ctx)
 
-		// _ = logger.Log("status", fmt.Sprintf("%d %s", statusCode, statusText))
+		logger.Response(reqID, method, path, statusCode, statusText, 0)
+
 		setCORSHeaders(ctx, w)
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(statusCode)
@@ -404,7 +412,7 @@ func loggingMiddleware(logger *logger.Logger, errorStatus ErrorStatus) endpoint.
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 			method := getContextStr(ctx, httptransport.ContextKeyRequestMethod)
 			path := getContextStr(ctx, httptransport.ContextKeyRequestPath)
-			reqID := getReqID(ctx)
+			reqID := getContextStr(ctx, contextReqID)
 
 			defer func(begin time.Time) {
 				statusCode, statusText := errorStatus.ResponseStatus(err)

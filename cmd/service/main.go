@@ -36,6 +36,7 @@ import (
 	"github.com/apache/incubator-milagro-dta/libs/transport"
 	"github.com/apache/incubator-milagro-dta/pkg/api"
 	"github.com/apache/incubator-milagro-dta/pkg/config"
+	"github.com/apache/incubator-milagro-dta/pkg/defaultservice"
 	"github.com/apache/incubator-milagro-dta/pkg/endpoints"
 	"github.com/apache/incubator-milagro-dta/plugins"
 	"github.com/go-kit/kit/metrics/prometheus"
@@ -99,7 +100,14 @@ func initConfig(args []string) error {
 		return errors.Errorf("Invalid service plugin: %v", initOptions.ServicePlugin)
 	}
 
-	if err := svcPlugin.Init(svcPlugin, logger, rand.Reader, store, ipfsConnector, nil, cfg); err != nil {
+	if err := svcPlugin.Init(
+		svcPlugin,
+		defaultservice.WithLogger(logger),
+		defaultservice.WithRng(rand.Reader),
+		defaultservice.WithStore(store),
+		defaultservice.WithIPFS(ipfsConnector),
+		defaultservice.WithConfig(cfg),
+	); err != nil {
 		return errors.Errorf("init service plugin %s", cfg.Plugins.Service)
 	}
 
@@ -196,7 +204,15 @@ func startDaemon(args []string) error {
 		return errors.Errorf("invalid plugin: %v", cfg.Plugins.Service)
 	}
 
-	if err := svcPlugin.Init(svcPlugin, logger, rand.Reader, store, ipfsConnector, masterFiduciaryServer, cfg); err != nil {
+	if err := svcPlugin.Init(
+		svcPlugin,
+		defaultservice.WithLogger(logger),
+		defaultservice.WithRng(rand.Reader),
+		defaultservice.WithStore(store),
+		defaultservice.WithIPFS(ipfsConnector),
+		defaultservice.WithMasterFiduciary(masterFiduciaryServer),
+		defaultservice.WithConfig(cfg),
+	); err != nil {
 		return errors.Errorf("init service plugin %s", cfg.Plugins.Service)
 	}
 	logger.Info("Service plugin loaded: %s", svcPlugin.Name())
@@ -229,7 +245,7 @@ func startDaemon(args []string) error {
 
 	logger.Info("NODE ID (IPFS):  %v", svcPlugin.NodeID())
 	logger.Info("Node Type: %v", strings.ToLower(cfg.Node.NodeType))
-	endpoints := endpoints.Endpoints(svcPlugin, cfg.HTTP.CorsAllow, authorizer, logger, cfg.Node.NodeType)
+	endpoints := endpoints.Endpoints(svcPlugin, cfg.HTTP.CorsAllow, authorizer, logger, cfg.Node.NodeType, svcPlugin)
 	httpHandler := transport.NewHTTPHandler(endpoints, logger, duration)
 	// Start the application http server
 	go func() {

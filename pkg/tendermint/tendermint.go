@@ -40,14 +40,19 @@ func QueryChain(index string) (string, string) {
 }
 
 //PostToChain - send TX data to the Blockchain
-func PostToChain(payload *api.BlockChainTX, method string) (string, error) {
-	serializedTX, _ := json.Marshal(payload)
-	TXID := sha256.Sum256(serializedTX)
-	TXIDhex := hex.EncodeToString(TXID[:])
-	fullTx := fmt.Sprintf("%s=%s", TXIDhex, string(serializedTX))
+func PostToChain(tx *api.BlockChainTX, method string) (string, error) {
+	//Create TX Hash
 
-	//fmt.Printf(" **** %s Block TX: %s\n", method, TXIDhex)
-	base64EncodedTX := base64.StdEncoding.EncodeToString([]byte(fullTx))
+	tx.RecipientID = unique(tx.RecipientID)
+
+	TXID := sha256.Sum256(tx.Payload)
+	TXIDhex := hex.EncodeToString(TXID[:])
+	tx.TXhash = TXID[:]
+
+	//serialize the whole transaction
+	serializedTX, _ := json.Marshal(tx)
+	base64EncodedTX := base64.StdEncoding.EncodeToString(serializedTX)
+
 	body := strings.NewReader("{\"jsonrpc\":\"2.0\",\"id\":\"anything\",\"method\":\"broadcast_tx_commit\",\"params\": {\"tx\": \"" + base64EncodedTX + "\"}}")
 	req, err := http.NewRequest("POST", "http://"+node+"", body)
 	if err != nil {
@@ -62,6 +67,7 @@ func PostToChain(payload *api.BlockChainTX, method string) (string, error) {
 		return "", err
 	}
 	defer resp.Body.Close()
+	fmt.Printf("POST TO CHAIN: METHOD:%s CALLS:%s  - TXID:%s", method, tx.Processor, TXIDhex)
 	return TXIDhex, nil
 }
 
@@ -170,4 +176,16 @@ func ProcessTransactionID(txid string) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func unique(stringSlice []string) []string {
+	keys := make(map[string]bool)
+	list := []string{}
+	for _, entry := range stringSlice {
+		if _, value := keys[entry]; !value {
+			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	return list
 }

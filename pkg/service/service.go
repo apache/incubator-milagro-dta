@@ -34,11 +34,9 @@ type Service interface {
 	OrderList(req *api.OrderListRequest) (*api.OrderListResponse, error)
 
 	//Order processing
-	OrderSecret(req *api.OrderSecretRequest) (*api.OrderSecretResponse, error)
 	OrderSecret1(req *api.OrderSecretRequest) (string, error)
 	OrderSecret2(req *api.FulfillOrderSecretResponse) (string, error)
 
-	Order(req *api.OrderRequest) (*api.OrderResponse, error)
 	Order1(req *api.OrderRequest) (string, error)
 	Order2(req *api.FulfillOrderResponse) (string, error)
 

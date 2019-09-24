@@ -89,24 +89,7 @@ func Endpoints(svc service.Service, corsAllow string, authorizer transport.Autho
 		},
 	}
 	principalEndpoints := transport.HTTPEndpoints{
-		"Order": {
-			Path:        "/" + apiVersion + "/order",
-			Method:      http.MethodPost,
-			Endpoint:    MakeOrderEndpoint(svc),
-			NewRequest:  func() interface{} { return &api.OrderRequest{} },
-			NewResponse: func() interface{} { return &api.OrderResponse{} },
-			Options: transport.ServerOptions(
-				transport.SetCors(corsAllow),
-				transport.AuthorizeOIDC(authorizer, false),
-			),
-			ErrStatus: transport.ErrorStatus{
-				transport.ErrInvalidRequest: http.StatusUnprocessableEntity,
-			},
-			// ErrStatus: transport.ErrorStatus{
-			// 	transport.ErrInvalidRequest:        http.StatusUnprocessableEntity,
-			// 	ErrCreatingOrderDoc: http.StatusInternalServerError,
-			// },
-		},
+
 		"Order1": {
 			Path:        "/" + apiVersion + "/order1",
 			Method:      http.MethodPost,
@@ -154,20 +137,6 @@ func Endpoints(svc service.Service, corsAllow string, authorizer transport.Autho
 			Method:      http.MethodGet,
 			Endpoint:    MakeOrderListEndpoint(svc),
 			NewResponse: func() interface{} { return &api.OrderListResponse{} },
-			Options: transport.ServerOptions(
-				transport.SetCors(corsAllow),
-				transport.AuthorizeOIDC(authorizer, false),
-			),
-			ErrStatus: transport.ErrorStatus{
-				transport.ErrInvalidRequest: http.StatusUnprocessableEntity,
-			},
-		},
-		"OrderSecret": {
-			Path:        "/" + apiVersion + "/order/secret",
-			Method:      http.MethodPost,
-			Endpoint:    MakeOrderSecretEndpoint(svc),
-			NewRequest:  func() interface{} { return &api.OrderSecretRequest{} },
-			NewResponse: func() interface{} { return &api.OrderSecretResponse{} },
 			Options: transport.ServerOptions(
 				transport.SetCors(corsAllow),
 				transport.AuthorizeOIDC(authorizer, false),
@@ -355,20 +324,6 @@ func MakeGetOrderEndpoint(m service.Service) endpoint.Endpoint {
 	}
 }
 
-//MakeOrderEndpoint -
-func MakeOrderEndpoint(m service.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		req, ok := request.(*api.OrderRequest)
-		if !ok {
-			return nil, transport.ErrInvalidRequest
-		}
-		if err := validateRequest(req); err != nil {
-			return "", err
-		}
-		return m.Order(req)
-	}
-}
-
 //MakeOrder1Endpoint -
 func MakeOrder1Endpoint(m service.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
@@ -394,20 +349,6 @@ func MakeOrder2Endpoint(m service.Service) endpoint.Endpoint {
 			return "", err
 		}
 		return m.Order2(req)
-	}
-}
-
-//MakeOrderSecretEndpoint -
-func MakeOrderSecretEndpoint(m service.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		req, ok := request.(*api.OrderSecretRequest)
-		if !ok {
-			return nil, transport.ErrInvalidRequest
-		}
-		if err := validateRequest(req); err != nil {
-			return "", err
-		}
-		return m.OrderSecret(req)
 	}
 }
 

@@ -44,8 +44,10 @@ const (
 type BlockChainTX struct {
 	Processor   string
 	SenderID    string
-	RecipientID string
+	RecipientID []string
 	Payload     []byte
+	TXhash      []byte
+	Tags        map[string]string
 }
 
 //CreateIdentityRequest -

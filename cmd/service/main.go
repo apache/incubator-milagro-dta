@@ -146,7 +146,7 @@ func startDaemon(args []string) error {
 		return errors.Wrap(err, "init logger")
 	}
 
-	go tendermint.Subscribe(logger)
+	go tendermint.Subscribe(logger, cfg.Node.NodeID)
 	if err != nil {
 		return errors.Wrap(err, "init Tendermint Blockchain")
 	}

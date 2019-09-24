@@ -14,6 +14,7 @@ require (
 	github.com/golang/protobuf v1.3.2
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.7.3
+	github.com/hokaccha/go-prettyjson v0.0.0-20190818114111-108c894c2c0e // indirect
 	github.com/ipfs/go-datastore v0.0.5
 	github.com/ipfs/go-ds-leveldb v0.0.2
 	github.com/ipfs/go-ipfs v0.4.22
@@ -30,8 +31,10 @@ require (
 	github.com/pquerna/cachecontrol v0.0.0-20180517163645-1555304b9b35 // indirect
 	github.com/prometheus/client_golang v0.9.3
 	github.com/stretchr/testify v1.4.0
+	github.com/stumble/gorocksdb v0.0.3 // indirect
 	github.com/tendermint/tendermint v0.32.4
 	github.com/tyler-smith/go-bip39 v1.0.0
+	github.com/urfave/cli v1.22.1
 	go.etcd.io/bbolt v1.3.3
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.29.1

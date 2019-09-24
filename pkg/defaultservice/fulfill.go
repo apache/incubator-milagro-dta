@@ -80,7 +80,7 @@ func (s *Service) FulfillOrder(req *api.FulfillOrderRequest) (string, error) {
 	chainTX := &api.BlockChainTX{
 		Processor:   api.TXFulfillResponse,
 		SenderID:    nodeID,
-		RecipientID: s.MasterFiduciaryNodeID(),
+		RecipientID: []string{s.MasterFiduciaryNodeID()},
 		Payload:     marshaledRequest,
 	}
 	//curl --data-binary '{"jsonrpc":"2.0","id":"anything","method":"broadcast_tx_commit","params": {"tx": "YWFhcT1hYWFxCg=="}}' -H 'content-type:text/plain;' http://localhost:26657
@@ -143,7 +143,7 @@ func (s *Service) FulfillOrderSecret(req *api.FulfillOrderSecretRequest) (string
 	chainTX := &api.BlockChainTX{
 		Processor:   api.TXFulfillOrderSecretResponse,
 		SenderID:    nodeID,
-		RecipientID: s.MasterFiduciaryNodeID(),
+		RecipientID: []string{s.MasterFiduciaryNodeID()},
 		Payload:     marshaledRequest,
 	}
 	//curl --data-binary '{"jsonrpc":"2.0","id":"anything","method":"broadcast_tx_commit","params": {"tx": "YWFhcT1hYWFxCg=="}}' -H 'content-type:text/plain;' http://localhost:26657

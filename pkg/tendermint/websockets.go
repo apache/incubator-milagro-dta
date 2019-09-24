@@ -2,17 +2,20 @@ package tendermint
 
 import (
 	"context"
+	"encoding/hex"
+	"encoding/json"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/apache/incubator-milagro-dta/libs/logger"
+	"github.com/apache/incubator-milagro-dta/pkg/api"
 	tmclient "github.com/tendermint/tendermint/rpc/client"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 //Subscribe - Connect to the Tendermint websocket to collect events
-func Subscribe(logger *logger.Logger) error {
+func Subscribe(logger *logger.Logger, nodeID string) error {
 
 	//tmlogger := log2.NewTMLogger(log.NewSyncWriter(os.Stdout))
 
@@ -25,7 +28,9 @@ func Subscribe(logger *logger.Logger) error {
 	}
 	defer client.Stop()
 
-	query := "tm.event = 'Tx'"
+	query := "tag.recipient='" + nodeID + "'"
+	//query := "tm.event = 'Tx'"
+
 	out, err := client.Subscribe(context.Background(), "test", query, 1000)
 	if err != nil {
 		logger.Info("Failed to subscribe to query %s %s", query, err)
@@ -41,16 +46,35 @@ func Subscribe(logger *logger.Logger) error {
 		select {
 		case result := <-out:
 			tx := result.Data.(tmtypes.EventDataTx).Tx
-			blockchainTX, txid, err := decodeTX(string(tx))
-			logger.Info("Incoming TX %s", txid)
+			payload := api.BlockChainTX{}
+			err := json.Unmarshal(tx, &payload)
 			if err != nil {
-				logger.Info("Invalid Incoming Transaction %s - %s:", err, string(tx))
-
+				logger.Info("******** Invalid TX - ignored")
+				break
 			}
-			if blockchainTX.Processor == "NONE" {
-				DumpTX(blockchainTX)
+
+			//check is receipient
+			isRecipient := false
+			for _, v := range payload.RecipientID {
+				if v == nodeID {
+					isRecipient = true
+					break
+				}
+			}
+
+			if isRecipient == false {
+				logger.Info("******** Invalid Recipient - why are we receiving this TX?")
+				break
+			}
+
+			//blockchainTX, txid, err := decodeTX(string(tx))
+			TXIDhex := hex.EncodeToString(payload.TXhash[:])
+			logger.Info("Incoming TXHash:%s . Processor:%s", TXIDhex, payload.Processor)
+
+			if payload.Processor == "NONE" {
+				DumpTX(&payload)
 			} else {
-				callNextTX(blockchainTX)
+				callNextTX(&payload)
 			}
 
 			//print(blockchainTX)

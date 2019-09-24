@@ -116,8 +116,8 @@ func (s *Service) Order(req *api.OrderRequest) (*api.OrderResponse, error) {
 
 	//Initialise values from Request object
 	beneficiaryIDDocumentCID := req.BeneficiaryIDDocumentCID
-	iDDocID := s.NodeID()
-	recipientList, err := common.BuildRecipientList(s.Ipfs, iDDocID, s.MasterFiduciaryNodeID())
+	nodeID := s.NodeID()
+	recipientList, err := common.BuildRecipientList(s.Ipfs, nodeID, s.MasterFiduciaryNodeID())
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +128,7 @@ func (s *Service) Order(req *api.OrderRequest) (*api.OrderResponse, error) {
 	}
 
 	//Create Order
-	order, err := common.CreateNewDepositOrder(beneficiaryIDDocumentCID, iDDocID)
+	order, err := common.CreateNewDepositOrder(beneficiaryIDDocumentCID, nodeID)
 	if err != nil {
 		return nil, err
 	}
@@ -139,14 +139,14 @@ func (s *Service) Order(req *api.OrderRequest) (*api.OrderResponse, error) {
 	}
 
 	//Write Order to IPFS
-	orderPart1CID, err := common.WriteOrderToIPFS(iDDocID, s.Ipfs, s.Store, iDDocID, order, recipientList)
+	orderPart1CID, err := common.WriteOrderToIPFS(nodeID, s.Ipfs, s.Store, nodeID, order, recipientList)
 	if err != nil {
 		return nil, err
 	}
 
 	//Fullfill the order on the remote Server
 	request := &api.FulfillOrderRequest{
-		DocumentCID:   iDDocID,
+		DocumentCID:   nodeID,
 		OrderPart1CID: orderPart1CID,
 		Extension:     fulfillExtension,
 	}
@@ -157,11 +157,11 @@ func (s *Service) Order(req *api.OrderRequest) (*api.OrderResponse, error) {
 	}
 
 	//Get the updated order out of IPFS
-	_, _, _, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, iDDocID)
+	_, _, _, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
 	if err != nil {
 		return nil, err
 	}
-	updatedOrder, err := common.RetrieveOrderFromIPFS(s.Ipfs, response.OrderPart2CID, sikeSK, iDDocID, remoteIDDoc.BLSPublicKey)
+	updatedOrder, err := common.RetrieveOrderFromIPFS(s.Ipfs, response.OrderPart2CID, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
 	if err != nil {
 		return nil, errors.Wrap(err, "Fail to retrieve Order from IPFS")
 	}
@@ -291,8 +291,8 @@ func (s *Service) Order1(req *api.OrderRequest) (string, error) {
 
 	//Initialise values from Request object
 	beneficiaryIDDocumentCID := req.BeneficiaryIDDocumentCID
-	iDDocID := s.NodeID()
-	recipientList, err := common.BuildRecipientList(s.Ipfs, iDDocID, s.MasterFiduciaryNodeID())
+	nodeID := s.NodeID()
+	recipientList, err := common.BuildRecipientList(s.Ipfs, nodeID, s.MasterFiduciaryNodeID())
 	if err != nil {
 		return "", err
 	}
@@ -303,7 +303,7 @@ func (s *Service) Order1(req *api.OrderRequest) (string, error) {
 	// }
 
 	//Create Order
-	order, err := common.CreateNewDepositOrder(beneficiaryIDDocumentCID, iDDocID)
+	order, err := common.CreateNewDepositOrder(beneficiaryIDDocumentCID, nodeID)
 	if err != nil {
 		return "", err
 	}
@@ -314,14 +314,14 @@ func (s *Service) Order1(req *api.OrderRequest) (string, error) {
 	}
 
 	//Write Order to IPFS
-	orderPart1CID, err := common.WriteOrderToIPFS(iDDocID, s.Ipfs, s.Store, iDDocID, order, recipientList)
+	orderPart1CID, err := common.WriteOrderToIPFS(nodeID, s.Ipfs, s.Store, nodeID, order, recipientList)
 	if err != nil {
 		return "", err
 	}
 
 	//Fullfill the order on the remote Server
 	request := &api.FulfillOrderRequest{
-		DocumentCID:   iDDocID,
+		DocumentCID:   nodeID,
 		OrderPart1CID: orderPart1CID,
 		Extension:     fulfillExtension,
 	}
@@ -331,8 +331,8 @@ func (s *Service) Order1(req *api.OrderRequest) (string, error) {
 	//Write the requests to the chain
 	chainTX := &api.BlockChainTX{
 		Processor:   api.TXFulfillRequest,
-		SenderID:    iDDocID,
-		RecipientID: s.MasterFiduciaryNodeID(),
+		SenderID:    nodeID,
+		RecipientID: []string{s.MasterFiduciaryNodeID(), nodeID},
 		Payload:     marshaledRequest,
 	}
 	//curl --data-binary '{"jsonrpc":"2.0","id":"anything","method":"broadcast_tx_commit","params": {"tx": "YWFhcT1hYWFxCg=="}}' -H 'content-type:text/plain;' http://localhost:26657
@@ -349,8 +349,8 @@ func (s *Service) Order2(req *api.FulfillOrderResponse) (string, error) {
 
 	// //Initialise values from Request object
 	// beneficiaryIDDocumentCID := req.BeneficiaryIDDocumentCID
-	iDDocID := s.NodeID()
-	// recipientList, err := common.BuildRecipientList(s.Ipfs, iDDocID, s.MasterFiduciaryNodeID())
+	nodeID := s.NodeID()
+	// recipientList, err := common.BuildRecipientList(s.Ipfs, nodeID, s.MasterFiduciaryNodeID())
 	// if err != nil {
 	// 	return "", err
 	// }
@@ -361,7 +361,7 @@ func (s *Service) Order2(req *api.FulfillOrderResponse) (string, error) {
 	}
 
 	// //Create Order
-	// order, err := common.CreateNewDepositOrder(beneficiaryIDDocumentCID, iDDocID)
+	// order, err := common.CreateNewDepositOrder(beneficiaryIDDocumentCID, nodeID)
 	// if err != nil {
 	// 	return "", err
 	// }
@@ -372,14 +372,14 @@ func (s *Service) Order2(req *api.FulfillOrderResponse) (string, error) {
 	// }
 
 	// //Write Order to IPFS
-	// orderPart1CID, err := common.WriteOrderToIPFS(iDDocID, s.Ipfs, s.Store, iDDocID, order, recipientList)
+	// orderPart1CID, err := common.WriteOrderToIPFS(nodeID, s.Ipfs, s.Store, nodeID, order, recipientList)
 	// if err != nil {
 	// 	return "", err
 	// }
 
 	// //Fullfill the order on the remote Server
 	// request := &api.FulfillOrderRequest{
-	// 	DocumentCID:   iDDocID,
+	// 	DocumentCID:   nodeID,
 	// 	OrderPart1CID: orderPart1CID,
 	// 	Extension:     fulfillExtension,
 	// }
@@ -389,7 +389,7 @@ func (s *Service) Order2(req *api.FulfillOrderResponse) (string, error) {
 	// //Write the requests to the chain
 	// chainTX := &api.BlockChainTX{
 	// 	Type:        api.TXFullfullRequest,
-	// 	SenderID:    iDDocID,
+	// 	SenderID:    nodeID,
 	// 	RecipientID: s.MasterFiduciaryNodeID(),
 	// 	Payload:     marshaledRequest,
 	// }
@@ -403,11 +403,11 @@ func (s *Service) Order2(req *api.FulfillOrderResponse) (string, error) {
 	//  }
 
 	//Get the updated order out of IPFS
-	_, _, _, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, iDDocID)
+	_, _, _, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
 	if err != nil {
 		return "", err
 	}
-	updatedOrder, err := common.RetrieveOrderFromIPFS(s.Ipfs, req.OrderPart2CID, sikeSK, iDDocID, remoteIDDoc.BLSPublicKey)
+	updatedOrder, err := common.RetrieveOrderFromIPFS(s.Ipfs, req.OrderPart2CID, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
 	if err != nil {
 		return "", errors.Wrap(err, "Fail to retrieve Order from IPFS")
 	}
@@ -429,11 +429,11 @@ func (s *Service) Order2(req *api.FulfillOrderResponse) (string, error) {
 	//Write the requests to the chain
 	chainTX := &api.BlockChainTX{
 		Processor:   api.TXOrderSecretResponse,
-		SenderID:    iDDocID,
-		RecipientID: s.MasterFiduciaryNodeID(),
+		SenderID:    nodeID,
+		RecipientID: []string{s.MasterFiduciaryNodeID(), nodeID},
 		Payload:     marshaledRequest,
+		Tags:        map[string]string{"reference": updatedOrder.Reference},
 	}
-	//curl --data-binary '{"jsonrpc":"2.0","id":"anything","method":"broadcast_tx_commit","params": {"tx": "YWFhcT1hYWFxCg=="}}' -H 'content-type:text/plain;' http://localhost:26657
 	return tendermint.PostToChain(chainTX, "Order2")
 
 }
@@ -501,7 +501,7 @@ func (s *Service) OrderSecret1(req *api.OrderSecretRequest) (string, error) {
 	chainTX := &api.BlockChainTX{
 		Processor:   api.TXFulfillOrderSecretRequest,
 		SenderID:    nodeID,
-		RecipientID: s.MasterFiduciaryNodeID(),
+		RecipientID: []string{s.MasterFiduciaryNodeID(), nodeID},
 		Payload:     marshaledRequest,
 	}
 	//curl --data-binary '{"jsonrpc":"2.0","id":"anything","method":"broadcast_tx_commit","params": {"tx": "YWFhcT1hYWFxCg=="}}' -H 'content-type:text/plain;' http://localhost:26657
@@ -556,7 +556,7 @@ func (s *Service) OrderSecret2(req *api.FulfillOrderSecretResponse) (string, err
 	chainTX := &api.BlockChainTX{
 		Processor:   api.TXOrderSecretResponse,
 		SenderID:    nodeID,
-		RecipientID: s.MasterFiduciaryNodeID(),
+		RecipientID: []string{s.MasterFiduciaryNodeID(), nodeID},
 		Payload:     marshaledRequest,
 	}
 	//curl --data-binary '{"jsonrpc":"2.0","id":"anything","method":"broadcast_tx_commit","params": {"tx": "YWFhcT1hYWFxCg=="}}' -H 'content-type:text/plain;' http://localhost:26657

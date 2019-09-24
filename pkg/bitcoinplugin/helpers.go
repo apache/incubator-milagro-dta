@@ -99,7 +99,7 @@ func adhocEncryptedEnvelopeEncode(s *Service, nodeID string, beneficiaryIDDocume
 	}
 	secretBody := &documents.SimpleString{Content: privateKeyPart1of2}
 	header := &documents.Header{}
-	recipients := map[string]documents.IDDoc{
+	recipients := map[string]*documents.IDDoc{
 		beneficiaryIDDocumentCID: beneficiaryIDDocument,
 	}
 	docEnv, err := documents.Encode(nodeID, nil, secretBody, header, blsSK, recipients)

@@ -19,67 +19,19 @@ package defaultservice
 
 import (
 	"encoding/hex"
-	"time"
 
-	"github.com/apache/incubator-milagro-dta/libs/crypto"
-	"github.com/apache/incubator-milagro-dta/libs/cryptowallet"
 	"github.com/apache/incubator-milagro-dta/libs/documents"
 	"github.com/apache/incubator-milagro-dta/pkg/api"
 	"github.com/apache/incubator-milagro-dta/pkg/common"
+	"github.com/apache/incubator-milagro-dta/pkg/identity"
 	"github.com/pkg/errors"
 )
 
 // CreateIdentity creates a new identity
 func (s *Service) CreateIdentity(req *api.CreateIdentityRequest) (*api.CreateIdentityResponse, error) {
-	name := req.Name
-
-	//generate crypto random seed
-	seed, err := cryptowallet.RandomBytes(48)
+	idDocumentCID, err := identity.CreateIdentity(req.Name, s.Ipfs, s.Store)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to Generate random seed")
-	}
-
-	//Generate SIKE keys
-	rc1, sikePublicKey, sikeSecretKey := crypto.SIKEKeys(seed)
-	if rc1 != 0 {
-		return nil, errors.New("Failed to generate SIKE keys")
-	}
-
-	//Generate BLS keys
-	rc1, blsPublicKey, blsSecretKey := crypto.BLSKeys(seed, nil)
-	if rc1 != 0 {
-		return nil, errors.New("Failed to generate BLS keys")
-	}
-
-	ecPubKey, err := common.InitECKeys(seed)
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to Generate EC Pub Key from random seed")
-	}
-	//build ID Doc
-	idDocument := documents.NewIDDoc()
-	idDocument.AuthenticationReference = name
-	idDocument.BeneficiaryECPublicKey = ecPubKey
-	idDocument.SikePublicKey = sikePublicKey
-	idDocument.BLSPublicKey = blsPublicKey
-	idDocument.Timestamp = time.Now().Unix()
-	//Encode the IDDoc to envelope byte stream
-	rawDoc, err := documents.EncodeIDDocument(idDocument, blsSecretKey)
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to encode IDDocument")
-	}
-	idDocumentCID, err := s.Ipfs.Add(rawDoc)
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to Save Raw Document into IPFS")
-	}
-	secrets := common.IdentitySecrets{
-		Name:          name,
-		Seed:          hex.EncodeToString(seed),
-		BLSSecretKey:  hex.EncodeToString(blsSecretKey),
-		SikeSecretKey: hex.EncodeToString(sikeSecretKey),
-	}
-
-	if err := s.Store.Set("id-doc", idDocumentCID, secrets, map[string]string{"time": time.Now().UTC().Format(time.RFC3339)}); err != nil {
-		return nil, errors.Wrap(err, "Failed to Save ID Document - Write to Store")
+		return nil, err
 	}
 
 	return &api.CreateIdentityResponse{

@@ -40,13 +40,13 @@ func Test_EnvelopeEncryption(t *testing.T) {
 
 	order, _ := BuildTestOrderDoc()
 	order.IPFSID = "NEW IPFS ID"
-	recipients := map[string]IDDoc{
+	recipients := map[string]*IDDoc{
 		id1: s1,
 	}
 	testText := "SEARCH_FOR_THIS123"
 	testTextBytes := []byte(testText)
 	order.Reference = testText
-	raw, _ := EncodeOrderDocument(id1, order, blsSK, "", recipients)
+	raw, _ := EncodeOrderDocument(id1, order, blsSK, recipients)
 	contains := bytes.Contains(raw, testTextBytes)
 	assert.False(t, contains, "Testtext should not be found inside the Envelope - its inside the ciphertext")
 
@@ -64,10 +64,10 @@ func Test_EncodeDecodeOrderDoc(t *testing.T) {
 	s1, id1, _, sikeSK, blsPK, blsSK := BuildTestIDDoc()
 	order, _ := BuildTestOrderDoc()
 	order.IPFSID = "NEW IPFS ID"
-	recipients := map[string]IDDoc{
+	recipients := map[string]*IDDoc{
 		id1: s1,
 	}
-	raw, _ := EncodeOrderDocument(id1, order, blsSK, "PREVIOUSCID", recipients)
+	raw, _ := EncodeOrderDocument(id1, order, blsSK, recipients)
 	reconstitutedOrder := OrderDoc{}
 	_ = DecodeOrderDocument(raw, "NEW IPFS ID", &reconstitutedOrder, sikeSK, id1, blsPK)
 	order.Header.Recipients[0].CipherText = reconstitutedOrder.Header.Recipients[0].CipherText
@@ -87,7 +87,7 @@ func Test_EncodeDecodeID(t *testing.T) {
 	iddoc, tag, _, _, _, blsSK := BuildTestIDDoc()
 	raw, _ := EncodeIDDocument(iddoc, blsSK)
 	reconstitutedIDDoc := NewIDDoc()
-	_ = DecodeIDDocument(raw, tag, &reconstitutedIDDoc)
+	_ = DecodeIDDocument(raw, tag, reconstitutedIDDoc)
 	differences := deep.Equal(reconstitutedIDDoc, iddoc)
 	var failed = false
 	for _, diff := range differences {
@@ -112,7 +112,7 @@ func Test_AESPadding(t *testing.T) {
 func Test_EncodeDecode(t *testing.T) {
 	//These are some DocID for local user
 	s1, id1, _, sikeSK1, _, _ := BuildTestIDDoc()
-	recipients := map[string]IDDoc{
+	recipients := map[string]*IDDoc{
 		id1: s1,
 	}
 	seed, _ := cryptowallet.RandomBytes(16)
@@ -121,8 +121,6 @@ func Test_EncodeDecode(t *testing.T) {
 	secretBody := &SimpleString{Content: "B"}
 	plainText := &SimpleString{Content: "A"}
 	header := &Header{}
-	previousIDCode := "previous_id_code"
-	header.PreviousCID = previousIDCode
 	rawDoc, err := Encode(id1, plainText, secretBody, header, blsSK, recipients)
 	assert.Nil(t, err, "Failed to Encode")
 
@@ -142,7 +140,6 @@ func Test_EncodeDecode(t *testing.T) {
 	assert.Equal(t, plainText.Content, reconPlainText.Content, "Verify fails")
 	assert.Equal(t, secretBody.Content, reconSecretBody.Content, "Verify fails")
 	assert.NotNil(t, reconHeader.DateTime, "Header not populated")
-	assert.Equal(t, header.PreviousCID, previousIDCode, "Verify fails")
 	assert.Equal(t, reconHeader.IPFSID, tag, "tag not loaded into header")
 }
 
@@ -181,7 +178,7 @@ func BuildTestOrderDoc() (OrderDoc, error) {
 	return order, nil
 }
 
-func BuildTestIDDoc() (IDDoc, string, []byte, []byte, []byte, []byte) {
+func BuildTestIDDoc() (*IDDoc, string, []byte, []byte, []byte, []byte) {
 	//make some test ID docs
 	seed, _ := cryptowallet.RandomBytes(16)
 
@@ -206,7 +203,7 @@ func BuildTestIDDoc() (IDDoc, string, []byte, []byte, []byte, []byte) {
 	iddoc := &IDDoc{}
 	rawDocI, _ := proto.Marshal(&signedEnvelope)
 	_ = DecodeIDDocument(rawDocI, ipfsID, iddoc)
-	return *iddoc, ipfsID, sikePK, sikeSK, blsPK, blsSK
+	return iddoc, ipfsID, sikePK, sikeSK, blsPK, blsSK
 }
 
 //createIDForSignedEnvelope - create a hash for the document to be used as an ID

@@ -22,9 +22,7 @@ package common
 
 import (
 	"encoding/hex"
-	"fmt"
 	"io"
-	"sync"
 	"time"
 
 	"github.com/apache/incubator-milagro-dta/libs/cryptowallet"
@@ -34,8 +32,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 )
-
-var previousIDMutex = &sync.Mutex{}
 
 //IdentitySecrets - keys required for decryption and signing
 type IdentitySecrets struct {
@@ -74,14 +70,14 @@ func RetrieveOrderFromIPFS(ipfs ipfs.Connector, ipfsID string, sikeSK []byte, re
 }
 
 // RetrieveIDDocFromIPFS finds and parses the IDDocument
-func RetrieveIDDocFromIPFS(ipfs ipfs.Connector, ipfsID string) (documents.IDDoc, error) {
+func RetrieveIDDocFromIPFS(ipfs ipfs.Connector, ipfsID string) (*documents.IDDoc, error) {
 	iddoc := &documents.IDDoc{}
 	rawDocI, err := ipfs.Get(ipfsID)
 	if err != nil {
-		return documents.IDDoc{}, err
+		return nil, err
 	}
 	err = documents.DecodeIDDocument(rawDocI, ipfsID, iddoc)
-	return *iddoc, err
+	return iddoc, err
 }
 
 // MakeRandomSeedAndStore genefates and stores a random seed
@@ -112,7 +108,7 @@ func RetrieveSeed(store *datastore.Store, reference string) (seedHex string, err
 }
 
 // CreateAndStoreOrderPart2 -
-func CreateAndStoreOrderPart2(ipfs ipfs.Connector, store *datastore.Store, order *documents.OrderDoc, orderPart1CID, commitmentPublicKey, nodeID string, recipients map[string]documents.IDDoc) (orderPart2CID string, err error) {
+func CreateAndStoreOrderPart2(ipfs ipfs.Connector, store *datastore.Store, order *documents.OrderDoc, orderPart1CID, commitmentPublicKey, nodeID string, recipients map[string]*documents.IDDoc) (orderPart2CID string, err error) {
 	Part2 := documents.OrderPart2{
 		CommitmentPublicKey: commitmentPublicKey,
 		PreviousOrderCID:    orderPart1CID,
@@ -128,7 +124,7 @@ func CreateAndStoreOrderPart2(ipfs ipfs.Connector, store *datastore.Store, order
 }
 
 // CreateAndStorePart3 adds part 3 "redemption request" to the order doc
-func CreateAndStorePart3(ipfs ipfs.Connector, store *datastore.Store, order *documents.OrderDoc, orderPart2CID, nodeID string, beneficiaryEncryptedData []byte, recipients map[string]documents.IDDoc) (orderPart3CID string, err error) {
+func CreateAndStorePart3(ipfs ipfs.Connector, store *datastore.Store, order *documents.OrderDoc, orderPart2CID, nodeID string, beneficiaryEncryptedData []byte, recipients map[string]*documents.IDDoc) (orderPart3CID string, err error) {
 	//Add part 3 "redemption request" to the order doc
 	redemptionRequest := documents.OrderPart3{
 		//TODO
@@ -147,7 +143,7 @@ func CreateAndStorePart3(ipfs ipfs.Connector, store *datastore.Store, order *doc
 }
 
 // CreateAndStoreOrderPart4 -
-func CreateAndStoreOrderPart4(ipfs ipfs.Connector, store *datastore.Store, order *documents.OrderDoc, commitmentPrivateKey, orderPart3CID, nodeID string, recipients map[string]documents.IDDoc) (orderPart4CID string, err error) {
+func CreateAndStoreOrderPart4(ipfs ipfs.Connector, store *datastore.Store, order *documents.OrderDoc, commitmentPrivateKey, orderPart3CID, nodeID string, recipients map[string]*documents.IDDoc) (orderPart4CID string, err error) {
 	Part4 := documents.OrderPart4{
 		Secret:           commitmentPrivateKey,
 		PreviousOrderCID: orderPart3CID,
@@ -163,7 +159,7 @@ func CreateAndStoreOrderPart4(ipfs ipfs.Connector, store *datastore.Store, order
 }
 
 // WriteOrderToIPFS writes the order document to IPFS network
-func WriteOrderToIPFS(nodeID string, ipfs ipfs.Connector, store *datastore.Store, id string, order *documents.OrderDoc, recipients map[string]documents.IDDoc) (ipfsAddress string, err error) { // Get the secret keys
+func WriteOrderToIPFS(nodeID string, ipfs ipfs.Connector, store *datastore.Store, id string, order *documents.OrderDoc, recipients map[string]*documents.IDDoc) (ipfsAddress string, err error) { // Get the secret keys
 	secrets := &IdentitySecrets{}
 	if err := store.Get("id-doc", nodeID, secrets); err != nil {
 		return "", errors.New("load secrets from store")
@@ -173,18 +169,7 @@ func WriteOrderToIPFS(nodeID string, ipfs ipfs.Connector, store *datastore.Store
 		return "", errors.Wrap(err, "Decode identity secrets")
 	}
 
-	////Mutex Lock - only one thread at once can write to IPFS as we need to keep track of the previous ID and put it into the next doc to create a chain
-	previousIDMutex.Lock()
-	previousIDKey := fmt.Sprintf("previous-id-%s", nodeID)
-	var previousID string
-	if err := store.Get("id-doc", previousIDKey, &previousID); err != nil {
-		previousID = "genesis"
-		if err := store.Set("id-doc", previousIDKey, previousID, nil); err != nil {
-			return "", err
-		}
-	}
-
-	rawDoc, err := documents.EncodeOrderDocument(nodeID, *order, blsSecretKey, previousID, recipients)
+	rawDoc, err := documents.EncodeOrderDocument(nodeID, *order, blsSecretKey, recipients)
 	if err != nil {
 		return "", errors.Wrap(err, "Failed to encode IDDocument")
 	}
@@ -192,13 +177,7 @@ func WriteOrderToIPFS(nodeID string, ipfs ipfs.Connector, store *datastore.Store
 	if err != nil {
 		return "", errors.Wrap(err, "Failed to Save Raw Document into IPFS")
 	}
-	if err := store.Set("id-doc", previousIDKey, ipfsAddress, nil); err != nil {
-		return "", err
-	}
-	previousIDMutex.Unlock()
 
-	//Write order to store
-	//orderRef := fmt.Sprintf("order-ref-%s", order.Reference)
 	if err := store.Set("order", order.Reference, ipfsAddress, map[string]string{"time": time.Now().UTC().Format(time.RFC3339)}); err != nil {
 		return "", errors.New("Save Order to store")
 	}
@@ -241,7 +220,7 @@ func RetrieveIdentitySecrets(store *datastore.Store, nodeID string) (name string
 }
 
 // BuildRecipientList builds a list of recipients who are able to decrypt the encrypted envelope
-func BuildRecipientList(ipfs ipfs.Connector, localNodeDocCID, remoteNodeDocCID string) (map[string]documents.IDDoc, error) {
+func BuildRecipientList(ipfs ipfs.Connector, localNodeDocCID, remoteNodeDocCID string) (map[string]*documents.IDDoc, error) {
 	remoteNodeDoc, err := RetrieveIDDocFromIPFS(ipfs, remoteNodeDocCID)
 	if err != nil {
 		return nil, err
@@ -252,7 +231,7 @@ func BuildRecipientList(ipfs ipfs.Connector, localNodeDocCID, remoteNodeDocCID s
 		return nil, err
 	}
 
-	recipients := map[string]documents.IDDoc{
+	recipients := map[string]*documents.IDDoc{
 		remoteNodeDocCID: remoteNodeDoc,
 		localNodeDocCID:  localNodeDoc,
 	}

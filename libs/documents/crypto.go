@@ -48,7 +48,17 @@ func decapsulateWithRecipient(recipient Recipient, sikeSK []byte) ([]byte, error
 	encapsulatedKey := recipient.EncapsulatedKey
 	encapIV := recipient.IV
 
-	rc, recreatedAesKey := crypto.DecapsulateDecrypt(cipherText, encapIV, sikeSK, encapsulatedKey)
+	cipherTextTemp := make([]byte, len(cipherText))
+	encapIVTemp := make([]byte, len(encapIV))
+	sikeSKTemp := make([]byte, len(sikeSK))
+	encapsulatedKeyTemp := make([]byte, len(encapsulatedKey))
+
+	copy(cipherTextTemp, cipherText)
+	copy(encapIVTemp, encapIV)
+	copy(sikeSKTemp, sikeSK)
+	copy(encapsulatedKeyTemp, encapsulatedKey)
+
+	rc, recreatedAesKey := crypto.DecapsulateDecrypt(cipherTextTemp, encapIVTemp, sikeSKTemp, encapsulatedKeyTemp)
 
 	if rc != 0 {
 		return nil, errFailedDecapsulation
@@ -67,7 +77,15 @@ func encapsulateKeyForRecipient(recipientsIDDocs map[string]IDDoc, secret []byte
 		r.IV = iv
 		sikePK := idDocument.SikePublicKey
 
-		rc, cipherText, encapsulatedKey := crypto.EncapsulateEncrypt(secret, iv, sikePK)
+		//Make Copies of EncapsulateEncrypt's input params as its destructive
+		secretTemp := make([]byte, len(secret))
+		ivTemp := make([]byte, len(iv))
+		sikePKtemp := make([]byte, len(sikePK))
+		copy(secretTemp, secret)
+		copy(ivTemp, iv)
+		copy(sikePKtemp, sikePK)
+
+		rc, cipherText, encapsulatedKey := crypto.EncapsulateEncrypt(secretTemp, ivTemp, sikePKtemp)
 
 		if rc != 0 {
 			return nil, errFailedToGenerateAESKey

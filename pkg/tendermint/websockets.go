@@ -15,7 +15,7 @@ import (
 )
 
 //Subscribe - Connect to the Tendermint websocket to collect events
-func Subscribe(logger *logger.Logger, nodeID string) error {
+func Subscribe(logger *logger.Logger, nodeID string, listenPort string) error {
 
 	//tmlogger := log2.NewTMLogger(log.NewSyncWriter(os.Stdout))
 
@@ -53,6 +53,11 @@ func Subscribe(logger *logger.Logger, nodeID string) error {
 				break
 			}
 
+			//check if this node is Sender
+			if payload.SenderID == nodeID {
+				break
+			}
+
 			//check is receipient
 			isRecipient := false
 			for _, v := range payload.RecipientID {
@@ -74,7 +79,7 @@ func Subscribe(logger *logger.Logger, nodeID string) error {
 			if payload.Processor == "NONE" {
 				DumpTX(&payload)
 			} else {
-				callNextTX(&payload)
+				callNextTX(&payload, listenPort)
 			}
 
 			//print(blockchainTX)

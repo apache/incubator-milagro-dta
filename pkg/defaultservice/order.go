@@ -332,7 +332,7 @@ func (s *Service) Order1(req *api.OrderRequest) (string, error) {
 	chainTX := &api.BlockChainTX{
 		Processor:   api.TXFulfillRequest,
 		SenderID:    nodeID,
-		RecipientID: []string{s.MasterFiduciaryNodeID(), nodeID},
+		RecipientID: []string{s.MasterFiduciaryNodeID()},
 		Payload:     marshaledRequest,
 	}
 	//curl --data-binary '{"jsonrpc":"2.0","id":"anything","method":"broadcast_tx_commit","params": {"tx": "YWFhcT1hYWFxCg=="}}' -H 'content-type:text/plain;' http://localhost:26657
@@ -430,7 +430,7 @@ func (s *Service) Order2(req *api.FulfillOrderResponse) (string, error) {
 	chainTX := &api.BlockChainTX{
 		Processor:   api.TXOrderSecretResponse,
 		SenderID:    nodeID,
-		RecipientID: []string{s.MasterFiduciaryNodeID(), nodeID},
+		RecipientID: []string{s.MasterFiduciaryNodeID()},
 		Payload:     marshaledRequest,
 		Tags:        map[string]string{"reference": updatedOrder.Reference},
 	}
@@ -501,7 +501,7 @@ func (s *Service) OrderSecret1(req *api.OrderSecretRequest) (string, error) {
 	chainTX := &api.BlockChainTX{
 		Processor:   api.TXFulfillOrderSecretRequest,
 		SenderID:    nodeID,
-		RecipientID: []string{s.MasterFiduciaryNodeID(), nodeID},
+		RecipientID: []string{s.MasterFiduciaryNodeID()},
 		Payload:     marshaledRequest,
 	}
 	//curl --data-binary '{"jsonrpc":"2.0","id":"anything","method":"broadcast_tx_commit","params": {"tx": "YWFhcT1hYWFxCg=="}}' -H 'content-type:text/plain;' http://localhost:26657
@@ -556,7 +556,7 @@ func (s *Service) OrderSecret2(req *api.FulfillOrderSecretResponse) (string, err
 	chainTX := &api.BlockChainTX{
 		Processor:   api.TXOrderSecretResponse,
 		SenderID:    nodeID,
-		RecipientID: []string{s.MasterFiduciaryNodeID(), nodeID},
+		RecipientID: []string{s.MasterFiduciaryNodeID()},
 		Payload:     marshaledRequest,
 	}
 	//curl --data-binary '{"jsonrpc":"2.0","id":"anything","method":"broadcast_tx_commit","params": {"tx": "YWFhcT1hYWFxCg=="}}' -H 'content-type:text/plain;' http://localhost:26657

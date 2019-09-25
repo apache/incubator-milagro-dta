@@ -67,7 +67,7 @@ func PostToChain(tx *api.BlockChainTX, method string) (string, error) {
 		return "", err
 	}
 	defer resp.Body.Close()
-	fmt.Printf("POST TO CHAIN: METHOD:%s CALLS:%s  - TXID:%s", method, tx.Processor, TXIDhex)
+	fmt.Printf("POST TO CHAIN: METHOD:%s CALLS:%s  - TXID:%s\n", method, tx.Processor, TXIDhex)
 	return TXIDhex, nil
 }
 
@@ -77,7 +77,8 @@ func HandleChainTX(myID string, tx string) error {
 	if err != nil {
 		return err
 	}
-	err = callNextTX(blockChainTX)
+	panic(nil)
+	err = callNextTX(blockChainTX, "5556")
 	if err != nil {
 		return err
 	}
@@ -111,7 +112,7 @@ func decodeTX(payload string) (*api.BlockChainTX, string, error) {
 	return tx, hash, nil
 }
 
-func callNextTX(tx *api.BlockChainTX) error {
+func callNextTX(tx *api.BlockChainTX, listenPort string) error {
 	// recipient := tx.RecipientID
 	// sender := tx.SenderID
 	//payloadJSON := tx.Payload
@@ -122,7 +123,7 @@ func callNextTX(tx *api.BlockChainTX) error {
 		return nil
 	}
 
-	desintationURL := fmt.Sprintf("http://localhost:5556/%s", tx.Processor)
+	desintationURL := fmt.Sprintf("http://localhost"+listenPort+"/%s", tx.Processor)
 
 	body := strings.NewReader(payloadString)
 	req, err := http.NewRequest("POST", os.ExpandEnv(desintationURL), body)
@@ -147,7 +148,7 @@ func callNextTX(tx *api.BlockChainTX) error {
 	return nil
 }
 
-//Decode the Payload into JSON and displays the entire Blockchain TX unencoded
+//DumpTX - Decode the Payload into JSON and displays the entire Blockchain TX unencoded
 func DumpTX(bctx *api.BlockChainTX) {
 	f := colorjson.NewFormatter()
 	f.Indent = 4
@@ -162,6 +163,7 @@ func DumpTX(bctx *api.BlockChainTX) {
 	fmt.Println(string(s))
 }
 
+//DumpTXID -
 func DumpTXID(txid string) {
 	value, raw := QueryChain(txid)
 	println(value)
@@ -170,6 +172,7 @@ func DumpTXID(txid string) {
 	println()
 }
 
+//ProcessTransactionID -
 func ProcessTransactionID(txid string) {
 	_, payload := QueryChain((txid))
 	err := HandleChainTX("", payload)

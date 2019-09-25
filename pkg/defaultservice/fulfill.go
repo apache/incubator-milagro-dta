@@ -47,7 +47,7 @@ func (s *Service) FulfillOrder(req *api.FulfillOrderRequest) (string, error) {
 		return "", err
 	}
 
-	recipientList, err := common.BuildRecipientList(s.Ipfs, nodeID, nodeID)
+	recipientList, err := common.BuildRecipientList(s.Ipfs, order.PrincipalCID, nodeID)
 	if err != nil {
 		return "", err
 	}
@@ -80,10 +80,9 @@ func (s *Service) FulfillOrder(req *api.FulfillOrderRequest) (string, error) {
 	chainTX := &api.BlockChainTX{
 		Processor:   api.TXFulfillResponse,
 		SenderID:    nodeID,
-		RecipientID: []string{s.MasterFiduciaryNodeID()},
+		RecipientID: []string{order.PrincipalCID},
 		Payload:     marshaledRequest,
 	}
-	//curl --data-binary '{"jsonrpc":"2.0","id":"anything","method":"broadcast_tx_commit","params": {"tx": "YWFhcT1hYWFxCg=="}}' -H 'content-type:text/plain;' http://localhost:26657
 	return tendermint.PostToChain(chainTX, "FulfillOrder")
 
 }
@@ -146,7 +145,5 @@ func (s *Service) FulfillOrderSecret(req *api.FulfillOrderSecretRequest) (string
 		RecipientID: []string{s.MasterFiduciaryNodeID()},
 		Payload:     marshaledRequest,
 	}
-	//curl --data-binary '{"jsonrpc":"2.0","id":"anything","method":"broadcast_tx_commit","params": {"tx": "YWFhcT1hYWFxCg=="}}' -H 'content-type:text/plain;' http://localhost:26657
 	return tendermint.PostToChain(chainTX, "FulfillOrderSecret")
-
 }

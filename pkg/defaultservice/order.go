@@ -108,77 +108,6 @@ func (s *Service) PrepareOrderResponse(orderPart2 *documents.OrderDoc, reqExtens
 	return orderPart2.OrderPart2.CommitmentPublicKey, nil, nil
 }
 
-// Order -
-func (s *Service) Order(req *api.OrderRequest) (*api.OrderResponse, error) {
-	if err := s.Plugin.ValidateOrderRequest(req); err != nil {
-		return nil, err
-	}
-
-	//Initialise values from Request object
-	beneficiaryIDDocumentCID := req.BeneficiaryIDDocumentCID
-	nodeID := s.NodeID()
-	recipientList, err := common.BuildRecipientList(s.Ipfs, nodeID, s.MasterFiduciaryNodeID())
-	if err != nil {
-		return nil, err
-	}
-
-	remoteIDDoc, err := common.RetrieveIDDocFromIPFS(s.Ipfs, s.MasterFiduciaryNodeID())
-	if err != nil {
-		return nil, err
-	}
-
-	//Create Order
-	order, err := common.CreateNewDepositOrder(beneficiaryIDDocumentCID, nodeID)
-	if err != nil {
-		return nil, err
-	}
-
-	fulfillExtension, err := s.Plugin.PrepareOrderPart1(order, req.Extension)
-	if err != nil {
-		return nil, err
-	}
-
-	//Write Order to IPFS
-	orderPart1CID, err := common.WriteOrderToIPFS(nodeID, s.Ipfs, s.Store, nodeID, order, recipientList)
-	if err != nil {
-		return nil, err
-	}
-
-	//Fullfill the order on the remote Server
-	request := &api.FulfillOrderRequest{
-		DocumentCID:   nodeID,
-		OrderPart1CID: orderPart1CID,
-		Extension:     fulfillExtension,
-	}
-
-	response, err := s.MasterFiduciaryServer.FulfillOrder(request)
-	if err != nil {
-		return nil, errors.Wrap(err, "Contacting Fiduciary")
-	}
-
-	//Get the updated order out of IPFS
-	_, _, _, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
-	if err != nil {
-		return nil, err
-	}
-	updatedOrder, err := common.RetrieveOrderFromIPFS(s.Ipfs, response.OrderPart2CID, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
-	if err != nil {
-		return nil, errors.Wrap(err, "Fail to retrieve Order from IPFS")
-	}
-
-	commitment, extension, err := s.Plugin.PrepareOrderResponse(updatedOrder, req.Extension, response.Extension)
-	if err != nil {
-		return nil, errors.Wrap(err, "Generating Final Public Key")
-	}
-
-	return &api.OrderResponse{
-		OrderReference: order.Reference,
-		Commitment:     commitment,
-		CreatedAt:      time.Now().Unix(),
-		Extension:      extension,
-	}, nil
-}
-
 // ProduceBeneficiaryEncryptedData -
 func (s *Service) ProduceBeneficiaryEncryptedData(blsSK []byte, order *documents.OrderDoc, req *api.OrderSecretRequest) (encrypted []byte, extension map[string]string, err error) {
 	return nil, nil, nil
@@ -332,7 +261,7 @@ func (s *Service) Order1(req *api.OrderRequest) (string, error) {
 	chainTX := &api.BlockChainTX{
 		Processor:   api.TXFulfillRequest,
 		SenderID:    nodeID,
-		RecipientID: []string{s.MasterFiduciaryNodeID()},
+		RecipientID: []string{s.MasterFiduciaryNodeID(), nodeID},
 		Payload:     marshaledRequest,
 	}
 	//curl --data-binary '{"jsonrpc":"2.0","id":"anything","method":"broadcast_tx_commit","params": {"tx": "YWFhcT1hYWFxCg=="}}' -H 'content-type:text/plain;' http://localhost:26657
@@ -430,7 +359,7 @@ func (s *Service) Order2(req *api.FulfillOrderResponse) (string, error) {
 	chainTX := &api.BlockChainTX{
 		Processor:   api.TXOrderSecretResponse,
 		SenderID:    nodeID,
-		RecipientID: []string{s.MasterFiduciaryNodeID()},
+		RecipientID: []string{s.MasterFiduciaryNodeID(), nodeID},
 		Payload:     marshaledRequest,
 		Tags:        map[string]string{"reference": updatedOrder.Reference},
 	}
@@ -554,7 +483,7 @@ func (s *Service) OrderSecret2(req *api.FulfillOrderSecretResponse) (string, err
 
 	//Write the requests to the chain
 	chainTX := &api.BlockChainTX{
-		Processor:   api.TXOrderSecretResponse,
+		Processor:   api.TXOrderSecretResponse, //NONE
 		SenderID:    nodeID,
 		RecipientID: []string{s.MasterFiduciaryNodeID()},
 		Payload:     marshaledRequest,

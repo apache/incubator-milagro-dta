@@ -80,7 +80,7 @@ func (s *Service) FulfillOrder(req *api.FulfillOrderRequest) (string, error) {
 	chainTX := &api.BlockChainTX{
 		Processor:   api.TXFulfillResponse,
 		SenderID:    nodeID,
-		RecipientID: []string{order.PrincipalCID},
+		RecipientID: []string{order.PrincipalCID, nodeID},
 		Payload:     marshaledRequest,
 	}
 	return tendermint.PostToChain(chainTX, "FulfillOrder")

@@ -1,3 +1,4 @@
 target/
 vendor/
 libs/crypto/libpqnist/build/
+/cmd/service/__debug_bin

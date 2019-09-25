@@ -43,22 +43,19 @@ func decapsulate(recipientCID string, recipients []*Recipient, sikeSK []byte) ([
 	return nil, errRecipientNotFound
 }
 
+func dup(orig []byte) []byte {
+	dupSlice := make([]byte, len(orig))
+	copy(dupSlice, orig)
+	return dupSlice
+}
+
 func decapsulateWithRecipient(recipient Recipient, sikeSK []byte) ([]byte, error) {
 	cipherText := recipient.CipherText
 	encapsulatedKey := recipient.EncapsulatedKey
 	encapIV := recipient.IV
 
-	cipherTextTemp := make([]byte, len(cipherText))
-	encapIVTemp := make([]byte, len(encapIV))
-	sikeSKTemp := make([]byte, len(sikeSK))
-	encapsulatedKeyTemp := make([]byte, len(encapsulatedKey))
-
-	copy(cipherTextTemp, cipherText)
-	copy(encapIVTemp, encapIV)
-	copy(sikeSKTemp, sikeSK)
-	copy(encapsulatedKeyTemp, encapsulatedKey)
-
-	rc, recreatedAesKey := crypto.DecapsulateDecrypt(cipherTextTemp, encapIVTemp, sikeSKTemp, encapsulatedKeyTemp)
+	//Use duplicates of params, as DecapsulateDecrypt is destructive to inputs
+	rc, recreatedAesKey := crypto.DecapsulateDecrypt(dup(cipherText), dup(encapIV), dup(sikeSK), dup(encapsulatedKey))
 
 	if rc != 0 {
 		return nil, errFailedDecapsulation
@@ -77,15 +74,8 @@ func encapsulateKeyForRecipient(recipientsIDDocs map[string]IDDoc, secret []byte
 		r.IV = iv
 		sikePK := idDocument.SikePublicKey
 
-		//Make Copies of EncapsulateEncrypt's input params as its destructive
-		secretTemp := make([]byte, len(secret))
-		ivTemp := make([]byte, len(iv))
-		sikePKtemp := make([]byte, len(sikePK))
-		copy(secretTemp, secret)
-		copy(ivTemp, iv)
-		copy(sikePKtemp, sikePK)
-
-		rc, cipherText, encapsulatedKey := crypto.EncapsulateEncrypt(secretTemp, ivTemp, sikePKtemp)
+		//Use duplicates of params, as EncapsulateEncrypt is destructive to inputs
+		rc, cipherText, encapsulatedKey := crypto.EncapsulateEncrypt(dup(secret), dup(iv), dup(sikePK))
 
 		if rc != 0 {
 			return nil, errFailedToGenerateAESKey

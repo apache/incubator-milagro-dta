@@ -122,95 +122,95 @@ func (s *Service) ProduceFinalSecret(seed, sikeSK []byte, order, orderPart4 *doc
 }
 
 // OrderSecret -
-func (s *Service) OrderSecret(req *api.OrderSecretRequest) (*api.OrderSecretResponse, error) {
-	orderReference := req.OrderReference
-	var orderPart2CID string
-	if err := s.Store.Get("order", orderReference, &orderPart2CID); err != nil {
-		return nil, err
-	}
+//func (s *Service) OrderSecret(req *api.OrderSecretRequest) (*api.OrderSecretResponse, error) {
+// orderReference := req.OrderReference
+// var orderPart2CID string
+// if err := s.Store.Get("order", orderReference, &orderPart2CID); err != nil {
+// 	return nil, err
+// }
 
-	nodeID := s.NodeID()
-	recipientList, err := common.BuildRecipientList(s.Ipfs, nodeID, s.MasterFiduciaryNodeID())
-	if err != nil {
-		return nil, err
-	}
-	remoteIDDoc, err := common.RetrieveIDDocFromIPFS(s.Ipfs, s.MasterFiduciaryNodeID())
-	if err != nil {
-		return nil, err
-	}
+// nodeID := s.NodeID()
+// recipientList, err := common.BuildRecipientList(s.Ipfs, nodeID, s.MasterFiduciaryNodeID())
+// if err != nil {
+// 	return nil, err
+// }
+// remoteIDDoc, err := common.RetrieveIDDocFromIPFS(s.Ipfs, s.MasterFiduciaryNodeID())
+// if err != nil {
+// 	return nil, err
+// }
 
-	_, _, blsSK, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
-	if err != nil {
-		return nil, err
-	}
+// _, _, blsSK, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
+// if err != nil {
+// 	return nil, err
+// }
 
-	//Retrieve the order from IPFS
+// //Retrieve the order from IPFS
 
-	order, err := common.RetrieveOrderFromIPFS(s.Ipfs, orderPart2CID, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
-	if err != nil {
-		return nil, errors.Wrap(err, "Fail to retrieve Order from IPFS")
-	}
+// order, err := common.RetrieveOrderFromIPFS(s.Ipfs, orderPart2CID, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
+// if err != nil {
+// 	return nil, errors.Wrap(err, "Fail to retrieve Order from IPFS")
+// }
 
-	if err := s.Plugin.ValidateOrderSecretRequest(req, *order); err != nil {
-		return nil, err
-	}
+// if err := s.Plugin.ValidateOrderSecretRequest(req, *order); err != nil {
+// 	return nil, err
+// }
 
-	var beneficiariesSikeSK []byte
-	var beneficiaryCID string
+// var beneficiariesSikeSK []byte
+// var beneficiaryCID string
 
-	if req.BeneficiaryIDDocumentCID != "" {
-		beneficiaryCID = req.BeneficiaryIDDocumentCID
-	} else {
-		beneficiaryCID = order.BeneficiaryCID
-	}
+// if req.BeneficiaryIDDocumentCID != "" {
+// 	beneficiaryCID = req.BeneficiaryIDDocumentCID
+// } else {
+// 	beneficiaryCID = order.BeneficiaryCID
+// }
 
-	_, beneficiariesSeed, _, beneficiariesSikeSK, err := common.RetrieveIdentitySecrets(s.Store, beneficiaryCID)
-	if err != nil {
-		return nil, err
-	}
+// _, beneficiariesSeed, _, beneficiariesSikeSK, err := common.RetrieveIdentitySecrets(s.Store, beneficiaryCID)
+// if err != nil {
+// 	return nil, err
+// }
 
-	//Create a piece of data that is destined for the beneficiary, passed via the Master Fiduciary
+// //Create a piece of data that is destined for the beneficiary, passed via the Master Fiduciary
 
-	beneficiaryEncryptedData, extension, err := s.Plugin.ProduceBeneficiaryEncryptedData(blsSK, order, req)
-	if err != nil {
-		return nil, err
-	}
+// beneficiaryEncryptedData, extension, err := s.Plugin.ProduceBeneficiaryEncryptedData(blsSK, order, req)
+// if err != nil {
+// 	return nil, err
+// }
 
-	//Create a request Object in IPFS
-	orderPart3CID, err := common.CreateAndStorePart3(s.Ipfs, s.Store, order, orderPart2CID, nodeID, beneficiaryEncryptedData, recipientList)
-	if err != nil {
-		return nil, err
-	}
+// //Create a request Object in IPFS
+// orderPart3CID, err := common.CreateAndStorePart3(s.Ipfs, s.Store, order, orderPart2CID, nodeID, beneficiaryEncryptedData, recipientList)
+// if err != nil {
+// 	return nil, err
+// }
 
-	//Post the address of the updated doc to the custody node
-	request := &api.FulfillOrderSecretRequest{
-		SenderDocumentCID: nodeID,
-		OrderPart3CID:     orderPart3CID,
-		Extension:         extension,
-	}
-	response, err := s.MasterFiduciaryServer.FulfillOrderSecret(request)
-	if err != nil {
-		return nil, err
-	}
+// //Post the address of the updated doc to the custody node
+// request := &api.FulfillOrderSecretRequest{
+// 	SenderDocumentCID: nodeID,
+// 	OrderPart3CID:     orderPart3CID,
+// 	Extension:         extension,
+// }
+// response, err := s.MasterFiduciaryServer.FulfillOrderSecret(request)
+// if err != nil {
+// 	return nil, err
+// }
 
-	//Retrieve the response Order from IPFS
-	orderPart4, err := common.RetrieveOrderFromIPFS(s.Ipfs, response.OrderPart4CID, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
-	if err != nil {
-		return nil, err
-	}
+// //Retrieve the response Order from IPFS
+// orderPart4, err := common.RetrieveOrderFromIPFS(s.Ipfs, response.OrderPart4CID, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
+// if err != nil {
+// 	return nil, err
+// }
 
-	finalPrivateKey, finalPublicKey, ext, err := s.Plugin.ProduceFinalSecret(beneficiariesSeed, beneficiariesSikeSK, order, orderPart4, beneficiaryCID)
-	if err != nil {
-		return nil, err
-	}
+// finalPrivateKey, finalPublicKey, ext, err := s.Plugin.ProduceFinalSecret(beneficiariesSeed, beneficiariesSikeSK, order, orderPart4, beneficiaryCID)
+// if err != nil {
+// 	return nil, err
+// }
 
-	return &api.OrderSecretResponse{
-		Secret:         finalPrivateKey,
-		Commitment:     finalPublicKey,
-		OrderReference: order.Reference,
-		Extension:      ext,
-	}, nil
-}
+// return &api.OrderSecretResponse{
+// 	Secret:         finalPrivateKey,
+// 	Commitment:     finalPublicKey,
+// 	OrderReference: order.Reference,
+// 	Extension:      ext,
+// }, nil
+//}
 
 // Order1 -
 func (s *Service) Order1(req *api.OrderRequest) (string, error) {
@@ -341,9 +341,16 @@ func (s *Service) Order2(req *api.FulfillOrderResponse) (string, error) {
 		return "", errors.Wrap(err, "Fail to retrieve Order from IPFS")
 	}
 
+	//update OrderPartCID for order id
+
 	commitment, extension, err := s.Plugin.PrepareOrderResponse(updatedOrder, req.Extension, req.Extension)
 	if err != nil {
 		return "", errors.Wrap(err, "Generating Final Public Key")
+	}
+
+	err = common.WriteOrderToStore(s.Store, updatedOrder.Reference, req.OrderPart2CID)
+	if err != nil {
+		return "", errors.Wrap(err, "Saving new CID to Order reference")
 	}
 
 	response := &api.OrderResponse{
@@ -389,6 +396,11 @@ func (s *Service) OrderSecret1(req *api.OrderSecretRequest) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+	// localIDDoc, err := common.RetrieveIDDocFromIPFS(s.Ipfs, s.NodeID())
+	// if err != nil {
+	// 	return "", err
+	// }
 
 	//Retrieve the order from IPFS
 	order, err := common.RetrieveOrderFromIPFS(s.Ipfs, orderPart2CID, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)

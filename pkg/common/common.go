@@ -206,10 +206,21 @@ func WriteOrderToIPFS(nodeID string, ipfs ipfs.Connector, store *datastore.Store
 
 	//Write order to store
 	//orderRef := fmt.Sprintf("order-ref-%s", order.Reference)
-	if err := store.Set("order", order.Reference, ipfsAddress, map[string]string{"time": time.Now().UTC().Format(time.RFC3339)}); err != nil {
+	if err := WriteOrderToStore(store, order.Reference, ipfsAddress); err != nil {
 		return "", errors.New("Save Order to store")
 	}
+
+	// if err := store.Set("order", order.Reference, ipfsAddress, map[string]string{"time": time.Now().UTC().Format(time.RFC3339)}); err != nil {
+	// 	return "", errors.New("Save Order to store")
+	// }
 	return ipfsAddress, nil
+}
+
+func WriteOrderToStore(store *datastore.Store, orderReference string, ipfsAddress string) error {
+	if err := store.Set("order", orderReference, ipfsAddress, map[string]string{"time": time.Now().UTC().Format(time.RFC3339)}); err != nil {
+		return errors.New("Save Order to store")
+	}
+	return nil
 }
 
 //InitECKeys - generate EC keys using BIP44 HD Wallets (as bitcoin) from seed

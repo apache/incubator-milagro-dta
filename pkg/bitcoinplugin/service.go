@@ -109,7 +109,7 @@ func (s *Service) PrepareOrderResponse(orderPart2 *documents.OrderDoc, reqExtens
 // ProduceBeneficiaryEncryptedData -
 func (s *Service) ProduceBeneficiaryEncryptedData(blsSK []byte, order *documents.OrderDoc, req *api.OrderSecretRequest) (encrypted []byte, extension map[string]string, err error) {
 
-	enc, err := adhocEncryptedEnvelopeEncode(s, s.NodeID(), req.BeneficiaryIDDocumentCID, *order, blsSK)
+	enc, err := adhocEncryptedEnvelopeEncode(s, s.NodeID(), *order, blsSK)
 	return enc, nil, err
 }
 

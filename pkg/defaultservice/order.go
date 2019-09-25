@@ -397,15 +397,19 @@ func (s *Service) OrderSecret1(req *api.OrderSecretRequest) (string, error) {
 		return "", err
 	}
 
-	// localIDDoc, err := common.RetrieveIDDocFromIPFS(s.Ipfs, s.NodeID())
-	// if err != nil {
-	// 	return "", err
-	// }
+	localIDDoc, err := common.RetrieveIDDocFromIPFS(s.Ipfs, s.NodeID())
+	if err != nil {
+		return "", err
+	}
 
-	//Retrieve the order from IPFS
+	//If we already did a transfer the Order doc is self signed so, check with own Key so we can re-process the transfer
 	order, err := common.RetrieveOrderFromIPFS(s.Ipfs, orderPart2CID, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
 	if err != nil {
-		return "", errors.Wrap(err, "Fail to retrieve Order from IPFS")
+		//check if we are re-trying the call, so the OrderDoc is locally signed
+		order, err = common.RetrieveOrderFromIPFS(s.Ipfs, orderPart2CID, sikeSK, nodeID, localIDDoc.BLSPublicKey)
+		if err != nil {
+			return "", errors.Wrap(err, "Fail to retrieve Order from IPFS")
+		}
 	}
 
 	if err := s.Plugin.ValidateOrderSecretRequest(req, *order); err != nil {
@@ -414,13 +418,13 @@ func (s *Service) OrderSecret1(req *api.OrderSecretRequest) (string, error) {
 
 	//Create a piece of data that is destined for the beneficiary, passed via the Master Fiduciary
 
+	if req.BeneficiaryIDDocumentCID != "" {
+		order.BeneficiaryCID = req.BeneficiaryIDDocumentCID
+	}
+
 	beneficiaryEncryptedData, extension, err := s.Plugin.ProduceBeneficiaryEncryptedData(blsSK, order, req)
 	if err != nil {
 		return "", err
-	}
-
-	if req.BeneficiaryIDDocumentCID != "" {
-		order.BeneficiaryCID = req.BeneficiaryIDDocumentCID
 	}
 
 	//Create a request Object in IPFS
@@ -463,11 +467,20 @@ func (s *Service) OrderSecret2(req *api.FulfillOrderSecretResponse) (string, err
 		return "", err
 	}
 
+	// localIDDoc, err := common.RetrieveIDDocFromIPFS(s.Ipfs, s.NodeID())
+	// if err != nil {
+	// 	return "", err
+	// }
+
 	//Retrieve the response Order from IPFS
 	orderPart4, err := common.RetrieveOrderFromIPFS(s.Ipfs, req.OrderPart4CID, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
-	if err != nil {
-		return "", err
-	}
+	// if err != nil {
+	// 	//check if we are re-trying the call, so the OrderDoc is locally signed
+	// 	orderPart4, err = common.RetrieveOrderFromIPFS(s.Ipfs, req.OrderPart4CID, sikeSK, nodeID, localIDDoc.BLSPublicKey)
+	// 	if err != nil {
+	// 		return "", errors.Wrap(err, "Fail to retrieve Order from IPFS")
+	// 	}
+	// }
 
 	var beneficiariesSikeSK []byte
 	var beneficiaryCID string
@@ -496,8 +509,8 @@ func (s *Service) OrderSecret2(req *api.FulfillOrderSecretResponse) (string, err
 	//Write the requests to the chain
 	chainTX := &api.BlockChainTX{
 		Processor:   api.TXOrderSecretResponse, //NONE
-		SenderID:    nodeID,
-		RecipientID: []string{s.MasterFiduciaryNodeID()},
+		SenderID:    "",                        // so we can view it
+		RecipientID: []string{beneficiaryCID},
 		Payload:     marshaledRequest,
 	}
 	//curl --data-binary '{"jsonrpc":"2.0","id":"anything","method":"broadcast_tx_commit","params": {"tx": "YWFhcT1hYWFxCg=="}}' -H 'content-type:text/plain;' http://localhost:26657

@@ -109,7 +109,7 @@ func (s *Service) FulfillOrderSecret(req *api.FulfillOrderSecretRequest) (string
 		return "", err
 	}
 
-	recipientList, err := common.BuildRecipientList(s.Ipfs, nodeID, nodeID)
+	recipientList, err := common.BuildRecipientList(s.Ipfs, nodeID, order.BeneficiaryCID)
 	if err != nil {
 		return "", err
 	}
@@ -142,7 +142,7 @@ func (s *Service) FulfillOrderSecret(req *api.FulfillOrderSecretRequest) (string
 	chainTX := &api.BlockChainTX{
 		Processor:   api.TXFulfillOrderSecretResponse,
 		SenderID:    nodeID,
-		RecipientID: []string{s.MasterFiduciaryNodeID()},
+		RecipientID: []string{s.MasterFiduciaryNodeID(), order.BeneficiaryCID},
 		Payload:     marshaledRequest,
 	}
 	return tendermint.PostToChain(chainTX, "FulfillOrderSecret")

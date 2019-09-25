@@ -75,12 +75,9 @@ func deriveFinalPrivateKey(s *Service, order documents.OrderDoc, beneficiariesSi
 	}
 }
 
-func adhocEncryptedEnvelopeEncode(s *Service, nodeID string, beneficiaryIDDocumentCID string, order documents.OrderDoc, blsSK []byte) ([]byte, error) {
+func adhocEncryptedEnvelopeEncode(s *Service, nodeID string, order documents.OrderDoc, blsSK []byte) ([]byte, error) {
 	//Regenerate the original Princaipal Priv Key based on Order
-	if beneficiaryIDDocumentCID == "" {
-		//beneficiaryIDDocumentCID is empty when it was passed in the Inital Deposit Order
-		return nil, nil
-	}
+	beneficiaryIDDocumentCID := order.BeneficiaryCID
 	seedHex, err := common.RetrieveSeed(s.Store, order.Reference)
 	if err != nil {
 		return nil, err

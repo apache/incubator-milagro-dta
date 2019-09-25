@@ -124,6 +124,7 @@ func Decode(rawDoc []byte, tag string, sikeSK []byte, recipientID string, plainT
 
 	//check the message verification if we have a key for it
 	if sendersBlsPK != nil {
+		//if the document is locally signed check with our signature
 		err = Verify(signedEnvelope, sendersBlsPK)
 		if err != nil {
 			return nil, err

@@ -26,14 +26,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-
-	"github.com/apache/incubator-milagro-dta/libs/datastore"
-	"github.com/apache/incubator-milagro-dta/libs/documents"
-	"github.com/apache/incubator-milagro-dta/libs/ipfs"
-	"github.com/apache/incubator-milagro-dta/libs/logger"
-	"github.com/apache/incubator-milagro-dta/pkg/api"
-	"github.com/apache/incubator-milagro-dta/pkg/common"
-	"github.com/apache/incubator-milagro-dta/pkg/service"
 )
 
 type initOptions struct {
@@ -113,48 +105,6 @@ func interactiveSetup(i *initOptions) error {
 	}
 
 	return nil
-}
-
-//checkForID - Setup a NodeID if not supplied in the config
-func checkForID(logger *logger.Logger, optNodeID, optNodeName string, ipfs ipfs.Connector, store *datastore.Store, service service.Service) (nodeID string, err error) {
-	if optNodeID != "" {
-		var idSecrets = &common.IdentitySecrets{}
-		if err := store.Get("id-doc", optNodeID, idSecrets); err == nil {
-			id := &documents.IDDoc{}
-			rawDocI, err := ipfs.Get(optNodeID)
-			if err == nil {
-				if err := documents.DecodeIDDocument(rawDocI, optNodeID, id); err != nil {
-					logger.Error("Invalid ID document")
-					return "", err
-				}
-				return optNodeID, nil
-			}
-			logger.Error("ID not found in IPFS: %v", optNodeID)
-		} else {
-			logger.Error("ID not found in the database: %v", optNodeID)
-		}
-	} else {
-		logger.Error("No ID found in flags or config")
-	}
-
-	if optNodeName == "" {
-		return "", errors.New("Please provide Node name")
-	}
-
-	return createNewID(optNodeName, service)
-}
-
-func createNewID(name string, service service.Service) (newID string, err error) {
-
-	req := &api.CreateIdentityRequest{
-		Name: strings.TrimSpace(name),
-	}
-
-	resp, err := service.CreateIdentity(req)
-	if err != nil {
-		return "", err
-	}
-	return resp.IDDocumentCID, nil
 }
 
 func generateRandomName() string {

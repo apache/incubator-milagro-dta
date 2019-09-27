@@ -26,6 +26,7 @@ import (
 
 	"github.com/apache/incubator-milagro-dta/libs/datastore"
 	"github.com/apache/incubator-milagro-dta/libs/ipfs"
+	"github.com/apache/incubator-milagro-dta/libs/keystore"
 	"github.com/apache/incubator-milagro-dta/libs/logger"
 	"github.com/apache/incubator-milagro-dta/libs/transport"
 	"github.com/apache/incubator-milagro-dta/pkg/api"
@@ -43,6 +44,7 @@ type Service struct {
 	Logger                *logger.Logger
 	Rng                   io.Reader
 	Store                 *datastore.Store
+	KeyStore              keystore.Store
 	Ipfs                  ipfs.Connector
 	MasterFiduciaryServer api.ClientService
 	nodeID                string

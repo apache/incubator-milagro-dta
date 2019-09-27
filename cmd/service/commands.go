@@ -28,6 +28,7 @@ import (
 const (
 	envMilagroHome      = "MILAGRO_HOME"
 	milagroConfigFolder = ".milagro"
+	keysFile            = "keys"
 
 	cmdInit   = "init"
 	cmdDaemon = "daemon"

@@ -95,63 +95,61 @@ execute_bitcoin () {
 
 
    #make another BeneficiaryID
-   output5=$(curl -s -X POST "http://localhost:5556/$apiVersion/identity" -H "accept: */*" -H       "Content-Type: application/json" -d "{\"Name\":\"AA\"}")
-   benid=$(echo $output5 | jq -r .idDocumentCID)
+  #  output5=$(curl -s -X POST "http://localhost:5556/$apiVersion/identity" -H "accept: */*" -H       "Content-Type: application/json" -d "{\"Name\":\"AA\"}")
+  #  benid=$(echo $output5 | jq -r .idDocumentCID)
+
+  #  #Tests against the Bitcoin Extension - different befificary
+  #  output6=$(curl -s -X POST "http://localhost:5556/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":\"\",\"extension\":{\"coin\":\"0\"}}")
+  #  #echo $output6
+  #  op6=$(echo $output6 | jq .orderReference)
+  #  commitment6=$(echo $output6 | jq .commitment)
+  #  address6=$(echo $output6 | jq .extension.address)
+
+  #  output7=$(curl -s -X POST "http://localhost:5556/$apiVersion/order/secret" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$op6,\"beneficiaryIDDocumentCID\":\"$benid\"}")
+  #  address7=$(echo $output7 | jq .extension.address)
+  #  commitment7=$(echo $output7 | jq .commitment)
+
+  #  echo "Committment5 $commitment6 $address6"
+  #  echo "Committment6 $commitment7 $address7"
+
+  #  if [ -z $commitment7 ]; then
+  #      echo "Failed Commitment is empty"
+  #      exit 1
+  #  fi
+
+  #  if [ $commitment6 == $commitment7 ]; then
+  #    echo "Pass - Id, Order & OrderSecret(Beneficiary)"
+  #  else
+  #    echo "Fail"
+  #    exit 1
+  #  fi
+
+  # output8=$(curl -s -X POST "http://localhost:5556/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":\"$benid\",\"extension\":{\"coin\":\"0\"}}")
+  # op8=$(echo $output8 | jq .orderReference)
+  # commitment8=$(echo $output8 | jq .commitment)
+  # address8=$(echo $output8 | jq .extension.address)
 
 
+  # output9=$(curl -s -X POST "http://localhost:5556/$apiVersion/order/secret" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$op8}")
+  # commitment9=$(echo $output9 | jq .commitment)
+  # address9=$(echo $output9 | jq .extension.address)
+  # orderReference=$(echo $output9 | jq .orderReference)
+  # orderIndex=1
 
-   #Tests against the Bitcoin Extension - different befificary
-   output6=$(curl -s -X POST "http://localhost:5556/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":\"\",\"extension\":{\"coin\":\"0\"}}")
-   #echo $output6
-   op6=$(echo $output6 | jq .orderReference)
-   commitment6=$(echo $output6 | jq .commitment)
-   address6=$(echo $output6 | jq .extension.address)
+  # echo "Committment7 $commitment8 $address8"
+  # echo "Committment8 $commitment9 $address9"
 
-   output7=$(curl -s -X POST "http://localhost:5556/$apiVersion/order/secret" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$op6,\"beneficiaryIDDocumentCID\":\"$benid\"}")
-   address7=$(echo $output7 | jq .extension.address)
-   commitment7=$(echo $output7 | jq .commitment)
+  # if [ -z $commitment9 ]; then
+  #     echo "Failed Commitment is empty"
+  #     exit 1
+  # fi
 
-   echo "Committment5 $commitment6 $address6"
-   echo "Committment6 $commitment7 $address7"
-
-   if [ -z $commitment7 ]; then
-       echo "Failed Commitment is empty"
-       exit 1
-   fi
-
-   if [ $commitment6 == $commitment7 ]; then
-     echo "Pass - Id, Order & OrderSecret(Beneficiary)"
-   else
-     echo "Fail"
-     exit 1
-   fi
-
-  output8=$(curl -s -X POST "http://localhost:5556/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":\"$benid\",\"extension\":{\"coin\":\"0\"}}")
-  op8=$(echo $output8 | jq .orderReference)
-  commitment8=$(echo $output8 | jq .commitment)
-  address8=$(echo $output8 | jq .extension.address)
-
-
-  output9=$(curl -s -X POST "http://localhost:5556/$apiVersion/order/secret" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$op8}")
-  commitment9=$(echo $output9 | jq .commitment)
-  address9=$(echo $output9 | jq .extension.address)
-  orderReference=$(echo $output9 | jq .orderReference)
-  orderIndex=1
-
-  echo "Committment7 $commitment8 $address8"
-  echo "Committment8 $commitment9 $address9"
-
-  if [ -z $commitment9 ]; then
-      echo "Failed Commitment is empty"
-      exit 1
-  fi
-
-  if [ $commitment8 == $commitment9 ]; then
-    echo "Pass - Id, Order(Beneficiary) & OrderSecret"
-  else
-      echo "Fail"
-      exit 1
-  fi
+  # if [ $commitment8 == $commitment9 ]; then
+  #   echo "Pass - Id, Order(Beneficiary) & OrderSecret"
+  # else
+  #     echo "Fail"
+  #     exit 1
+  # fi
 
 }
 

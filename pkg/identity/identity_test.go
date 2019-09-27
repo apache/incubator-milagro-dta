@@ -15,32 +15,33 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package keystore
+package identity
 
 import (
-	"bytes"
 	"testing"
+
+	"github.com/apache/incubator-milagro-dta/libs/ipfs"
+	"github.com/apache/incubator-milagro-dta/libs/keystore"
 )
 
-func TestMemoryStore(t *testing.T) {
-	keys := map[string][]byte{"key1": {1}, "key2": {1, 2}, "key3": {1, 2, 3}}
+func TestCreateIdentity(t *testing.T) {
 
-	ms, err := NewMemoryStore()
+	ipfsNode, err := ipfs.NewMemoryConnector()
 	if err != nil {
 		t.Fatal(err)
 	}
-	for k, v := range keys {
-		ms.Set(k, v)
+
+	store, _ := keystore.NewMemoryStore()
+
+	_, rawIDDoc, secret, err := CreateIdentity("test")
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	for name, v := range keys {
-		key, err := ms.Get(name)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if !bytes.Equal(v, key) {
-			t.Errorf("Key not match: %v. Expected: %v, Found: %v", name, v, key)
-		}
+	idDocID, err := StoreIdentity(rawIDDoc, secret, ipfsNode, store)
 
+	if err := CheckIdentity(idDocID, "test", ipfsNode, store); err != nil {
+		t.Fatal(err)
 	}
+
 }

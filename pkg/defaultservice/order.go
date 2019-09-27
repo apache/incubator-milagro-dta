@@ -25,6 +25,7 @@ import (
 	"github.com/apache/incubator-milagro-dta/libs/documents"
 	"github.com/apache/incubator-milagro-dta/pkg/api"
 	"github.com/apache/incubator-milagro-dta/pkg/common"
+	"github.com/apache/incubator-milagro-dta/pkg/identity"
 	"github.com/pkg/errors"
 )
 
@@ -42,7 +43,12 @@ func (s *Service) GetOrder(req *api.GetOrderRequest) (*api.GetOrderResponse, err
 		return nil, err
 	}
 
-	_, _, _, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, s.NodeID())
+	// SIKE key
+	keyseed, err := s.KeyStore.Get("seed")
+	if err != nil {
+		return nil, err
+	}
+	_, sikeSK, err := identity.GenerateSIKEKeys(keyseed)
 	if err != nil {
 		return nil, err
 	}
@@ -116,6 +122,7 @@ func (s *Service) Order(req *api.OrderRequest) (*api.OrderResponse, error) {
 	//Initialise values from Request object
 	beneficiaryIDDocumentCID := req.BeneficiaryIDDocumentCID
 	iDDocID := s.NodeID()
+
 	recipientList, err := common.BuildRecipientList(s.Ipfs, iDDocID, s.MasterFiduciaryNodeID())
 	if err != nil {
 		return nil, err
@@ -138,7 +145,7 @@ func (s *Service) Order(req *api.OrderRequest) (*api.OrderResponse, error) {
 	}
 
 	//Write Order to IPFS
-	orderPart1CID, err := common.WriteOrderToIPFS(iDDocID, s.Ipfs, s.Store, iDDocID, order, recipientList)
+	orderPart1CID, err := common.WriteOrderToIPFS(iDDocID, s.Ipfs, s.Store, s.KeyStore, iDDocID, order, recipientList)
 	if err != nil {
 		return nil, err
 	}
@@ -154,11 +161,16 @@ func (s *Service) Order(req *api.OrderRequest) (*api.OrderResponse, error) {
 		return nil, errors.Wrap(err, "Contacting Fiduciary")
 	}
 
-	//Get the updated order out of IPFS
-	_, _, _, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, iDDocID)
+	// SIKE key
+	keyseed, err := s.KeyStore.Get("seed")
 	if err != nil {
 		return nil, err
 	}
+	_, sikeSK, err := identity.GenerateSIKEKeys(keyseed)
+	if err != nil {
+		return nil, err
+	}
+
 	updatedOrder, err := common.RetrieveOrderFromIPFS(s.Ipfs, response.OrderPart2CID, sikeSK, iDDocID, remoteIDDoc.BLSPublicKey)
 	if err != nil {
 		return nil, errors.Wrap(err, "Fail to retrieve Order from IPFS")
@@ -208,7 +220,16 @@ func (s *Service) OrderSecret(req *api.OrderSecretRequest) (*api.OrderSecretResp
 		return nil, err
 	}
 
-	_, _, blsSK, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
+	// SIKE and BLS keys
+	keyseed, err := s.KeyStore.Get("seed")
+	if err != nil {
+		return nil, err
+	}
+	_, sikeSK, err := identity.GenerateSIKEKeys(keyseed)
+	if err != nil {
+		return nil, err
+	}
+	_, blsSK, err := identity.GenerateBLSKeys(keyseed)
 	if err != nil {
 		return nil, err
 	}
@@ -219,19 +240,9 @@ func (s *Service) OrderSecret(req *api.OrderSecretRequest) (*api.OrderSecretResp
 		return nil, errors.Wrap(err, "Fail to retrieve Order from IPFS")
 	}
 
-	var beneficiariesSikeSK []byte
-	var beneficiaryCID string
-
-	if req.BeneficiaryIDDocumentCID != "" {
-		beneficiaryCID = req.BeneficiaryIDDocumentCID
-	} else {
-		beneficiaryCID = order.BeneficiaryCID
-	}
-
-	_, beneficiariesSeed, _, beneficiariesSikeSK, err := common.RetrieveIdentitySecrets(s.Store, beneficiaryCID)
-	if err != nil {
-		return nil, err
-	}
+	// TODO: Split Beneficiary and Principal
+	beneficiariesSeed := keyseed
+	beneficiariesSikeSK := sikeSK
 
 	if err := s.Plugin.ValidateOrderSecretRequest(req, *order); err != nil {
 		return nil, err
@@ -245,7 +256,7 @@ func (s *Service) OrderSecret(req *api.OrderSecretRequest) (*api.OrderSecretResp
 	}
 
 	//Create a request Object in IPFS
-	orderPart3CID, err := common.CreateAndStorePart3(s.Ipfs, s.Store, order, orderPart2CID, nodeID, beneficiaryEncryptedData, recipientList)
+	orderPart3CID, err := common.CreateAndStorePart3(s.Ipfs, s.Store, s.KeyStore, order, orderPart2CID, nodeID, beneficiaryEncryptedData, recipientList)
 	if err != nil {
 		return nil, err
 	}

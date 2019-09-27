@@ -22,6 +22,7 @@ import (
 
 	"github.com/apache/incubator-milagro-dta/libs/datastore"
 	"github.com/apache/incubator-milagro-dta/libs/ipfs"
+	"github.com/apache/incubator-milagro-dta/libs/keystore"
 	"github.com/apache/incubator-milagro-dta/libs/logger"
 	"github.com/apache/incubator-milagro-dta/pkg/api"
 	"github.com/apache/incubator-milagro-dta/pkg/config"
@@ -59,10 +60,18 @@ func WithRng(rng io.Reader) ServiceOption {
 	}
 }
 
-// WithStore adds store to the Service
-func WithStore(store *datastore.Store) ServiceOption {
+// WithDataStore adds store to the Service
+func WithDataStore(store *datastore.Store) ServiceOption {
 	return func(s *Service) error {
 		s.Store = store
+		return nil
+	}
+}
+
+// WithKeyStore adds store to the Service
+func WithKeyStore(store keystore.Store) ServiceOption {
+	return func(s *Service) error {
+		s.KeyStore = store
 		return nil
 	}
 }

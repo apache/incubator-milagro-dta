@@ -30,6 +30,8 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/apache/incubator-milagro-dta/libs/keystore"
+
 	"github.com/apache/incubator-milagro-dta/libs/datastore"
 	"github.com/apache/incubator-milagro-dta/libs/ipfs"
 	"github.com/apache/incubator-milagro-dta/libs/logger"
@@ -38,6 +40,7 @@ import (
 	"github.com/apache/incubator-milagro-dta/pkg/config"
 	"github.com/apache/incubator-milagro-dta/pkg/defaultservice"
 	"github.com/apache/incubator-milagro-dta/pkg/endpoints"
+	"github.com/apache/incubator-milagro-dta/pkg/identity"
 	"github.com/apache/incubator-milagro-dta/plugins"
 	"github.com/go-kit/kit/metrics/prometheus"
 	"github.com/pkg/errors"
@@ -74,11 +77,6 @@ func initConfig(args []string) error {
 	// Init the config folder
 	config.Init(configFolder(), cfg)
 
-	store, err := initDataStore(cfg.Node.Datastore)
-	if err != nil {
-		return errors.Wrap(err, "init datastore")
-	}
-
 	logger.Info("IPFS connector type: %s", cfg.IPFS.Connector)
 	var ipfsConnector ipfs.Connector
 	switch cfg.IPFS.Connector {
@@ -95,23 +93,15 @@ func initConfig(args []string) error {
 		return errors.Wrap(err, "init IPFS connector")
 	}
 
-	svcPlugin := plugins.FindServicePlugin(cfg.Plugins.Service)
-	if svcPlugin == nil {
-		return errors.Errorf("Invalid service plugin: %v", initOptions.ServicePlugin)
+	keyStore, err := keystore.NewFileStore(filepath.Join(configFolder(), keysFile))
+	if err != nil {
+		return err
 	}
-
-	if err := svcPlugin.Init(
-		svcPlugin,
-		defaultservice.WithLogger(logger),
-		defaultservice.WithRng(rand.Reader),
-		defaultservice.WithStore(store),
-		defaultservice.WithIPFS(ipfsConnector),
-		defaultservice.WithConfig(cfg),
-	); err != nil {
-		return errors.Errorf("init service plugin %s", cfg.Plugins.Service)
+	_, rawDocID, secret, err := identity.CreateIdentity(cfg.Node.NodeName)
+	if err != nil {
+		return err
 	}
-
-	newID, err := createNewID(cfg.Node.NodeName, svcPlugin)
+	newID, err := identity.StoreIdentity(rawDocID, secret, ipfsConnector, keyStore)
 	if err != nil {
 		return err
 	}
@@ -175,6 +165,10 @@ func startDaemon(args []string) error {
 	if err != nil {
 		return errors.Wrap(err, "init IPFS connector")
 	}
+	keyStore, err := keystore.NewFileStore(filepath.Join(configFolder(), keysFile))
+	if err != nil {
+		return err
+	}
 
 	// Setup Endpoint authorizer
 	var authorizer transport.Authorizer
@@ -208,7 +202,8 @@ func startDaemon(args []string) error {
 		svcPlugin,
 		defaultservice.WithLogger(logger),
 		defaultservice.WithRng(rand.Reader),
-		defaultservice.WithStore(store),
+		defaultservice.WithDataStore(store),
+		defaultservice.WithKeyStore(keyStore),
 		defaultservice.WithIPFS(ipfsConnector),
 		defaultservice.WithMasterFiduciary(masterFiduciaryServer),
 		defaultservice.WithConfig(cfg),
@@ -217,20 +212,12 @@ func startDaemon(args []string) error {
 	}
 	logger.Info("Service plugin loaded: %s", svcPlugin.Name())
 
-	nodeID, err := checkForID(logger, cfg.Node.NodeID, cfg.Node.NodeName, ipfsConnector, store, svcPlugin)
-	if err != nil {
-		return err
-	}
-
-	if nodeID != cfg.Node.NodeID {
-		cfg.Node.NodeID = nodeID
-		if err := config.SaveConfig(configFolder(), cfg); err != nil {
-			return errors.Wrap(err, "cannot update config")
-		}
+	if err := identity.CheckIdentity(cfg.Node.NodeID, cfg.Node.NodeName, ipfsConnector, keyStore); err != nil {
+		return errors.Wrap(err, "Invalid node identity")
 	}
 
 	svcPlugin.SetMasterFiduciaryNodeID(cfg.Node.MasterFiduciaryNodeID)
-	svcPlugin.SetNodeID(nodeID)
+	svcPlugin.SetNodeID(cfg.Node.NodeID)
 
 	// Create metrics
 	duration := prometheus.NewSummaryFrom(stdprometheus.SummaryOpts{

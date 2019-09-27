@@ -25,21 +25,14 @@ import (
 	"io"
 	"time"
 
-	"github.com/apache/incubator-milagro-dta/libs/cryptowallet"
 	"github.com/apache/incubator-milagro-dta/libs/datastore"
 	"github.com/apache/incubator-milagro-dta/libs/documents"
 	"github.com/apache/incubator-milagro-dta/libs/ipfs"
+	"github.com/apache/incubator-milagro-dta/libs/keystore"
+	"github.com/apache/incubator-milagro-dta/pkg/identity"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 )
-
-//IdentitySecrets - keys required for decryption and signing
-type IdentitySecrets struct {
-	Name          string `json:"Name"`
-	Seed          string `json:"Seed"`
-	SikeSecretKey string `json:"SikeSecretKey"`
-	BLSSecretKey  string `json:"BlsSecretKey"`
-}
 
 // CreateNewDepositOrder - Generate an empty new Deposit Order with random reference
 func CreateNewDepositOrder(BeneficiaryIDDocumentCID string, nodeID string) (*documents.OrderDoc, error) {
@@ -108,7 +101,7 @@ func RetrieveSeed(store *datastore.Store, reference string) (seedHex string, err
 }
 
 // CreateAndStoreOrderPart2 -
-func CreateAndStoreOrderPart2(ipfs ipfs.Connector, store *datastore.Store, order *documents.OrderDoc, orderPart1CID, commitmentPublicKey, nodeID string, recipients map[string]*documents.IDDoc) (orderPart2CID string, err error) {
+func CreateAndStoreOrderPart2(ipfs ipfs.Connector, store *datastore.Store, keyStore keystore.Store, order *documents.OrderDoc, orderPart1CID, commitmentPublicKey, nodeID string, recipients map[string]*documents.IDDoc) (orderPart2CID string, err error) {
 	Part2 := documents.OrderPart2{
 		CommitmentPublicKey: commitmentPublicKey,
 		PreviousOrderCID:    orderPart1CID,
@@ -116,7 +109,7 @@ func CreateAndStoreOrderPart2(ipfs ipfs.Connector, store *datastore.Store, order
 	}
 	order.OrderPart2 = &Part2
 	//Write the updated doc back to IPFS
-	orderPart2CID, err = WriteOrderToIPFS(nodeID, ipfs, store, nodeID, order, recipients)
+	orderPart2CID, err = WriteOrderToIPFS(nodeID, ipfs, store, keyStore, nodeID, order, recipients)
 	if err != nil {
 		return "", err
 	}
@@ -124,7 +117,7 @@ func CreateAndStoreOrderPart2(ipfs ipfs.Connector, store *datastore.Store, order
 }
 
 // CreateAndStorePart3 adds part 3 "redemption request" to the order doc
-func CreateAndStorePart3(ipfs ipfs.Connector, store *datastore.Store, order *documents.OrderDoc, orderPart2CID, nodeID string, beneficiaryEncryptedData []byte, recipients map[string]*documents.IDDoc) (orderPart3CID string, err error) {
+func CreateAndStorePart3(ipfs ipfs.Connector, store *datastore.Store, keyStore keystore.Store, order *documents.OrderDoc, orderPart2CID, nodeID string, beneficiaryEncryptedData []byte, recipients map[string]*documents.IDDoc) (orderPart3CID string, err error) {
 	//Add part 3 "redemption request" to the order doc
 	redemptionRequest := documents.OrderPart3{
 		//TODO
@@ -135,7 +128,7 @@ func CreateAndStorePart3(ipfs ipfs.Connector, store *datastore.Store, order *doc
 	}
 	order.OrderPart3 = &redemptionRequest
 	//Write the updated doc back to IPFS
-	orderPart3CID, err = WriteOrderToIPFS(nodeID, ipfs, store, nodeID, order, recipients)
+	orderPart3CID, err = WriteOrderToIPFS(nodeID, ipfs, store, keyStore, nodeID, order, recipients)
 	if err != nil {
 		return "", nil
 	}
@@ -143,7 +136,7 @@ func CreateAndStorePart3(ipfs ipfs.Connector, store *datastore.Store, order *doc
 }
 
 // CreateAndStoreOrderPart4 -
-func CreateAndStoreOrderPart4(ipfs ipfs.Connector, store *datastore.Store, order *documents.OrderDoc, commitmentPrivateKey, orderPart3CID, nodeID string, recipients map[string]*documents.IDDoc) (orderPart4CID string, err error) {
+func CreateAndStoreOrderPart4(ipfs ipfs.Connector, store *datastore.Store, keyStore keystore.Store, order *documents.OrderDoc, commitmentPrivateKey, orderPart3CID, nodeID string, recipients map[string]*documents.IDDoc) (orderPart4CID string, err error) {
 	Part4 := documents.OrderPart4{
 		Secret:           commitmentPrivateKey,
 		PreviousOrderCID: orderPart3CID,
@@ -151,7 +144,7 @@ func CreateAndStoreOrderPart4(ipfs ipfs.Connector, store *datastore.Store, order
 	}
 	order.OrderPart4 = &Part4
 	//Write the updated doc back to IPFS
-	orderPart4CID, err = WriteOrderToIPFS(nodeID, ipfs, store, nodeID, order, recipients)
+	orderPart4CID, err = WriteOrderToIPFS(nodeID, ipfs, store, keyStore, nodeID, order, recipients)
 	if err != nil {
 		return "", nil
 	}
@@ -159,14 +152,14 @@ func CreateAndStoreOrderPart4(ipfs ipfs.Connector, store *datastore.Store, order
 }
 
 // WriteOrderToIPFS writes the order document to IPFS network
-func WriteOrderToIPFS(nodeID string, ipfs ipfs.Connector, store *datastore.Store, id string, order *documents.OrderDoc, recipients map[string]*documents.IDDoc) (ipfsAddress string, err error) { // Get the secret keys
-	secrets := &IdentitySecrets{}
-	if err := store.Get("id-doc", nodeID, secrets); err != nil {
-		return "", errors.New("load secrets from store")
-	}
-	blsSecretKey, err := hex.DecodeString(secrets.BLSSecretKey)
+func WriteOrderToIPFS(nodeID string, ipfs ipfs.Connector, store *datastore.Store, keyStore keystore.Store, id string, order *documents.OrderDoc, recipients map[string]*documents.IDDoc) (ipfsAddress string, err error) { // Get the secret keys
+	seed, err := keyStore.Get("seed")
 	if err != nil {
-		return "", errors.Wrap(err, "Decode identity secrets")
+		return "", errors.New("load secrets")
+	}
+	_, blsSecretKey, err := identity.GenerateBLSKeys(seed)
+	if err != nil {
+		return "", err
 	}
 
 	rawDoc, err := documents.EncodeOrderDocument(nodeID, *order, blsSecretKey, recipients)
@@ -182,41 +175,6 @@ func WriteOrderToIPFS(nodeID string, ipfs ipfs.Connector, store *datastore.Store
 		return "", errors.New("Save Order to store")
 	}
 	return ipfsAddress, nil
-}
-
-//InitECKeys - generate EC keys using BIP44 HD Wallets (as bitcoin) from seed
-func InitECKeys(seed []byte) ([]byte, error) {
-	//EC ADD Keypair Protocol
-	_, pubKeyECADD, _, err := cryptowallet.Bip44Address(seed, cryptowallet.CoinTypeBitcoinMain, 0, 0, 0)
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to derive EC HD Wallet Key")
-	}
-	return pubKeyECADD.SerializeCompressed(), nil
-}
-
-// RetrieveIdentitySecrets gets the secrets for the node ID
-func RetrieveIdentitySecrets(store *datastore.Store, nodeID string) (name string, seed []byte, blsSK []byte, sikeSK []byte, err error) {
-
-	var idSecrets = &IdentitySecrets{}
-	if err := store.Get("id-doc", nodeID, idSecrets); err != nil {
-		return "", nil, nil, nil, err
-	}
-
-	seed, err = hex.DecodeString(idSecrets.Seed)
-	if err != nil {
-		return "", nil, nil, nil, err
-	}
-
-	blsSK, err = hex.DecodeString(idSecrets.BLSSecretKey)
-	if err != nil {
-		return "", nil, nil, nil, err
-	}
-
-	sikeSK, err = hex.DecodeString(idSecrets.SikeSecretKey)
-	if err != nil {
-		return "", nil, nil, nil, err
-	}
-	return idSecrets.Name, seed, blsSK, sikeSK, nil
 }
 
 // BuildRecipientList builds a list of recipients who are able to decrypt the encrypted envelope

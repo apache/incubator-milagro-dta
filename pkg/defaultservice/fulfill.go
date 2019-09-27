@@ -21,6 +21,7 @@ import (
 	"github.com/apache/incubator-milagro-dta/libs/cryptowallet"
 	"github.com/apache/incubator-milagro-dta/pkg/api"
 	"github.com/apache/incubator-milagro-dta/pkg/common"
+	"github.com/apache/incubator-milagro-dta/pkg/identity"
 )
 
 // FulfillOrder -
@@ -28,7 +29,13 @@ func (s *Service) FulfillOrder(req *api.FulfillOrderRequest) (*api.FulfillOrderR
 	orderPart1CID := req.OrderPart1CID
 	nodeID := s.NodeID()
 	remoteIDDocCID := req.DocumentCID
-	_, _, _, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
+
+	// SIKE key
+	keyseed, err := s.KeyStore.Get("seed")
+	if err != nil {
+		return nil, err
+	}
+	_, sikeSK, err := identity.GenerateSIKEKeys(keyseed)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +69,7 @@ func (s *Service) FulfillOrder(req *api.FulfillOrderRequest) (*api.FulfillOrderR
 	}
 
 	//Create an order response in IPFS
-	orderPart2CID, err := common.CreateAndStoreOrderPart2(s.Ipfs, s.Store, order, orderPart1CID, commitmentPublicKey, nodeID, recipientList)
+	orderPart2CID, err := common.CreateAndStoreOrderPart2(s.Ipfs, s.Store, s.KeyStore, order, orderPart1CID, commitmentPublicKey, nodeID, recipientList)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +85,13 @@ func (s *Service) FulfillOrderSecret(req *api.FulfillOrderSecretRequest) (*api.F
 	orderPart3CID := req.OrderPart3CID
 	nodeID := s.NodeID()
 	remoteIDDocCID := req.SenderDocumentCID
-	_, _, _, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
+
+	// SIKE key
+	keyseed, err := s.KeyStore.Get("seed")
+	if err != nil {
+		return nil, err
+	}
+	_, sikeSK, err := identity.GenerateSIKEKeys(keyseed)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +125,7 @@ func (s *Service) FulfillOrderSecret(req *api.FulfillOrderSecretRequest) (*api.F
 	}
 
 	//Create an order response in IPFS
-	orderPart4ID, err := common.CreateAndStoreOrderPart4(s.Ipfs, s.Store, order, commitmentPrivateKey, orderPart3CID, nodeID, recipientList)
+	orderPart4ID, err := common.CreateAndStoreOrderPart4(s.Ipfs, s.Store, s.KeyStore, order, commitmentPrivateKey, orderPart3CID, nodeID, recipientList)
 	if err != nil {
 		return nil, err
 	}

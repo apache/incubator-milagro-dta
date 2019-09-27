@@ -27,11 +27,6 @@ import (
 
 // Service is the CustodyService interface
 type Service interface {
-	//Identity
-	CreateIdentity(req *api.CreateIdentityRequest) (*api.CreateIdentityResponse, error)
-	GetIdentity(req *api.GetIdentityRequest) (*api.GetIdentityResponse, error)
-	IdentityList(req *api.IdentityListRequest) (*api.IdentityListResponse, error)
-
 	//Order
 	GetOrder(req *api.GetOrderRequest) (*api.GetOrderResponse, error)
 	OrderList(req *api.OrderListRequest) (*api.OrderListResponse, error)

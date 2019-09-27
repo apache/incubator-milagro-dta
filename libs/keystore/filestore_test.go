@@ -28,7 +28,7 @@ import (
 )
 
 func TestFileStore(t *testing.T) {
-	keys := map[string][]byte{"key1": []byte{1}, "key2": []byte{1, 2}, "key3": []byte{1, 2, 3}}
+	keys := map[string][]byte{"key1": {1}, "key2": {1, 2}, "key3": {1, 2, 3}}
 
 	fn := tmpFileName()
 	defer func() {

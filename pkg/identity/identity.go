@@ -21,78 +21,101 @@ Package identity - manage Identity document and keys
 package identity
 
 import (
-	"encoding/hex"
+	"bytes"
 	"time"
 
-	"github.com/apache/incubator-milagro-dta/libs/crypto"
 	"github.com/apache/incubator-milagro-dta/libs/cryptowallet"
-	"github.com/apache/incubator-milagro-dta/libs/datastore"
 	"github.com/apache/incubator-milagro-dta/libs/documents"
 	"github.com/apache/incubator-milagro-dta/libs/ipfs"
-	"github.com/apache/incubator-milagro-dta/pkg/common"
+	"github.com/apache/incubator-milagro-dta/libs/keystore"
 	"github.com/pkg/errors"
 )
 
 // CreateIdentity creates a new identity
-// returns Identity secrets and Identity document
-func CreateIdentity(name string, ipfsConn ipfs.Connector, store *datastore.Store) (idDocumentCID string, err error) {
+// returns Identity document and secret
+func CreateIdentity(name string) (idDocument *documents.IDDoc, rawIDDoc, seed []byte, err error) {
 	//generate crypto random seed
-	seed, err := cryptowallet.RandomBytes(48)
+	seed, err = cryptowallet.RandomBytes(48)
 	if err != nil {
 		err = errors.Wrap(err, "Failed to generate random seed")
 		return
 	}
 
-	//Generate SIKE keys
-	rc1, sikePublicKey, sikeSecretKey := crypto.SIKEKeys(seed)
-	if rc1 != 0 {
-		err = errors.New("Failed to generate SIKE keys")
-		return
-	}
-
-	//Generate BLS keys
-	rc1, blsPublicKey, blsSecretKey := crypto.BLSKeys(seed, nil)
-	if rc1 != 0 {
-		err = errors.New("Failed to generate BLS keys")
-		return
-	}
-
-	ecPubKey, err := common.InitECKeys(seed)
+	sikePublicKey, _, err := GenerateSIKEKeys(seed)
 	if err != nil {
-		err = errors.Wrap(err, "Failed to generate EC Public Key")
 		return
 	}
 
-	//build ID Doc
-	idDocument := documents.NewIDDoc()
+	blsPublicKey, blsSecretKey, err := GenerateBLSKeys(seed)
+	if err != nil {
+		return
+	}
+
+	ecPublicKey, err := GenerateECPublicKey(seed)
+	if err != nil {
+		return
+	}
+
+	// build ID Doc
+	idDocument = documents.NewIDDoc()
 	idDocument.AuthenticationReference = name
-	idDocument.BeneficiaryECPublicKey = ecPubKey
+	idDocument.BeneficiaryECPublicKey = ecPublicKey
 	idDocument.SikePublicKey = sikePublicKey
 	idDocument.BLSPublicKey = blsPublicKey
 	idDocument.Timestamp = time.Now().Unix()
 
-	rawIDDoc, err := documents.EncodeIDDocument(idDocument, blsSecretKey)
+	// encode ID Doc
+	rawIDDoc, err = documents.EncodeIDDocument(idDocument, blsSecretKey)
 	if err != nil {
 		err = errors.Wrap(err, "Failed to encode IDDocument")
 		return
 	}
 
+	return
+}
+
+// StoreIdentity writes IDDocument to IPFS and secret to keystore
+func StoreIdentity(rawIDDoc, secret []byte, ipfsConn ipfs.Connector, store keystore.Store) (idDocumentCID string, err error) {
+	// add ID Doc to IPFS
 	idDocumentCID, err = ipfsConn.Add(rawIDDoc)
+	if err != nil {
+		return
+	}
+	// store the seed
+	err = store.Set("seed", secret)
+	return
+}
 
-	secrets := common.IdentitySecrets{
-		Name:          name,
-		Seed:          hex.EncodeToString(seed),
-		BLSSecretKey:  hex.EncodeToString(blsSecretKey),
-		SikeSecretKey: hex.EncodeToString(sikeSecretKey),
+// CheckIdentity verifies the IDDocument
+func CheckIdentity(id, name string, ipfsConn ipfs.Connector, store keystore.Store) error {
+
+	rawIDDoc, err := ipfsConn.Get(id)
+	if err != nil {
+		return errors.Wrap(err, "ID Document not found")
 	}
 
-	if store != nil {
-		err = store.Set("id-doc", idDocumentCID, secrets, map[string]string{"time": time.Now().UTC().Format(time.RFC3339)})
-		if err != nil {
-			err = errors.Wrap(err, "Failed to store ID Document")
-			return
-		}
+	idDoc := &documents.IDDoc{}
+	if err := documents.DecodeIDDocument(rawIDDoc, id, idDoc); err != nil {
+		return errors.Wrap(err, "Decode ID document")
 	}
 
-	return idDocumentCID, nil
+	if idDoc.AuthenticationReference != name {
+		return errors.New("Name doesn't match the authentication reference")
+	}
+
+	seed, err := store.Get("seed")
+	if err != nil {
+		return errors.Wrap(err, "Seed not found")
+	}
+
+	sikePublic, _, err := GenerateSIKEKeys(seed)
+	if !bytes.Equal(idDoc.SikePublicKey, sikePublic) {
+		return errors.New("SIKE keys are different")
+	}
+	blsPublic, _, err := GenerateBLSKeys(seed)
+	if !bytes.Equal(idDoc.BLSPublicKey, blsPublic) {
+		return errors.New("BLS keys are different")
+	}
+
+	return nil
 }

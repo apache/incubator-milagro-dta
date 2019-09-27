@@ -54,7 +54,9 @@ func PostToChain(tx *api.BlockChainTX, method string) (string, error) {
 	base64EncodedTX := base64.StdEncoding.EncodeToString(serializedTX)
 
 	body := strings.NewReader("{\"jsonrpc\":\"2.0\",\"id\":\"anything\",\"method\":\"broadcast_tx_commit\",\"params\": {\"tx\": \"" + base64EncodedTX + "\"}}")
-	req, err := http.NewRequest("POST", "http://"+node+"", body)
+	url := "http://" + node + ""
+
+	req, err := http.NewRequest("POST", url, body)
 	if err != nil {
 		print("Error posting to Blockchain")
 		return "", err

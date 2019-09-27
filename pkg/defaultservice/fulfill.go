@@ -82,6 +82,7 @@ func (s *Service) FulfillOrder(req *api.FulfillOrderRequest) (string, error) {
 		SenderID:    nodeID,
 		RecipientID: []string{order.PrincipalCID, nodeID},
 		Payload:     marshaledRequest,
+		Tags:        map[string]string{"reference": order.Reference},
 	}
 	return tendermint.PostToChain(chainTX, "FulfillOrder")
 
@@ -144,6 +145,7 @@ func (s *Service) FulfillOrderSecret(req *api.FulfillOrderSecretRequest) (string
 		SenderID:    nodeID,
 		RecipientID: []string{s.MasterFiduciaryNodeID(), order.BeneficiaryCID},
 		Payload:     marshaledRequest,
+		Tags:        map[string]string{"reference": order.Reference},
 	}
 	return tendermint.PostToChain(chainTX, "FulfillOrderSecret")
 }

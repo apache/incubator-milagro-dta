@@ -8,16 +8,23 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/apache/incubator-milagro-dta/libs/datastore"
 	"github.com/apache/incubator-milagro-dta/libs/logger"
 	"github.com/apache/incubator-milagro-dta/pkg/api"
 	tmclient "github.com/tendermint/tendermint/rpc/client"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-//Subscribe - Connect to the Tendermint websocket to collect events
-func Subscribe(logger *logger.Logger, nodeID string, listenPort string) error {
+func catchUp(store *datastore.Store, logger *logger.Logger, nodeID string, listenPort string) error {
 
-	//tmlogger := log2.NewTMLogger(log.NewSyncWriter(os.Stdout))
+	return nil
+}
+
+//Subscribe - Connect to the Tendermint websocket to collect events
+func Subscribe(store *datastore.Store, logger *logger.Logger, nodeID string, listenPort string) error {
+
+	//first catch up to Tip of chain
+	//catchUp(store, logger, nodeID, listenPort)
 
 	client := tmclient.NewHTTP("tcp://"+node+"", "/websocket")
 	//client.SetLogger(tmlogger)
@@ -28,6 +35,7 @@ func Subscribe(logger *logger.Logger, nodeID string, listenPort string) error {
 	}
 	defer client.Stop()
 
+	//curl "34.246.173.153:26657/tx_search?query=\"tag.part=4%20AND%20tag.reference='579a2864-e100-11e9-aaf4-acde48001122'\""
 	query := "tag.recipient='" + nodeID + "'"
 	//query := "tm.event = 'Tx'"
 

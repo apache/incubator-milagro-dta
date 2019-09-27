@@ -146,16 +146,17 @@ func startDaemon(args []string) error {
 		return errors.Wrap(err, "init logger")
 	}
 
-	go tendermint.Subscribe(logger, cfg.Node.NodeID, cfg.HTTP.ListenAddr)
-	if err != nil {
-		return errors.Wrap(err, "init Tendermint Blockchain")
-	}
-
 	// Create KV store
 	logger.Info("Datastore type: %s", cfg.Node.Datastore)
 	store, err := initDataStore(cfg.Node.Datastore)
 	if err != nil {
 		return errors.Wrap(err, "init datastore")
+	}
+
+	//Connect to Blockchain - Tendermint
+	go tendermint.Subscribe(store, logger, cfg.Node.NodeID, cfg.HTTP.ListenAddr)
+	if err != nil {
+		return errors.Wrap(err, "init Tendermint Blockchain")
 	}
 
 	logger.Info("IPFS connector type: %s", cfg.IPFS.Connector)

@@ -121,97 +121,6 @@ func (s *Service) ProduceFinalSecret(seed, sikeSK []byte, order, orderPart4 *doc
 	return finalPrivateKey, finalPublicKey, nil, err
 }
 
-// OrderSecret -
-//func (s *Service) OrderSecret(req *api.OrderSecretRequest) (*api.OrderSecretResponse, error) {
-// orderReference := req.OrderReference
-// var orderPart2CID string
-// if err := s.Store.Get("order", orderReference, &orderPart2CID); err != nil {
-// 	return nil, err
-// }
-
-// nodeID := s.NodeID()
-// recipientList, err := common.BuildRecipientList(s.Ipfs, nodeID, s.MasterFiduciaryNodeID())
-// if err != nil {
-// 	return nil, err
-// }
-// remoteIDDoc, err := common.RetrieveIDDocFromIPFS(s.Ipfs, s.MasterFiduciaryNodeID())
-// if err != nil {
-// 	return nil, err
-// }
-
-// _, _, blsSK, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
-// if err != nil {
-// 	return nil, err
-// }
-
-// //Retrieve the order from IPFS
-
-// order, err := common.RetrieveOrderFromIPFS(s.Ipfs, orderPart2CID, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
-// if err != nil {
-// 	return nil, errors.Wrap(err, "Fail to retrieve Order from IPFS")
-// }
-
-// if err := s.Plugin.ValidateOrderSecretRequest(req, *order); err != nil {
-// 	return nil, err
-// }
-
-// var beneficiariesSikeSK []byte
-// var beneficiaryCID string
-
-// if req.BeneficiaryIDDocumentCID != "" {
-// 	beneficiaryCID = req.BeneficiaryIDDocumentCID
-// } else {
-// 	beneficiaryCID = order.BeneficiaryCID
-// }
-
-// _, beneficiariesSeed, _, beneficiariesSikeSK, err := common.RetrieveIdentitySecrets(s.Store, beneficiaryCID)
-// if err != nil {
-// 	return nil, err
-// }
-
-// //Create a piece of data that is destined for the beneficiary, passed via the Master Fiduciary
-
-// beneficiaryEncryptedData, extension, err := s.Plugin.ProduceBeneficiaryEncryptedData(blsSK, order, req)
-// if err != nil {
-// 	return nil, err
-// }
-
-// //Create a request Object in IPFS
-// orderPart3CID, err := common.CreateAndStorePart3(s.Ipfs, s.Store, order, orderPart2CID, nodeID, beneficiaryEncryptedData, recipientList)
-// if err != nil {
-// 	return nil, err
-// }
-
-// //Post the address of the updated doc to the custody node
-// request := &api.FulfillOrderSecretRequest{
-// 	SenderDocumentCID: nodeID,
-// 	OrderPart3CID:     orderPart3CID,
-// 	Extension:         extension,
-// }
-// response, err := s.MasterFiduciaryServer.FulfillOrderSecret(request)
-// if err != nil {
-// 	return nil, err
-// }
-
-// //Retrieve the response Order from IPFS
-// orderPart4, err := common.RetrieveOrderFromIPFS(s.Ipfs, response.OrderPart4CID, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
-// if err != nil {
-// 	return nil, err
-// }
-
-// finalPrivateKey, finalPublicKey, ext, err := s.Plugin.ProduceFinalSecret(beneficiariesSeed, beneficiariesSikeSK, order, orderPart4, beneficiaryCID)
-// if err != nil {
-// 	return nil, err
-// }
-
-// return &api.OrderSecretResponse{
-// 	Secret:         finalPrivateKey,
-// 	Commitment:     finalPublicKey,
-// 	OrderReference: order.Reference,
-// 	Extension:      ext,
-// }, nil
-//}
-
 // Order1 -
 func (s *Service) Order1(req *api.OrderRequest) (string, error) {
 	if err := s.Plugin.ValidateOrderRequest(req); err != nil {
@@ -225,11 +134,6 @@ func (s *Service) Order1(req *api.OrderRequest) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
-	// remoteIDDoc, err := common.RetrieveIDDocFromIPFS(s.Ipfs, s.MasterFiduciaryNodeID())
-	// if err != nil {
-	// 	return "", err
-	// }
 
 	//Create Order
 	order, err := common.CreateNewDepositOrder(beneficiaryIDDocumentCID, nodeID)
@@ -263,73 +167,20 @@ func (s *Service) Order1(req *api.OrderRequest) (string, error) {
 		SenderID:    nodeID,
 		RecipientID: []string{s.MasterFiduciaryNodeID(), nodeID},
 		Payload:     marshaledRequest,
+		Tags:        map[string]string{"reference": order.Reference},
 	}
-	//curl --data-binary '{"jsonrpc":"2.0","id":"anything","method":"broadcast_tx_commit","params": {"tx": "YWFhcT1hYWFxCg=="}}' -H 'content-type:text/plain;' http://localhost:26657
-
 	tendermint.PostToChain(chainTX, "Order1")
 	return order.Reference, nil
 }
 
 // Order2 -
 func (s *Service) Order2(req *api.FulfillOrderResponse) (string, error) {
-	// if err := s.Plugin.ValidateOrderRequest(req); err != nil {
-	// 	return "", err
-	// }
-
-	// //Initialise values from Request object
-	// beneficiaryIDDocumentCID := req.BeneficiaryIDDocumentCID
 	nodeID := s.NodeID()
-	// recipientList, err := common.BuildRecipientList(s.Ipfs, nodeID, s.MasterFiduciaryNodeID())
-	// if err != nil {
-	// 	return "", err
-	// }
 
 	remoteIDDoc, err := common.RetrieveIDDocFromIPFS(s.Ipfs, s.MasterFiduciaryNodeID())
 	if err != nil {
 		return "", err
 	}
-
-	// //Create Order
-	// order, err := common.CreateNewDepositOrder(beneficiaryIDDocumentCID, nodeID)
-	// if err != nil {
-	// 	return "", err
-	// }
-
-	// fulfillExtension, err := s.Plugin.PrepareOrderPart1(order, req.Extension)
-	// if err != nil {
-	// 	return "", err
-	// }
-
-	// //Write Order to IPFS
-	// orderPart1CID, err := common.WriteOrderToIPFS(nodeID, s.Ipfs, s.Store, nodeID, order, recipientList)
-	// if err != nil {
-	// 	return "", err
-	// }
-
-	// //Fullfill the order on the remote Server
-	// request := &api.FulfillOrderRequest{
-	// 	DocumentCID:   nodeID,
-	// 	OrderPart1CID: orderPart1CID,
-	// 	Extension:     fulfillExtension,
-	// }
-
-	// marshaledRequest, _ := json.Marshal(request)
-
-	// //Write the requests to the chain
-	// chainTX := &api.BlockChainTX{
-	// 	Type:        api.TXFullfullRequest,
-	// 	SenderID:    nodeID,
-	// 	RecipientID: s.MasterFiduciaryNodeID(),
-	// 	Payload:     marshaledRequest,
-	// }
-	// //curl --data-binary '{"jsonrpc":"2.0","id":"anything","method":"broadcast_tx_commit","params": {"tx": "YWFhcT1hYWFxCg=="}}' -H 'content-type:text/plain;' http://localhost:26657
-
-	// tendermint.PostToChain(chainTX)
-
-	//  response, err := s.MasterFiduciaryServer.FulfillOrder(request)
-	//  if err != nil {
-	//  	return "", errors.Wrap(err, "Contacting Fiduciary")
-	//  }
 
 	//Get the updated order out of IPFS
 	_, _, _, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
@@ -365,7 +216,7 @@ func (s *Service) Order2(req *api.FulfillOrderResponse) (string, error) {
 	//Write the requests to the chain
 	chainTX := &api.BlockChainTX{
 		Processor:   api.TXOrderSecretResponse,
-		SenderID:    nodeID,
+		SenderID:    "",
 		RecipientID: []string{s.MasterFiduciaryNodeID(), nodeID},
 		Payload:     marshaledRequest,
 		Tags:        map[string]string{"reference": updatedOrder.Reference},
@@ -416,12 +267,11 @@ func (s *Service) OrderSecret1(req *api.OrderSecretRequest) (string, error) {
 		return "", err
 	}
 
-	//Create a piece of data that is destined for the beneficiary, passed via the Master Fiduciary
-
 	if req.BeneficiaryIDDocumentCID != "" {
 		order.BeneficiaryCID = req.BeneficiaryIDDocumentCID
 	}
 
+	//Create a piece of data that is destined for the beneficiary, passed via the Master Fiduciary
 	beneficiaryEncryptedData, extension, err := s.Plugin.ProduceBeneficiaryEncryptedData(blsSK, order, req)
 	if err != nil {
 		return "", err
@@ -448,9 +298,8 @@ func (s *Service) OrderSecret1(req *api.OrderSecretRequest) (string, error) {
 		SenderID:    nodeID,
 		RecipientID: []string{s.MasterFiduciaryNodeID()},
 		Payload:     marshaledRequest,
+		Tags:        map[string]string{"reference": order.Reference},
 	}
-	//curl --data-binary '{"jsonrpc":"2.0","id":"anything","method":"broadcast_tx_commit","params": {"tx": "YWFhcT1hYWFxCg=="}}' -H 'content-type:text/plain;' http://localhost:26657
-
 	return tendermint.PostToChain(chainTX, "OrderSecret1")
 }
 
@@ -467,32 +316,19 @@ func (s *Service) OrderSecret2(req *api.FulfillOrderSecretResponse) (string, err
 		return "", err
 	}
 
-	// localIDDoc, err := common.RetrieveIDDocFromIPFS(s.Ipfs, s.NodeID())
-	// if err != nil {
-	// 	return "", err
-	// }
-
 	//Retrieve the response Order from IPFS
 	orderPart4, err := common.RetrieveOrderFromIPFS(s.Ipfs, req.OrderPart4CID, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
-	// if err != nil {
-	// 	//check if we are re-trying the call, so the OrderDoc is locally signed
-	// 	orderPart4, err = common.RetrieveOrderFromIPFS(s.Ipfs, req.OrderPart4CID, sikeSK, nodeID, localIDDoc.BLSPublicKey)
-	// 	if err != nil {
-	// 		return "", errors.Wrap(err, "Fail to retrieve Order from IPFS")
-	// 	}
-	// }
 
-	var beneficiariesSikeSK []byte
-	var beneficiaryCID string
+	if orderPart4.BeneficiaryCID != nodeID {
+		return "", errors.New("Invalid Processor")
+	}
 
-	beneficiaryCID = orderPart4.BeneficiaryCID
-
-	_, beneficiariesSeed, _, beneficiariesSikeSK, err := common.RetrieveIdentitySecrets(s.Store, beneficiaryCID)
+	_, seed, _, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
 	if err != nil {
 		return "", err
 	}
 
-	finalPrivateKey, finalPublicKey, ext, err := s.Plugin.ProduceFinalSecret(beneficiariesSeed, beneficiariesSikeSK, orderPart4, orderPart4, beneficiaryCID)
+	finalPrivateKey, finalPublicKey, ext, err := s.Plugin.ProduceFinalSecret(seed, sikeSK, orderPart4, orderPart4, nodeID)
 	if err != nil {
 		return "", err
 	}
@@ -510,11 +346,9 @@ func (s *Service) OrderSecret2(req *api.FulfillOrderSecretResponse) (string, err
 	chainTX := &api.BlockChainTX{
 		Processor:   api.TXOrderSecretResponse, //NONE
 		SenderID:    "",                        // so we can view it
-		RecipientID: []string{beneficiaryCID},
+		RecipientID: []string{nodeID},          //don't send this to chain, seed compromise becomes fatal, sent just debugging
 		Payload:     marshaledRequest,
+		Tags:        map[string]string{"reference": orderPart4.Reference, "part": "4"},
 	}
-	//curl --data-binary '{"jsonrpc":"2.0","id":"anything","method":"broadcast_tx_commit","params": {"tx": "YWFhcT1hYWFxCg=="}}' -H 'content-type:text/plain;' http://localhost:26657
-
 	return tendermint.PostToChain(chainTX, "OrderSecret2")
-
 }

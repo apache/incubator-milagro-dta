@@ -125,7 +125,7 @@ func generateFinalPubKey(s *Service, pubKeyPart2of2 string, order documents.Orde
 	coinType := order.Coin
 	var pubKeyPart1of2 string
 
-	if beneficiaryIDDocumentCID == "" {
+	if order.BeneficiaryType == documents.OrderDocument_Beneficiary_Unknown_at_Start {
 		//There is no beneficiary ID so we do it all locally based on
 		//Retrieve the Local Seed
 		seedHex, err := common.RetrieveSeed(s.Store, order.Reference)
@@ -148,7 +148,7 @@ func generateFinalPubKey(s *Service, pubKeyPart2of2 string, order documents.Orde
 		}
 	}
 
-	if beneficiaryIDDocumentCID != "" {
+	if order.BeneficiaryType == documents.OrderDocument_Beneficiary_Known_at_start {
 		//There is a BeneficiaryID use it to generate the key
 		//Get beneficiary's identity out of IPFS
 		id := &documents.IDDoc{}
@@ -173,7 +173,6 @@ func generateFinalPubKey(s *Service, pubKeyPart2of2 string, order documents.Orde
 		return "", "", err
 	}
 	return finalPublicKey, addressForPublicKey, nil
-
 }
 
 //AddPrivateKeys Perform eliptical key additon on 2 privates keys

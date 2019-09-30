@@ -78,7 +78,7 @@ func (s *Service) Order2(tx *api.BlockChainTX) (string, error) {
 	//Write the Order2 results to the chain
 	chainTX := &api.BlockChainTX{
 		Processor:              api.TXOrderResponse,
-		SenderID:               "",
+		SenderID:               nodeID,
 		RecipientID:            nodeID,
 		AdditionalRecipientIDs: []string{},
 		Payload:                payload,
@@ -145,7 +145,7 @@ func (s *Service) OrderSecret2(tx *api.BlockChainTX) (string, error) {
 	//Write the requests to the chain
 	chainTX := &api.BlockChainTX{
 		Processor:              api.TXOrderSecretResponse, //NONE
-		SenderID:               "",
+		SenderID:               nodeID,
 		RecipientID:            nodeID,
 		AdditionalRecipientIDs: []string{},
 		Payload:                payload,

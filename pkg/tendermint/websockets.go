@@ -62,8 +62,6 @@ func subscribeAndQueue(queueWaiting chan api.BlockChainTX, logger *logger.Logger
 				break
 			}
 
-			//check if this node is Sender - if so we don't need to process it
-
 			//check if this node is in receipient list
 			if payload.RecipientID != nodeID {
 				logger.Info("******** Invalid Recipient - why are we receiving this TX?")

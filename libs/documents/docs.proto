@@ -91,6 +91,7 @@ message OrderDocument {
     OrderPart2 OrderPart2    = 8;
     OrderPart3 OrderPart3    = 9;
     OrderPart4 OrderPart4    = 10;
+    map<string, string> Extension = 11;
 }
 
 message OrderPart2 {
@@ -105,6 +106,7 @@ message OrderPart3 {
     string PreviousOrderCID        = 2 [(validator.field) = {regex: "^Q[[:alnum:]]{45}$|^$"}];
     bytes BeneficiaryEncryptedData = 3;
     int64 Timestamp                = 4 [(validator.field) = {int_gt:1564050341,int_lt:32521429541}];
+    map<string, string> Extension  = 5;
 }
 
 message OrderPart4 {

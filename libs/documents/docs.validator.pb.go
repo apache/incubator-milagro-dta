@@ -115,6 +115,7 @@ func (this *OrderDocument) Validate() error {
 			return github_com_mwitkow_go_proto_validators.FieldError("OrderPart4", err)
 		}
 	}
+	// Validation of proto3 map<> fields is unsupported.
 	return nil
 }
 
@@ -146,6 +147,7 @@ func (this *OrderPart3) Validate() error {
 	if !(this.Timestamp < 32521429541) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Timestamp", fmt.Errorf(`value '%v' must be less than '32521429541'`, this.Timestamp))
 	}
+	// Validation of proto3 map<> fields is unsupported.
 	return nil
 }
 

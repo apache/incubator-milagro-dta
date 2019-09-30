@@ -383,16 +383,7 @@ func MakeOrderSecret2Endpoint(m service.Service) endpoint.Endpoint {
 
 //MakeFulfillOrderEndpoint -
 func MakeFulfillOrderEndpoint(m service.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		req, ok := request.(*api.FulfillOrderRequest)
-		if !ok {
-			return nil, transport.ErrInvalidRequest
-		}
-		if err := validateRequest(req); err != nil {
-			return "", err
-		}
-		return m.FulfillOrder(req)
-	}
+	return nil
 }
 
 //MakeFulfillOrderSecretEndpoint -

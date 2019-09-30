@@ -130,13 +130,22 @@ func callNextTX(svc service.Service, tx *api.BlockChainTX, listenPort string) er
 		return nil
 	}
 	if tx.Processor == "v1/fulfill/order" {
-		svc.BCFulfillOrder(tx)
+		svc.FulfillOrder(tx)
 		return nil
 	}
 	if tx.Processor == "v1/order2" {
 		svc.Order2(tx)
 		return nil
 	}
+
+	// if tx.Processor == "v1/fulfill/order/secret" {
+	// 	svc.FulfillOrderSecret(tx)
+	// 	return nil
+	// }
+	// if tx.Processor == "v1/order/secret2" {
+	// 	svc.OrderSecret1(tx)
+	// 	return nil
+	// }
 
 	desintationURL := fmt.Sprintf("http://localhost"+listenPort+"/%s", tx.Processor)
 

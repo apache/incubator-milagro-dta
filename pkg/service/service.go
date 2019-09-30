@@ -41,8 +41,7 @@ type Service interface {
 	Order2(tx *api.BlockChainTX) (string, error)
 
 	//Fullfill processing
-	BCFulfillOrder(tx *api.BlockChainTX) (string, error)
-	FulfillOrder(req *api.FulfillOrderRequest) (string, error)
+	FulfillOrder(tx *api.BlockChainTX) (string, error)
 	FulfillOrderSecret(req *api.FulfillOrderSecretRequest) (string, error)
 
 	NodeID() string

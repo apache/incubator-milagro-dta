@@ -34,8 +34,7 @@ var (
 
 //ClientService - enables service to be mocked
 type ClientService interface {
-	BCFulfillOrder(tx *BlockChainTX) (string, error)
-	FulfillOrder(req *FulfillOrderRequest) (*FulfillOrderResponse, error)
+	FulfillOrder(tx *BlockChainTX) (string, error)
 	FulfillOrderSecret(req *FulfillOrderSecretRequest) (*FulfillOrderSecretResponse, error)
 	Status(token string) (*StatusResponse, error)
 	Dump(tx *BlockChainTX) error
@@ -76,19 +75,6 @@ func NewHTTPClient(instance string, logger *logger.Logger) (ClientService, error
 
 }
 
-//FulfillOrder -
-func (c MilagroClientService) FulfillOrder(req *FulfillOrderRequest) (*FulfillOrderResponse, error) {
-	endpoint := c.endpoints["FulfillOrder"]
-	ctx := context.Background()
-
-	d, err := endpoint(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	r := d.(*FulfillOrderResponse)
-	return r, nil
-}
-
 //FulfillOrderSecret -
 func (c MilagroClientService) FulfillOrderSecret(req *FulfillOrderSecretRequest) (*FulfillOrderSecretResponse, error) {
 	endpoint := c.endpoints["FulfillOrderSecret"]
@@ -116,7 +102,7 @@ func (c MilagroClientService) Status(token string) (*StatusResponse, error) {
 	return r, nil
 }
 
-func (c MilagroClientService) BCFulfillOrder(tx *BlockChainTX) (string, error) {
+func (c MilagroClientService) FulfillOrder(tx *BlockChainTX) (string, error) {
 	return "", nil
 }
 

@@ -29,7 +29,7 @@ import (
 	"github.com/apache/incubator-milagro-dta/pkg/tendermint"
 )
 
-func (s *Service) BCFulfillOrder(tx *api.BlockChainTX) (string, error) {
+func (s *Service) FulfillOrder(tx *api.BlockChainTX) (string, error) {
 
 	reqPayload := tx.Payload
 	txHashString := hex.EncodeToString(tx.TXhash)
@@ -107,68 +107,6 @@ func (s *Service) BCFulfillOrder(tx *api.BlockChainTX) (string, error) {
 		RecipientID: []string{order.PrincipalCID, nodeID},
 		Payload:     payload,
 		TXhash:      txHash,
-		Tags:        map[string]string{"reference": order.Reference},
-	}
-	return tendermint.PostToChain(chainTX, "FulfillOrder")
-
-}
-
-// FulfillOrder -
-func (s *Service) FulfillOrder(req *api.FulfillOrderRequest) (string, error) {
-	orderPart1CID := req.OrderPart1CID
-	nodeID := s.NodeID()
-	remoteIDDocCID := req.DocumentCID
-	_, _, _, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
-	if err != nil {
-		return "", err
-	}
-
-	remoteIDDoc, err := common.RetrieveIDDocFromIPFS(s.Ipfs, remoteIDDocCID)
-	if err != nil {
-		return "", err
-	}
-
-	//Retrieve the order from IPFS
-	order, err := common.RetrieveOrderFromIPFS(s.Ipfs, orderPart1CID, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
-	if err != nil {
-		return "", err
-	}
-
-	recipientList, err := common.BuildRecipientList(s.Ipfs, order.PrincipalCID, nodeID)
-	if err != nil {
-		return "", err
-	}
-
-	//Generate the secret and store for later redemption
-	seed, err := common.MakeRandomSeedAndStore(s.Store, s.Rng, order.Reference)
-	if err != nil {
-		return "", err
-	}
-
-	//Generate the Public Key (Commitment) from the Seed/Secret
-	commitmentPublicKey, err := cryptowallet.RedeemPublicKey(seed)
-	if err != nil {
-		return "", err
-	}
-
-	//Create an order response in IPFS
-	orderPart2CID, err := common.CreateAndStoreOrderPart2(s.Ipfs, s.Store, order, orderPart1CID, commitmentPublicKey, nodeID, recipientList)
-	if err != nil {
-		return "", err
-	}
-
-	response := &api.FulfillOrderResponse{
-		OrderPart2CID: orderPart2CID,
-	}
-
-	marshaledRequest, _ := json.Marshal(response)
-
-	//Write the requests to the chain
-	chainTX := &api.BlockChainTX{
-		Processor:   api.TXFulfillResponse,
-		SenderID:    nodeID,
-		RecipientID: []string{order.PrincipalCID, nodeID},
-		Payload:     marshaledRequest,
 		Tags:        map[string]string{"reference": order.Reference},
 	}
 	return tendermint.PostToChain(chainTX, "FulfillOrder")

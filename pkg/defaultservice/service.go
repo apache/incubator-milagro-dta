@@ -118,6 +118,7 @@ func (s *Service) Status(apiVersion, nodeType string) (*api.StatusResponse, erro
 	}, nil
 }
 
+//Dump - used for debugging purpose, print the entire Encrypted Transaction
 func (s *Service) Dump(tx *api.BlockChainTX) error {
 	nodeID := s.NodeID()
 	txHashString := hex.EncodeToString(tx.TXhash)

@@ -18,8 +18,10 @@
 package defaultservice
 
 import (
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"time"
 
 	"github.com/apache/incubator-milagro-dta/libs/cryptowallet"
 	"github.com/apache/incubator-milagro-dta/libs/documents"
@@ -141,28 +143,13 @@ func (s *Service) Order1(req *api.OrderRequest) (string, error) {
 		return "", err
 	}
 
-	fulfillExtension, err := s.Plugin.PrepareOrderPart1(order, req.Extension)
-	if err != nil {
-		return "", err
-	}
-
-	//Write Order to IPFS
-	orderPart1CID, err := common.WriteOrderToIPFS(nodeID, s.Ipfs, s.Store, nodeID, order, recipientList)
-	if err != nil {
-		return "", err
-	}
-
-	request := &api.FulfillOrderRequest{
-		DocumentCID:   nodeID,
-		OrderPart1CID: orderPart1CID,
-		Extension:     fulfillExtension,
-	}
+	// fulfillExtension, err := s.Plugin.PrepareOrderPart1(order, req.Extension)
+	// if err != nil {
+	// 	return "", err
+	// }
 
 	//This is serialized and output to the chain
 	txHash, payload, err := common.CreateTX(nodeID, s.Store, nodeID, order, recipientList)
-
-	marshaledRequest, _ := json.Marshal(request)
-	_ = marshaledRequest
 
 	//Write the requests to the chain
 	chainTX := &api.BlockChainTX{
@@ -171,7 +158,7 @@ func (s *Service) Order1(req *api.OrderRequest) (string, error) {
 		RecipientID: []string{s.MasterFiduciaryNodeID(), nodeID},
 		Payload:     payload, //marshaledRequest,
 		TXhash:      txHash,
-		Tags:        map[string]string{"reference": order.Reference},
+		Tags:        map[string]string{"reference": order.Reference, "txhash": hex.EncodeToString(txHash)},
 	}
 	tendermint.PostToChain(chainTX, "Order1")
 	return order.Reference, nil
@@ -217,7 +204,6 @@ func (s *Service) Order2(tx *api.BlockChainTX) (string, error) {
 		order.OrderPart2.Extension = make(map[string]string)
 	}
 	for key, value := range extension {
-
 		order.OrderPart2.Extension[key] = value
 	}
 
@@ -238,14 +224,17 @@ func (s *Service) Order2(tx *api.BlockChainTX) (string, error) {
 	}
 	txHash, payload, err := common.CreateTX(nodeID, s.Store, nodeID, order, recipientList)
 
+	print(hex.EncodeToString(txHash))
+	txHash64 := base64.StdEncoding.EncodeToString(txHash)
+
 	//Write the Order2 results to the chain
 	chainTX := &api.BlockChainTX{
 		Processor:   api.TXOrderResponse,
 		SenderID:    "", //use no Sender so we can read our own Result for testing
 		RecipientID: []string{nodeID},
 		Payload:     payload,
-		TXhash:      txHash,
-		Tags:        map[string]string{"reference": order.Reference},
+		TXhash:      []byte(txHash64),
+		Tags:        map[string]string{"reference": order.Reference, "txhash": hex.EncodeToString(txHash)},
 	}
 	return tendermint.PostToChain(chainTX, "Order2")
 
@@ -254,8 +243,8 @@ func (s *Service) Order2(tx *api.BlockChainTX) (string, error) {
 // OrderSecret1 -
 func (s *Service) OrderSecret1(req *api.OrderSecretRequest) (string, error) {
 	orderReference := req.OrderReference
-	var orderPart2CID string
-	if err := s.Store.Get("order", orderReference, &orderPart2CID); err != nil {
+	var previousOrderHash string
+	if err := s.Store.Get("order", orderReference, &previousOrderHash); err != nil {
 		return "", err
 	}
 
@@ -279,15 +268,31 @@ func (s *Service) OrderSecret1(req *api.OrderSecretRequest) (string, error) {
 		return "", err
 	}
 
-	//If we already did a transfer the Order doc is self signed so, check with own Key so we can re-process the transfer
-	order, err := common.RetrieveOrderFromIPFS(s.Ipfs, orderPart2CID, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
+	tx, err := tendermint.TXbyHash(previousOrderHash)
 	if err != nil {
-		//check if we are re-trying the call, so the OrderDoc is locally signed
-		order, err = common.RetrieveOrderFromIPFS(s.Ipfs, orderPart2CID, sikeSK, nodeID, localIDDoc.BLSPublicKey)
+		return "", err
+	}
+
+	_ = tx
+
+	order := &documents.OrderDoc{}
+	err = documents.DecodeOrderDocument(tx.Payload, previousOrderHash, order, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
+	if err != nil {
+		err = documents.DecodeOrderDocument(tx.Payload, previousOrderHash, order, sikeSK, nodeID, localIDDoc.BLSPublicKey)
 		if err != nil {
-			return "", errors.Wrap(err, "Fail to retrieve Order from IPFS")
+			return "", errors.Wrap(err, "Fail to retrieve existing order")
 		}
 	}
+
+	//If we already did a transfer the Order doc is self signed so, check with own Key so we can re-process the transfer
+	// order, err := common.RetrieveOrderFromIPFS(s.Ipfs, previousOrderHash, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
+	// if err != nil {
+	// 	//check if we are re-trying the call, so the OrderDoc is locally signed
+	// 	order, err = common.RetrieveOrderFromIPFS(s.Ipfs, previousOrderHash, sikeSK, nodeID, localIDDoc.BLSPublicKey)
+	// 	if err != nil {
+	// 		return "", errors.Wrap(err, "Fail to retrieve Order from IPFS")
+	// 	}
+	// }
 
 	if err := s.Plugin.ValidateOrderSecretRequest(req, *order); err != nil {
 		return "", err
@@ -298,40 +303,38 @@ func (s *Service) OrderSecret1(req *api.OrderSecretRequest) (string, error) {
 	}
 
 	//Create a piece of data that is destined for the beneficiary, passed via the Master Fiduciary
-	beneficiaryEncryptedData, extension, err := s.Plugin.ProduceBeneficiaryEncryptedData(blsSK, order, req)
+	beneficiaryEncryptedData, _, err := s.Plugin.ProduceBeneficiaryEncryptedData(blsSK, order, req)
 	if err != nil {
 		return "", err
 	}
 
 	//Create a request Object in IPFS
-	orderPart3CID, err := common.CreateAndStorePart3(s.Ipfs, s.Store, order, orderPart2CID, nodeID, beneficiaryEncryptedData, recipientList)
-	if err != nil {
-		return "", err
+	order.OrderPart3 = &documents.OrderPart3{
+		Redemption:               "SignedReferenceNumber",
+		PreviousOrderCID:         previousOrderHash,
+		BeneficiaryEncryptedData: beneficiaryEncryptedData,
+		Timestamp:                time.Now().Unix(),
 	}
 
-	//Post the address of the updated doc to the custody node
-	request := &api.FulfillOrderSecretRequest{
-		SenderDocumentCID: nodeID,
-		OrderPart3CID:     orderPart3CID,
-		Extension:         extension,
-	}
-
-	marshaledRequest, _ := json.Marshal(request)
+	txHash, payload, err := common.CreateTX(nodeID, s.Store, nodeID, order, recipientList)
 
 	//Write the requests to the chain
 	chainTX := &api.BlockChainTX{
 		Processor:   api.TXFulfillOrderSecretRequest,
 		SenderID:    nodeID,
 		RecipientID: []string{s.MasterFiduciaryNodeID()},
-		Payload:     marshaledRequest,
-		Tags:        map[string]string{"reference": order.Reference},
+		Payload:     payload,
+		Tags:        map[string]string{"reference": order.Reference, "txhash": hex.EncodeToString(txHash)},
 	}
 	return tendermint.PostToChain(chainTX, "OrderSecret1")
 }
 
 // OrderSecret2 -
-func (s *Service) OrderSecret2(req *api.FulfillOrderSecretResponse) (string, error) {
+func (s *Service) OrderSecret2(tx *api.BlockChainTX) (string, error) {
 	nodeID := s.NodeID()
+	reqPayload := tx.Payload
+	txHashString := hex.EncodeToString(tx.TXhash)
+
 	_, _, _, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
 	if err != nil {
 		return "", err
@@ -343,9 +346,10 @@ func (s *Service) OrderSecret2(req *api.FulfillOrderSecretResponse) (string, err
 	}
 
 	//Retrieve the response Order from IPFS
-	orderPart4, err := common.RetrieveOrderFromIPFS(s.Ipfs, req.OrderPart4CID, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
+	order := &documents.OrderDoc{}
+	err = documents.DecodeOrderDocument(reqPayload, txHashString, order, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
 
-	if orderPart4.BeneficiaryCID != nodeID {
+	if order.BeneficiaryCID != nodeID {
 		return "", errors.New("Invalid Processor")
 	}
 
@@ -354,27 +358,34 @@ func (s *Service) OrderSecret2(req *api.FulfillOrderSecretResponse) (string, err
 		return "", err
 	}
 
-	finalPrivateKey, finalPublicKey, ext, err := s.Plugin.ProduceFinalSecret(seed, sikeSK, orderPart4, orderPart4, nodeID)
+	finalPrivateKey, _, extension, err := s.Plugin.ProduceFinalSecret(seed, sikeSK, order, order, nodeID)
 	if err != nil {
 		return "", err
 	}
 
-	request := &api.OrderSecretResponse{
-		Secret:         finalPrivateKey,
-		Commitment:     finalPublicKey,
-		OrderReference: orderPart4.Reference,
-		Extension:      ext,
+	if order.OrderPart4.Extension == nil {
+		order.OrderPart4.Extension = make(map[string]string)
+	}
+	for key, value := range extension {
+		order.OrderPart4.Extension[key] = value
 	}
 
-	marshaledRequest, _ := json.Marshal(request)
+	order.OrderPart4.Extension["FinalPrivateKey"] = finalPrivateKey
+
+	//Output Only to self for autoviewing
+	recipientList, err := common.BuildRecipientList(s.Ipfs, nodeID, nodeID)
+	if err != nil {
+		return "", err
+	}
+	txHash, payload, err := common.CreateTX(nodeID, s.Store, nodeID, order, recipientList)
 
 	//Write the requests to the chain
 	chainTX := &api.BlockChainTX{
 		Processor:   api.TXOrderSecretResponse, //NONE
 		SenderID:    "",                        // so we can view it
 		RecipientID: []string{nodeID},          //don't send this to chain, seed compromise becomes fatal, sent just debugging
-		Payload:     marshaledRequest,
-		Tags:        map[string]string{"reference": orderPart4.Reference, "part": "4"},
+		Payload:     payload,
+		Tags:        map[string]string{"reference": order.Reference, "txhash": hex.EncodeToString(txHash)},
 	}
 	return tendermint.PostToChain(chainTX, "OrderSecret2")
 }

@@ -369,16 +369,7 @@ func MakeOrderSecret1Endpoint(m service.Service) endpoint.Endpoint {
 
 //MakeOrderSecret2Endpoint -
 func MakeOrderSecret2Endpoint(m service.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		req, ok := request.(*api.FulfillOrderSecretResponse)
-		if !ok {
-			return nil, transport.ErrInvalidRequest
-		}
-		if err := validateRequest(req); err != nil {
-			return "", err
-		}
-		return m.OrderSecret2(req)
-	}
+	return nil
 }
 
 //MakeFulfillOrderEndpoint -
@@ -388,16 +379,7 @@ func MakeFulfillOrderEndpoint(m service.Service) endpoint.Endpoint {
 
 //MakeFulfillOrderSecretEndpoint -
 func MakeFulfillOrderSecretEndpoint(m service.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		req, ok := request.(*api.FulfillOrderSecretRequest)
-		if !ok {
-			return nil, transport.ErrInvalidRequest
-		}
-		if err := validateRequest(req); err != nil {
-			return "", err
-		}
-		return m.FulfillOrderSecret(req)
-	}
+	return nil
 }
 
 //MakeStatusEndpoint -

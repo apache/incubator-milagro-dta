@@ -118,10 +118,11 @@ func DecodeOrderDocument(rawdoc []byte, tag string, orderdoc *OrderDoc, sikeSK [
 	orderdoc.OrderDocument = &cipherText
 
 	//validate the order document
-	err = orderdoc.OrderDocument.Validate()
-	if err != nil {
-		return err
-	}
+	//TODO: temp remove validation because we arent using IPFS any more
+	// err = orderdoc.OrderDocument.Validate()
+	// if err != nil {
+	// 	return err
+	// }
 	return nil
 }
 

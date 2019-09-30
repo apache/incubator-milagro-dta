@@ -24,11 +24,11 @@ func CreateTX(nodeID string, store *datastore.Store, id string, order *documents
 		return nil, nil, errors.Wrap(err, "Failed to encode IDDocument")
 	}
 	TXID := sha256.Sum256(rawDoc)
-	//	TXIDhex = hex.EncodeToString(TXID[:])
+	TXIDhex := hex.EncodeToString(TXID[:])
 	//Write order to store
-	//if err := WriteOrderToStore(store, order.Reference, TXIDhex); err != nil {
-	//	return nil, nil, errors.New("Save Order to store")
-	//	}
+	if err := WriteOrderToStore(store, order.Reference, TXIDhex); err != nil {
+		return nil, nil, errors.New("Save Order to store")
+	}
 	return TXID[:], rawDoc, nil
 }
 

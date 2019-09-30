@@ -135,7 +135,7 @@ func CreateAndStoreOrderPart2(ipfs ipfs.Connector, store *datastore.Store, order
 }
 
 // CreateAndStorePart3 adds part 3 "redemption request" to the order doc
-func CreateAndStorePart3(ipfs ipfs.Connector, store *datastore.Store, order *documents.OrderDoc, orderPart2CID, nodeID string, beneficiaryEncryptedData []byte, recipients map[string]documents.IDDoc) (orderPart3CID string, err error) {
+func CreateAndStorePart3(ipfs ipfs.Connector, store *datastore.Store, order *documents.OrderDoc, orderPart2CID, nodeID string, beneficiaryEncryptedData []byte, recipients map[string]documents.IDDoc) (*documents.OrderDoc, error) {
 	//Add part 3 "redemption request" to the order doc
 	redemptionRequest := documents.OrderPart3{
 		//TODO
@@ -146,11 +146,7 @@ func CreateAndStorePart3(ipfs ipfs.Connector, store *datastore.Store, order *doc
 	}
 	order.OrderPart3 = &redemptionRequest
 	//Write the updated doc back to IPFS
-	orderPart3CID, err = WriteOrderToIPFS(nodeID, ipfs, store, nodeID, order, recipients)
-	if err != nil {
-		return "", nil
-	}
-	return orderPart3CID, nil
+	return order, nil
 }
 
 // CreateAndStoreOrderPart4 -
@@ -216,8 +212,8 @@ func WriteOrderToIPFS(nodeID string, ipfs ipfs.Connector, store *datastore.Store
 	return ipfsAddress, nil
 }
 
-func WriteOrderToStore(store *datastore.Store, orderReference string, ipfsAddress string) error {
-	if err := store.Set("order", orderReference, ipfsAddress, map[string]string{"time": time.Now().UTC().Format(time.RFC3339)}); err != nil {
+func WriteOrderToStore(store *datastore.Store, orderReference string, address string) error {
+	if err := store.Set("order", orderReference, address, map[string]string{"time": time.Now().UTC().Format(time.RFC3339)}); err != nil {
 		return errors.New("Save Order to store")
 	}
 	return nil

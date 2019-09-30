@@ -35,14 +35,14 @@ type Service interface {
 
 	//Order processing
 	OrderSecret1(req *api.OrderSecretRequest) (string, error)
-	OrderSecret2(req *api.FulfillOrderSecretResponse) (string, error)
+	OrderSecret2(tx *api.BlockChainTX) (string, error)
 
 	Order1(req *api.OrderRequest) (string, error)
 	Order2(tx *api.BlockChainTX) (string, error)
 
 	//Fullfill processing
 	FulfillOrder(tx *api.BlockChainTX) (string, error)
-	FulfillOrderSecret(req *api.FulfillOrderSecretRequest) (string, error)
+	FulfillOrderSecret(tx *api.BlockChainTX) (string, error)
 
 	NodeID() string
 	MasterFiduciaryNodeID() string

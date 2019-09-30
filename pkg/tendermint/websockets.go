@@ -103,6 +103,30 @@ func subscribeAndQueue(queueWaiting chan api.BlockChainTX, logger *logger.Logger
 	return nil
 }
 
+func TXbyHash(TXHash string) (api.BlockChainTX, error) {
+	client := tmclient.NewHTTP("tcp://"+node+"", "/websocket")
+	query := fmt.Sprintf("tag.txhash='%s'", TXHash)
+	result, err := client.TxSearch(query, true, 1, 1)
+
+	if len(result.Txs) == 0 {
+		return api.BlockChainTX{}, errors.New("Not found")
+	}
+
+	payload := api.BlockChainTX{}
+	err = json.Unmarshal(result.Txs[0].Tx, &payload)
+
+	_ = payload
+
+	if err != nil {
+		return payload, err
+	}
+	//
+	// res := result.Txs[0]
+	// tx := res.Tx
+	return payload, nil
+
+}
+
 //loadAllHistoricTX - load the history for this node into a queue
 func loadAllHistoricTX(start int, end int, txHistory []ctypes.ResultTx, nodeID string, listenPort string) error {
 	//cycle through the historic transactions page by page

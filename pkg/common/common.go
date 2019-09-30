@@ -136,22 +136,18 @@ func InitECKeys(seed []byte) ([]byte, error) {
 
 // RetrieveIdentitySecrets gets the secrets for the node ID
 func RetrieveIdentitySecrets(store *datastore.Store, nodeID string) (name string, seed []byte, blsSK []byte, sikeSK []byte, err error) {
-
 	var idSecrets = &IdentitySecrets{}
 	if err := store.Get("id-doc", nodeID, idSecrets); err != nil {
 		return "", nil, nil, nil, err
 	}
-
 	seed, err = hex.DecodeString(idSecrets.Seed)
 	if err != nil {
 		return "", nil, nil, nil, err
 	}
-
 	blsSK, err = hex.DecodeString(idSecrets.BLSSecretKey)
 	if err != nil {
 		return "", nil, nil, nil, err
 	}
-
 	sikeSK, err = hex.DecodeString(idSecrets.SikeSecretKey)
 	if err != nil {
 		return "", nil, nil, nil, err
@@ -161,9 +157,7 @@ func RetrieveIdentitySecrets(store *datastore.Store, nodeID string) (name string
 
 // BuildRecipientList builds a list of recipients who are able to decrypt the encrypted envelope
 func BuildRecipientList(ipfs ipfs.Connector, IDDocs ...string) (map[string]documents.IDDoc, error) {
-
 	recipients := make(map[string]documents.IDDoc)
-
 	for _, v := range IDDocs {
 		iddoc, err := RetrieveIDDocFromIPFS(ipfs, v)
 		if err != nil {
@@ -171,6 +165,5 @@ func BuildRecipientList(ipfs ipfs.Connector, IDDocs ...string) (map[string]docum
 		}
 		recipients[v] = iddoc
 	}
-
 	return recipients, nil
 }

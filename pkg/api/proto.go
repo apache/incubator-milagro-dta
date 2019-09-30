@@ -42,12 +42,13 @@ const (
 
 //BlockChainTX - struct for on chain req/resp
 type BlockChainTX struct {
-	Processor   string
-	SenderID    string
-	RecipientID []string
-	Payload     []byte
-	TXhash      []byte
-	Tags        map[string]string
+	Processor              string
+	SenderID               string
+	RecipientID            string
+	AdditionalRecipientIDs []string
+	Payload                []byte
+	TXhash                 []byte
+	Tags                   map[string]string
 }
 
 //CreateIdentityRequest -

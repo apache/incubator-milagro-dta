@@ -77,11 +77,12 @@ func (s *Service) Order2(tx *api.BlockChainTX) (string, error) {
 
 	//Write the Order2 results to the chain
 	chainTX := &api.BlockChainTX{
-		Processor:   api.TXOrderResponse,
-		SenderID:    "",
-		RecipientID: []string{nodeID},
-		Payload:     payload,
-		Tags:        map[string]string{"reference": order.Reference, "txhash": hex.EncodeToString(txHash)},
+		Processor:              api.TXOrderResponse,
+		SenderID:               "",
+		RecipientID:            nodeID,
+		AdditionalRecipientIDs: []string{},
+		Payload:                payload,
+		Tags:                   map[string]string{"reference": order.Reference, "txhash": hex.EncodeToString(txHash)},
 	}
 	return tendermint.PostToChain(chainTX, "Order2")
 
@@ -143,11 +144,12 @@ func (s *Service) OrderSecret2(tx *api.BlockChainTX) (string, error) {
 
 	//Write the requests to the chain
 	chainTX := &api.BlockChainTX{
-		Processor:   api.TXOrderSecretResponse, //NONE
-		SenderID:    nodeID,
-		RecipientID: []string{nodeID}, //don't send this to chain, seed compromise becomes fatal, sent just debugging
-		Payload:     payload,
-		Tags:        map[string]string{"reference": order.Reference, "txhash": hex.EncodeToString(txHash)},
+		Processor:              api.TXOrderSecretResponse, //NONE
+		SenderID:               "",
+		RecipientID:            nodeID,
+		AdditionalRecipientIDs: []string{},
+		Payload:                payload,
+		Tags:                   map[string]string{"reference": order.Reference, "txhash": hex.EncodeToString(txHash)},
 	}
 	return tendermint.PostToChain(chainTX, "OrderSecret2")
 }

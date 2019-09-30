@@ -87,12 +87,13 @@ func (s *Service) FulfillOrder(tx *api.BlockChainTX) (string, error) {
 
 	//Write the requests to the chain
 	chainTX := &api.BlockChainTX{
-		Processor:   api.TXFulfillResponse,
-		SenderID:    nodeID,
-		RecipientID: []string{order.PrincipalCID, nodeID},
-		Payload:     payload,
-		TXhash:      txHash,
-		Tags:        map[string]string{"reference": order.Reference, "txhash": hex.EncodeToString(txHash)},
+		Processor:              api.TXFulfillResponse,
+		SenderID:               nodeID,
+		RecipientID:            order.PrincipalCID,
+		AdditionalRecipientIDs: []string{},
+		Payload:                payload,
+		TXhash:                 txHash,
+		Tags:                   map[string]string{"reference": order.Reference, "txhash": hex.EncodeToString(txHash)},
 	}
 	return tendermint.PostToChain(chainTX, "FulfillOrder")
 
@@ -158,11 +159,13 @@ func (s *Service) FulfillOrderSecret(tx *api.BlockChainTX) (string, error) {
 
 	//Write the requests to the chain
 	chainTX := &api.BlockChainTX{
-		Processor:   api.TXFulfillOrderSecretResponse,
-		SenderID:    nodeID,
-		RecipientID: []string{s.MasterFiduciaryNodeID(), order.BeneficiaryCID},
-		Payload:     payload,
-		Tags:        map[string]string{"reference": order.Reference, "txhash": hex.EncodeToString(txHash)},
+		Processor:              api.TXFulfillOrderSecretResponse,
+		SenderID:               nodeID,
+		RecipientID:            order.BeneficiaryCID,
+		AdditionalRecipientIDs: []string{},
+
+		Payload: payload,
+		Tags:    map[string]string{"reference": order.Reference, "txhash": hex.EncodeToString(txHash)},
 	}
 	return tendermint.PostToChain(chainTX, "FulfillOrderSecret")
 }

@@ -152,12 +152,13 @@ func (s *Service) Order1(req *api.OrderRequest) (string, error) {
 
 	//Write the requests to the chain
 	chainTX := &api.BlockChainTX{
-		Processor:   api.TXFulfillRequest,
-		SenderID:    nodeID,
-		RecipientID: []string{s.MasterFiduciaryNodeID(), nodeID},
-		Payload:     payload, //marshaledRequest,
-		TXhash:      txHash,
-		Tags:        map[string]string{"reference": order.Reference, "txhash": hex.EncodeToString(txHash)},
+		Processor:              api.TXFulfillRequest,
+		SenderID:               nodeID,
+		RecipientID:            s.MasterFiduciaryNodeID(),
+		AdditionalRecipientIDs: []string{},
+		Payload:                payload, //marshaledRequest,
+		TXhash:                 txHash,
+		Tags:                   map[string]string{"reference": order.Reference, "txhash": hex.EncodeToString(txHash)},
 	}
 	tendermint.PostToChain(chainTX, "Order1")
 	return order.Reference, nil
@@ -207,16 +208,6 @@ func (s *Service) OrderSecret1(req *api.OrderSecretRequest) (string, error) {
 		}
 	}
 
-	//If we already did a transfer the Order doc is self signed so, check with own Key so we can re-process the transfer
-	// order, err := common.RetrieveOrderFromIPFS(s.Ipfs, previousOrderHash, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
-	// if err != nil {
-	// 	//check if we are re-trying the call, so the OrderDoc is locally signed
-	// 	order, err = common.RetrieveOrderFromIPFS(s.Ipfs, previousOrderHash, sikeSK, nodeID, localIDDoc.BLSPublicKey)
-	// 	if err != nil {
-	// 		return "", errors.Wrap(err, "Fail to retrieve Order from IPFS")
-	// 	}
-	// }
-
 	if err := s.Plugin.ValidateOrderSecretRequest(req, *order); err != nil {
 		return "", err
 	}
@@ -243,11 +234,12 @@ func (s *Service) OrderSecret1(req *api.OrderSecretRequest) (string, error) {
 
 	//Write the requests to the chain
 	chainTX := &api.BlockChainTX{
-		Processor:   api.TXFulfillOrderSecretRequest,
-		SenderID:    nodeID,
-		RecipientID: []string{s.MasterFiduciaryNodeID()},
-		Payload:     payload,
-		Tags:        map[string]string{"reference": order.Reference, "txhash": hex.EncodeToString(txHash)},
+		Processor:              api.TXFulfillOrderSecretRequest,
+		SenderID:               nodeID,
+		RecipientID:            s.MasterFiduciaryNodeID(),
+		AdditionalRecipientIDs: []string{},
+		Payload:                payload,
+		Tags:                   map[string]string{"reference": order.Reference, "txhash": hex.EncodeToString(txHash)},
 	}
 	return tendermint.PostToChain(chainTX, "OrderSecret1")
 }

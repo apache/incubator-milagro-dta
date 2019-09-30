@@ -43,7 +43,7 @@ func QueryChain(index string) (string, string) {
 func PostToChain(tx *api.BlockChainTX, method string) (string, error) {
 	//Create TX Hash
 
-	tx.RecipientID = unique(tx.RecipientID)
+	tx.RecipientID = tx.RecipientID
 
 	TXID := sha256.Sum256(tx.Payload)
 	TXIDhex := hex.EncodeToString(TXID[:])

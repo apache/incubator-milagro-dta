@@ -29,20 +29,15 @@ import (
 )
 
 func (s *Service) FulfillOrder(tx *api.BlockChainTX) (string, error) {
-
+	nodeID := s.NodeID()
 	reqPayload := tx.Payload
 	txHashString := hex.EncodeToString(tx.TXhash)
 
-	//Decode the incoming TX
-	//Peek inside the TX
-	//Pull out the header - to get PrincipalID
+	//Get signer by peeking inside the document
 	signerID, err := documents.OrderDocumentSigner(reqPayload)
 	if err != nil {
 		return "", err
 	}
-
-	//orderPart1CID := req.OrderPart1CID
-	nodeID := s.NodeID()
 	remoteIDDocCID := signerID
 
 	_, _, _, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
@@ -55,13 +50,14 @@ func (s *Service) FulfillOrder(tx *api.BlockChainTX) (string, error) {
 		return "", err
 	}
 
-	//Decode the supplied order
+	//Decode the Order from the supplied TX
 	order := &documents.OrderDoc{}
 	err = documents.DecodeOrderDocument(reqPayload, txHashString, order, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
 	if err != nil {
 		return "", err
 	}
 
+	//Recipient list is principal and self
 	recipientList, err := common.BuildRecipientList(s.Ipfs, order.PrincipalCID, nodeID)
 	if err != nil {
 		return "", err
@@ -79,22 +75,15 @@ func (s *Service) FulfillOrder(tx *api.BlockChainTX) (string, error) {
 		return "", err
 	}
 
-	//Create an order part 2
+	//Populate Order part 2
 	order.OrderPart2 = &documents.OrderPart2{
 		CommitmentPublicKey: commitmentPublicKey,
 		PreviousOrderCID:    txHashString,
 		Timestamp:           time.Now().Unix(),
 	}
 
+	//Create a new Transaction payload and TX
 	txHash, payload, err := common.CreateTX(nodeID, s.Store, nodeID, order, recipientList)
-	//_ = txHashID
-
-	// orderPart2CID, err := common.CreateAndStoreOrderPart2(s.Ipfs, s.Store, order, orderPart1CID, commitmentPublicKey, nodeID, recipientList)
-	// if err != nil {
-	// 	return "", err
-	// }
-
-	//marshaledRequest, _ := json.Marshal(response)
 
 	//Write the requests to the chain
 	chainTX := &api.BlockChainTX{
@@ -111,16 +100,15 @@ func (s *Service) FulfillOrder(tx *api.BlockChainTX) (string, error) {
 
 // FulfillOrderSecret -
 func (s *Service) FulfillOrderSecret(tx *api.BlockChainTX) (string, error) {
-	//Initialise values from Request object
+	nodeID := s.NodeID()
 	reqPayload := tx.Payload
 	txHashString := hex.EncodeToString(tx.TXhash)
 
+	//Get signer by peeking inside the document
 	signerID, err := documents.OrderDocumentSigner(reqPayload)
 	if err != nil {
 		return "", err
 	}
-
-	nodeID := s.NodeID()
 	remoteIDDocCID := signerID
 
 	_, _, _, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
@@ -133,13 +121,14 @@ func (s *Service) FulfillOrderSecret(tx *api.BlockChainTX) (string, error) {
 		return "", err
 	}
 
-	//Decode the supplied order
+	//Decode the Order from the supplied TX
 	order := &documents.OrderDoc{}
 	err = documents.DecodeOrderDocument(reqPayload, txHashString, order, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
 	if err != nil {
 		return "", err
 	}
 
+	//Recipient list is beneficiary and self
 	recipientList, err := common.BuildRecipientList(s.Ipfs, nodeID, order.BeneficiaryCID)
 	if err != nil {
 		return "", err
@@ -157,12 +146,14 @@ func (s *Service) FulfillOrderSecret(tx *api.BlockChainTX) (string, error) {
 		return "", err
 	}
 
+	//Populate Order part 4
 	order.OrderPart4 = &documents.OrderPart4{
 		Secret:           commitmentPrivateKey,
 		PreviousOrderCID: txHashString,
 		Timestamp:        time.Now().Unix(),
 	}
 
+	//Create a new Transaction payload and TX
 	txHash, payload, err := common.CreateTX(nodeID, s.Store, nodeID, order, recipientList)
 
 	//Write the requests to the chain

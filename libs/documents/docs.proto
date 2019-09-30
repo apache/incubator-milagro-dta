@@ -81,8 +81,6 @@ message OrderDocument {
         Beneficiary_Known_at_start = 1;
         Beneficiary_Unknown_at_Start = 2;
     }
-
-
     string Type           = 1; //This can be used to extend the types of things that an order can do.
     OrderBeneficiaryType BeneficiaryType = 2;
     int64 Coin               = 3 [(validator.field) = {int_gt: -1, int_lt: 999}];

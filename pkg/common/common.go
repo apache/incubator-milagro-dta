@@ -22,7 +22,6 @@ package common
 
 import (
 	"encoding/hex"
-	"fmt"
 	"io"
 	"sync"
 	"time"
@@ -118,100 +117,6 @@ func RetrieveSeed(store *datastore.Store, reference string) (seedHex string, err
 	return seedHex, nil
 }
 
-// CreateAndStoreOrderPart2 -
-func CreateAndStoreOrderPart2(ipfs ipfs.Connector, store *datastore.Store, order *documents.OrderDoc, orderPart1CID, commitmentPublicKey, nodeID string, recipients map[string]documents.IDDoc) (orderPart2CID string, err error) {
-	Part2 := documents.OrderPart2{
-		CommitmentPublicKey: commitmentPublicKey,
-		PreviousOrderCID:    orderPart1CID,
-		Timestamp:           time.Now().Unix(),
-	}
-	order.OrderPart2 = &Part2
-	//Write the updated doc back to IPFS
-	orderPart2CID, err = WriteOrderToIPFS(nodeID, ipfs, store, nodeID, order, recipients)
-	if err != nil {
-		return "", err
-	}
-	return orderPart2CID, nil
-}
-
-// CreateAndStorePart3 adds part 3 "redemption request" to the order doc
-func CreateAndStorePart3(ipfs ipfs.Connector, store *datastore.Store, order *documents.OrderDoc, orderPart2CID, nodeID string, beneficiaryEncryptedData []byte, recipients map[string]documents.IDDoc) (*documents.OrderDoc, error) {
-	//Add part 3 "redemption request" to the order doc
-	redemptionRequest := documents.OrderPart3{
-		//TODO
-		Redemption:               "SignedReferenceNumber",
-		PreviousOrderCID:         orderPart2CID,
-		BeneficiaryEncryptedData: beneficiaryEncryptedData,
-		Timestamp:                time.Now().Unix(),
-	}
-	order.OrderPart3 = &redemptionRequest
-	//Write the updated doc back to IPFS
-	return order, nil
-}
-
-// CreateAndStoreOrderPart4 -
-func CreateAndStoreOrderPart4(ipfs ipfs.Connector, store *datastore.Store, order *documents.OrderDoc, commitmentPrivateKey, orderPart3CID, nodeID string, recipients map[string]documents.IDDoc) (orderPart4CID string, err error) {
-	Part4 := documents.OrderPart4{
-		Secret:           commitmentPrivateKey,
-		PreviousOrderCID: orderPart3CID,
-		Timestamp:        time.Now().Unix(),
-	}
-	order.OrderPart4 = &Part4
-	//Write the updated doc back to IPFS
-	orderPart4CID, err = WriteOrderToIPFS(nodeID, ipfs, store, nodeID, order, recipients)
-	if err != nil {
-		return "", nil
-	}
-	return orderPart4CID, nil
-}
-
-// WriteOrderToIPFS writes the order document to IPFS network
-func WriteOrderToIPFS(nodeID string, ipfs ipfs.Connector, store *datastore.Store, id string, order *documents.OrderDoc, recipients map[string]documents.IDDoc) (ipfsAddress string, err error) { // Get the secret keys
-	secrets := &IdentitySecrets{}
-	if err := store.Get("id-doc", nodeID, secrets); err != nil {
-		return "", errors.New("load secrets from store")
-	}
-	blsSecretKey, err := hex.DecodeString(secrets.BLSSecretKey)
-	if err != nil {
-		return "", errors.Wrap(err, "Decode identity secrets")
-	}
-
-	////Mutex Lock - only one thread at once can write to IPFS as we need to keep track of the previous ID and put it into the next doc to create a chain
-	previousIDMutex.Lock()
-	previousIDKey := fmt.Sprintf("previous-id-%s", nodeID)
-	var previousID string
-	if err := store.Get("id-doc", previousIDKey, &previousID); err != nil {
-		previousID = "genesis"
-		if err := store.Set("id-doc", previousIDKey, previousID, nil); err != nil {
-			return "", err
-		}
-	}
-
-	rawDoc, err := documents.EncodeOrderDocument(nodeID, *order, blsSecretKey, previousID, recipients)
-	if err != nil {
-		return "", errors.Wrap(err, "Failed to encode IDDocument")
-	}
-	ipfsAddress, err = ipfs.Add(rawDoc)
-	if err != nil {
-		return "", errors.Wrap(err, "Failed to Save Raw Document into IPFS")
-	}
-	if err := store.Set("id-doc", previousIDKey, ipfsAddress, nil); err != nil {
-		return "", err
-	}
-	previousIDMutex.Unlock()
-
-	//Write order to store
-	//orderRef := fmt.Sprintf("order-ref-%s", order.Reference)
-	if err := WriteOrderToStore(store, order.Reference, ipfsAddress); err != nil {
-		return "", errors.New("Save Order to store")
-	}
-
-	// if err := store.Set("order", order.Reference, ipfsAddress, map[string]string{"time": time.Now().UTC().Format(time.RFC3339)}); err != nil {
-	// 	return "", errors.New("Save Order to store")
-	// }
-	return ipfsAddress, nil
-}
-
 func WriteOrderToStore(store *datastore.Store, orderReference string, address string) error {
 	if err := store.Set("order", orderReference, address, map[string]string{"time": time.Now().UTC().Format(time.RFC3339)}); err != nil {
 		return errors.New("Save Order to store")
@@ -255,20 +160,17 @@ func RetrieveIdentitySecrets(store *datastore.Store, nodeID string) (name string
 }
 
 // BuildRecipientList builds a list of recipients who are able to decrypt the encrypted envelope
-func BuildRecipientList(ipfs ipfs.Connector, localNodeDocCID, remoteNodeDocCID string) (map[string]documents.IDDoc, error) {
-	remoteNodeDoc, err := RetrieveIDDocFromIPFS(ipfs, remoteNodeDocCID)
-	if err != nil {
-		return nil, err
+func BuildRecipientList(ipfs ipfs.Connector, IDDocs ...string) (map[string]documents.IDDoc, error) {
+
+	recipients := make(map[string]documents.IDDoc)
+
+	for _, v := range IDDocs {
+		iddoc, err := RetrieveIDDocFromIPFS(ipfs, v)
+		if err != nil {
+			return nil, err
+		}
+		recipients[v] = iddoc
 	}
 
-	localNodeDoc, err := RetrieveIDDocFromIPFS(ipfs, localNodeDocCID)
-	if err != nil {
-		return nil, err
-	}
-
-	recipients := map[string]documents.IDDoc{
-		remoteNodeDocCID: remoteNodeDoc,
-		localNodeDocCID:  localNodeDoc,
-	}
 	return recipients, nil
 }

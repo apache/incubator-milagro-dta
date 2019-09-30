@@ -99,7 +99,7 @@ func (s *Service) PrepareOrderPart1(order *documents.OrderDoc, reqExtension map[
 }
 
 // PrepareOrderResponse gets the updated order and returns the commitment and extension
-func (s *Service) PrepareOrderResponse(orderPart2 *documents.OrderDoc, reqExtension, fulfillExtension map[string]string) (commitment string, extension map[string]string, err error) {
+func (s *Service) PrepareOrderResponse(orderPart2 *documents.OrderDoc) (commitment string, extension map[string]string, err error) {
 	pubKeyPart2of2 := orderPart2.OrderPart2.CommitmentPublicKey
 	finalPublicKey, cryptoAddress, err := generateFinalPubKey(s, pubKeyPart2of2, *orderPart2)
 

@@ -12,8 +12,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/TylerBrock/colorjson"
 	"github.com/apache/incubator-milagro-dta/pkg/api"
+	"github.com/apache/incubator-milagro-dta/pkg/service"
 )
 
 //QueryChain the blockchain for an index
@@ -80,7 +80,7 @@ func HandleChainTX(myID string, tx string) error {
 		return err
 	}
 	panic(nil)
-	err = callNextTX(blockChainTX, "5556")
+	err = callNextTX(nil, blockChainTX, "5556")
 	if err != nil {
 		return err
 	}
@@ -114,7 +114,7 @@ func decodeTX(payload string) (*api.BlockChainTX, string, error) {
 	return tx, hash, nil
 }
 
-func callNextTX(tx *api.BlockChainTX, listenPort string) error {
+func callNextTX(svc service.Service, tx *api.BlockChainTX, listenPort string) error {
 	// recipient := tx.RecipientID
 	// sender := tx.SenderID
 	//payloadJSON := tx.Payload
@@ -122,6 +122,19 @@ func callNextTX(tx *api.BlockChainTX, listenPort string) error {
 
 	if tx.Processor == "NONE" {
 		//The TX is information and doesn't require any further processing
+		return nil
+	}
+
+	if tx.Processor == "dump" {
+		svc.Dump(tx)
+		return nil
+	}
+	if tx.Processor == "v1/fulfill/order" {
+		svc.BCFulfillOrder(tx)
+		return nil
+	}
+	if tx.Processor == "v1/order2" {
+		svc.Order2(tx)
 		return nil
 	}
 
@@ -148,21 +161,6 @@ func callNextTX(tx *api.BlockChainTX, listenPort string) error {
 		///fmt.Print(scanner.Text())
 	}
 	return nil
-}
-
-//DumpTX - Decode the Payload into JSON and displays the entire Blockchain TX unencoded
-func DumpTX(bctx *api.BlockChainTX) {
-	f := colorjson.NewFormatter()
-	f.Indent = 4
-	var payloadObj map[string]interface{}
-	payload := bctx.Payload
-	json.Unmarshal([]byte(payload), &payloadObj)
-	jsonstring, _ := json.Marshal(bctx)
-	var obj map[string]interface{}
-	json.Unmarshal([]byte(jsonstring), &obj)
-	obj["Payload"] = payloadObj
-	s, _ := f.Marshal(obj)
-	fmt.Println(string(s))
 }
 
 //DumpTXID -

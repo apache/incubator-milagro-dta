@@ -14,7 +14,7 @@ require (
 	github.com/golang/protobuf v1.3.2
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.7.3
-	github.com/hokaccha/go-prettyjson v0.0.0-20190818114111-108c894c2c0e // indirect
+	github.com/hokaccha/go-prettyjson v0.0.0-20190818114111-108c894c2c0e
 	github.com/ipfs/go-datastore v0.0.5
 	github.com/ipfs/go-ds-leveldb v0.0.2
 	github.com/ipfs/go-ipfs v0.4.22

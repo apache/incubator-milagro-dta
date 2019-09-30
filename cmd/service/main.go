@@ -153,12 +153,6 @@ func startDaemon(args []string) error {
 		return errors.Wrap(err, "init datastore")
 	}
 
-	//Connect to Blockchain - Tendermint
-	go tendermint.Subscribe(store, logger, cfg.Node.NodeID, cfg.HTTP.ListenAddr)
-	if err != nil {
-		return errors.Wrap(err, "init Tendermint Blockchain")
-	}
-
 	logger.Info("IPFS connector type: %s", cfg.IPFS.Connector)
 	var ipfsConnector ipfs.Connector
 	switch cfg.IPFS.Connector {
@@ -238,6 +232,13 @@ func startDaemon(args []string) error {
 	logger.Info("Node Type: %v", strings.ToLower(cfg.Node.NodeType))
 	endpoints := endpoints.Endpoints(svcPlugin, cfg.HTTP.CorsAllow, authorizer, logger, cfg.Node.NodeType)
 	httpHandler := transport.NewHTTPHandler(endpoints, logger, duration)
+
+	//Connect to Blockchain - Tendermint
+	go tendermint.Subscribe(svcPlugin, store, logger, cfg.Node.NodeID, cfg.HTTP.ListenAddr)
+	if err != nil {
+		return errors.Wrap(err, "init Tendermint Blockchain")
+	}
+
 	// Start the application http server
 	go func() {
 		logger.Info("starting listener on %v, custody server %v", cfg.HTTP.ListenAddr, cfg.Node.MasterFiduciaryServer)

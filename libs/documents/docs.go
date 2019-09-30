@@ -96,6 +96,17 @@ func DecodeIDDocument(rawdoc []byte, tag string, idDocument *IDDoc) error {
 	return nil
 }
 
+//PeekOrderDocument - look at the header inside an order document before decryption
+func OrderDocumentSigner(rawDoc []byte) (string, error) {
+	signedEnvelope := SignedEnvelope{}
+	err := proto.Unmarshal(rawDoc, &signedEnvelope)
+	if err != nil {
+		return "", errors.New("Protobuf - Failed to unmarshal Signed Envelope")
+	}
+	return signedEnvelope.SignerCID, nil
+
+}
+
 //DecodeOrderDocument -
 func DecodeOrderDocument(rawdoc []byte, tag string, orderdoc *OrderDoc, sikeSK []byte, recipientCID string, sendersBlsPK []byte) error {
 	cipherText := OrderDocument{}

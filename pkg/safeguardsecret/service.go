@@ -54,9 +54,10 @@ func (s *Service) Vendor() string {
 }
 
 // PrepareOrderResponse gets the updated order and returns the commitment and extension
-func (s *Service) PrepareOrderResponse(orderPart2 *documents.OrderDoc, reqExtension, fulfillExtension map[string]string) (commitment string, extension map[string]string, err error) {
-	finalPublicKey := orderPart2.OrderPart2.CommitmentPublicKey
-	c, v, t, err := crypto.Secp256k1Encrypt(reqExtension["plainText"], finalPublicKey)
+func (s *Service) PrepareOrderResponse(order *documents.OrderDoc) (commitment string, extension map[string]string, err error) {
+	finalPublicKey := order.OrderPart2.CommitmentPublicKey
+	plainText := order.OrderPart2.Extension["plainText"]
+	c, v, t, err := crypto.Secp256k1Encrypt(plainText, finalPublicKey)
 
 	return finalPublicKey, map[string]string{"cypherText": c, "v": v, "t": t}, nil
 }

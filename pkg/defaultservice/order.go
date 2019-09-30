@@ -18,8 +18,8 @@
 package defaultservice
 
 import (
+	"encoding/hex"
 	"encoding/json"
-	"time"
 
 	"github.com/apache/incubator-milagro-dta/libs/cryptowallet"
 	"github.com/apache/incubator-milagro-dta/libs/documents"
@@ -152,21 +152,25 @@ func (s *Service) Order1(req *api.OrderRequest) (string, error) {
 		return "", err
 	}
 
-	//Fullfill the order on the remote Server
 	request := &api.FulfillOrderRequest{
 		DocumentCID:   nodeID,
 		OrderPart1CID: orderPart1CID,
 		Extension:     fulfillExtension,
 	}
 
+	//This is serialized and output to the chain
+	txHash, payload, err := common.CreateTX(nodeID, s.Store, nodeID, order, recipientList)
+
 	marshaledRequest, _ := json.Marshal(request)
+	_ = marshaledRequest
 
 	//Write the requests to the chain
 	chainTX := &api.BlockChainTX{
 		Processor:   api.TXFulfillRequest,
 		SenderID:    nodeID,
 		RecipientID: []string{s.MasterFiduciaryNodeID(), nodeID},
-		Payload:     marshaledRequest,
+		Payload:     payload, //marshaledRequest,
+		TXhash:      txHash,
 		Tags:        map[string]string{"reference": order.Reference},
 	}
 	tendermint.PostToChain(chainTX, "Order1")
@@ -174,8 +178,10 @@ func (s *Service) Order1(req *api.OrderRequest) (string, error) {
 }
 
 // Order2 -
-func (s *Service) Order2(req *api.FulfillOrderResponse) (string, error) {
+func (s *Service) Order2(tx *api.BlockChainTX) (string, error) {
 	nodeID := s.NodeID()
+	reqPayload := tx.Payload
+	txHashString := hex.EncodeToString(tx.TXhash)
 
 	remoteIDDoc, err := common.RetrieveIDDocFromIPFS(s.Ipfs, s.MasterFiduciaryNodeID())
 	if err != nil {
@@ -187,39 +193,59 @@ func (s *Service) Order2(req *api.FulfillOrderResponse) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	updatedOrder, err := common.RetrieveOrderFromIPFS(s.Ipfs, req.OrderPart2CID, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
-	if err != nil {
-		return "", errors.Wrap(err, "Fail to retrieve Order from IPFS")
-	}
+
+	order := &documents.OrderDoc{}
+	err = documents.DecodeOrderDocument(reqPayload, txHashString, order, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
+
+	// updatedOrder, err := common.RetrieveOrderFromIPFS(s.Ipfs, req.OrderPart2CID, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
+	// if err != nil {
+	// 	return "", errors.Wrap(err, "Fail to retrieve Order from IPFS")
+	// }
 
 	//update OrderPartCID for order id
 
-	commitment, extension, err := s.Plugin.PrepareOrderResponse(updatedOrder, req.Extension, req.Extension)
+	commitment, extension, err := s.Plugin.PrepareOrderResponse(order)
 	if err != nil {
 		return "", errors.Wrap(err, "Generating Final Public Key")
 	}
 
-	err = common.WriteOrderToStore(s.Store, updatedOrder.Reference, req.OrderPart2CID)
+	order.OrderPart2.CommitmentPublicKey = commitment
+
+	//Populate Extension
+
+	if order.OrderPart2.Extension == nil {
+		order.OrderPart2.Extension = make(map[string]string)
+	}
+	for key, value := range extension {
+
+		order.OrderPart2.Extension[key] = value
+	}
+
+	// err = common.WriteOrderToStore(s.Store, order.Reference, req.OrderPart2CID)
+	// if err != nil {
+	// 	return "", errors.Wrap(err, "Saving new CID to Order reference")
+	// }
+
+	// response := &api.OrderResponse{
+	// 	OrderReference: order.Reference,
+	// 	Commitment:     commitment,
+	// 	CreatedAt:      time.Now().Unix(),
+	// 	Extension:      extension,
+	// }
+	recipientList, err := common.BuildRecipientList(s.Ipfs, nodeID, nodeID)
 	if err != nil {
-		return "", errors.Wrap(err, "Saving new CID to Order reference")
+		return "", err
 	}
+	txHash, payload, err := common.CreateTX(nodeID, s.Store, nodeID, order, recipientList)
 
-	response := &api.OrderResponse{
-		OrderReference: updatedOrder.Reference,
-		Commitment:     commitment,
-		CreatedAt:      time.Now().Unix(),
-		Extension:      extension,
-	}
-
-	marshaledRequest, _ := json.Marshal(response)
-
-	//Write the requests to the chain
+	//Write the Order2 results to the chain
 	chainTX := &api.BlockChainTX{
-		Processor:   api.TXOrderSecretResponse,
-		SenderID:    "",
-		RecipientID: []string{s.MasterFiduciaryNodeID(), nodeID},
-		Payload:     marshaledRequest,
-		Tags:        map[string]string{"reference": updatedOrder.Reference},
+		Processor:   api.TXOrderResponse,
+		SenderID:    "", //use no Sender so we can read our own Result for testing
+		RecipientID: []string{nodeID},
+		Payload:     payload,
+		TXhash:      txHash,
+		Tags:        map[string]string{"reference": order.Reference},
 	}
 	return tendermint.PostToChain(chainTX, "Order2")
 

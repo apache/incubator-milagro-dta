@@ -340,16 +340,17 @@ func MakeOrder1Endpoint(m service.Service) endpoint.Endpoint {
 
 //MakeOrder2Endpoint -
 func MakeOrder2Endpoint(m service.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		req, ok := request.(*api.FulfillOrderResponse)
-		if !ok {
-			return nil, transport.ErrInvalidRequest
-		}
-		if err := validateRequest(req); err != nil {
-			return "", err
-		}
-		return m.Order2(req)
-	}
+	// return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+	// 	req, ok := request.(*api.FulfillOrderResponse)
+	// 	if !ok {
+	// 		return nil, transport.ErrInvalidRequest
+	// 	}
+	// 	if err := validateRequest(req); err != nil {
+	// 		return "", err
+	// 	}
+	// 	return m.Order2(req)
+	// }
+	return nil
 }
 
 //MakeOrderSecret1Endpoint -

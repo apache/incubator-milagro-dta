@@ -32,12 +32,12 @@ const (
 	TXOrderRequest    = "v1/order1"
 	TXFulfillRequest  = "v1/fulfill/order"
 	TXFulfillResponse = "v1/order2"
-	TXOrderResponse   = "NONE"
+	TXOrderResponse   = "dump"
 
 	TXOrderSecretRequest         = "v1/order/secret1"
 	TXFulfillOrderSecretRequest  = "v1/fulfill/order/secret"
 	TXFulfillOrderSecretResponse = "v1/order/secret2"
-	TXOrderSecretResponse        = "NONE"
+	TXOrderSecretResponse        = "dump"
 )
 
 //BlockChainTX - struct for on chain req/resp

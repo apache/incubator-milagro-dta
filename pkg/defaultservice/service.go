@@ -21,14 +21,19 @@ Package defaultservice - Service that Milagro D-TA provides with no-plugins
 package defaultservice
 
 import (
+	"encoding/hex"
+	"fmt"
 	"io"
 	"time"
 
 	"github.com/apache/incubator-milagro-dta/libs/datastore"
+	"github.com/apache/incubator-milagro-dta/libs/documents"
 	"github.com/apache/incubator-milagro-dta/libs/ipfs"
 	"github.com/apache/incubator-milagro-dta/libs/logger"
 	"github.com/apache/incubator-milagro-dta/pkg/api"
+	"github.com/apache/incubator-milagro-dta/pkg/common"
 	"github.com/apache/incubator-milagro-dta/pkg/config"
+	"github.com/hokaccha/go-prettyjson"
 )
 
 var (
@@ -111,4 +116,27 @@ func (s *Service) Status(apiVersion, nodeType string) (*api.StatusResponse, erro
 		TimeStamp:       time.Now(),
 		Plugin:          s.Plugin.Name(),
 	}, nil
+}
+
+func (s *Service) Dump(tx *api.BlockChainTX) error {
+	nodeID := s.NodeID()
+	txHashString := hex.EncodeToString(tx.TXhash)
+
+	localIDDoc, err := common.RetrieveIDDocFromIPFS(s.Ipfs, nodeID)
+	if err != nil {
+		return err
+	}
+
+	_, _, _, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
+	if err != nil {
+		return err
+	}
+
+	order := &documents.OrderDoc{}
+	err = documents.DecodeOrderDocument(tx.Payload, txHashString, order, sikeSK, nodeID, localIDDoc.BLSPublicKey)
+
+	pp, _ := prettyjson.Marshal(order)
+	fmt.Println(string(pp))
+
+	return nil
 }

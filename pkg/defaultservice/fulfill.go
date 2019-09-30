@@ -18,13 +18,100 @@
 package defaultservice
 
 import (
+	"encoding/hex"
 	"encoding/json"
+	"time"
 
 	"github.com/apache/incubator-milagro-dta/libs/cryptowallet"
+	"github.com/apache/incubator-milagro-dta/libs/documents"
 	"github.com/apache/incubator-milagro-dta/pkg/api"
 	"github.com/apache/incubator-milagro-dta/pkg/common"
 	"github.com/apache/incubator-milagro-dta/pkg/tendermint"
 )
+
+func (s *Service) BCFulfillOrder(tx *api.BlockChainTX) (string, error) {
+
+	reqPayload := tx.Payload
+	txHashString := hex.EncodeToString(tx.TXhash)
+
+	//Decode the incoming TX
+	//Peek inside the TX
+	//Pull out the header - to get PrincipalID
+	signerID, err := documents.OrderDocumentSigner(reqPayload)
+	if err != nil {
+		return "", err
+	}
+
+	//orderPart1CID := req.OrderPart1CID
+	nodeID := s.NodeID()
+	remoteIDDocCID := signerID
+
+	_, _, _, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
+	if err != nil {
+		return "", err
+	}
+
+	remoteIDDoc, err := common.RetrieveIDDocFromIPFS(s.Ipfs, remoteIDDocCID)
+	if err != nil {
+		return "", err
+	}
+
+	//Retrieve the order from IPFS
+	order := &documents.OrderDoc{}
+	err = documents.DecodeOrderDocument(reqPayload, txHashString, order, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
+
+	//	order, err := common.RetrieveOrderFromIPFS(s.Ipfs, orderPart1CID, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
+	if err != nil {
+		return "", err
+	}
+
+	recipientList, err := common.BuildRecipientList(s.Ipfs, order.PrincipalCID, nodeID)
+	if err != nil {
+		return "", err
+	}
+
+	//Generate the secret and store for later redemption
+	seed, err := common.MakeRandomSeedAndStore(s.Store, s.Rng, order.Reference)
+	if err != nil {
+		return "", err
+	}
+
+	//Generate the Public Key (Commitment) from the Seed/Secret
+	commitmentPublicKey, err := cryptowallet.RedeemPublicKey(seed)
+	if err != nil {
+		return "", err
+	}
+
+	//Create an order part 2
+	Part2 := documents.OrderPart2{
+		CommitmentPublicKey: commitmentPublicKey,
+		PreviousOrderCID:    txHashString,
+		Timestamp:           time.Now().Unix(),
+	}
+	order.OrderPart2 = &Part2
+
+	txHash, payload, err := common.CreateTX(nodeID, s.Store, nodeID, order, recipientList)
+	//_ = txHashID
+
+	// orderPart2CID, err := common.CreateAndStoreOrderPart2(s.Ipfs, s.Store, order, orderPart1CID, commitmentPublicKey, nodeID, recipientList)
+	// if err != nil {
+	// 	return "", err
+	// }
+
+	//marshaledRequest, _ := json.Marshal(response)
+
+	//Write the requests to the chain
+	chainTX := &api.BlockChainTX{
+		Processor:   api.TXFulfillResponse,
+		SenderID:    nodeID,
+		RecipientID: []string{order.PrincipalCID, nodeID},
+		Payload:     payload,
+		TXhash:      txHash,
+		Tags:        map[string]string{"reference": order.Reference},
+	}
+	return tendermint.PostToChain(chainTX, "FulfillOrder")
+
+}
 
 // FulfillOrder -
 func (s *Service) FulfillOrder(req *api.FulfillOrderRequest) (string, error) {

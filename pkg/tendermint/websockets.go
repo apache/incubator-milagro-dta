@@ -13,6 +13,7 @@ import (
 	"github.com/apache/incubator-milagro-dta/libs/datastore"
 	"github.com/apache/incubator-milagro-dta/libs/logger"
 	"github.com/apache/incubator-milagro-dta/pkg/api"
+	"github.com/apache/incubator-milagro-dta/pkg/service"
 	status "github.com/apache/incubator-milagro-dta/pkg/tendermint/status"
 	"github.com/pkg/errors"
 	tmclient "github.com/tendermint/tendermint/rpc/client"
@@ -160,23 +161,20 @@ func parseHistory(txHistory []ctypes.ResultTx) {
 	print("Finished loading - but not parsing the History\n")
 }
 
-func processTXQueue(queue chan api.BlockChainTX, listenPort string) {
+func processTXQueue(svc service.Service, queue chan api.BlockChainTX, listenPort string) {
 	print("Processing queue\n")
 	for payload := range queue {
 		//blockchainTX, txid, err := decodeTX(string(tx))
 		//TXIDhex := hex.EncodeToString(payload.TXhash[:])
 		//	logger.Info("Incoming TXHash:%s . Processor:%s", TXIDhex, payload.Processor)
 
-		if payload.Processor == "NONE" {
-			DumpTX(&payload)
-		} else {
-			callNextTX(&payload, listenPort)
-		}
+		callNextTX(svc, &payload, listenPort)
 	}
+	print("Finished processing queue")
 }
 
 //Subscribe - Connect to the Tendermint websocket to collect events
-func Subscribe(store *datastore.Store, logger *logger.Logger, nodeID string, listenPort string) error {
+func Subscribe(svc service.Service, store *datastore.Store, logger *logger.Logger, nodeID string, listenPort string) error {
 	//Subscribe to channel
 	//Get height
 
@@ -200,7 +198,7 @@ func Subscribe(store *datastore.Store, logger *logger.Logger, nodeID string, lis
 
 	loadAllHistoricTX(processedToHeight, currentBlockHeight, txHistory, nodeID, listenPort)
 
-	processTXQueue(queueWaiting, listenPort)
+	processTXQueue(svc, queueWaiting, listenPort)
 
 	// var height int
 	// store.Get("chain", "height", &height)

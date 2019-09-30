@@ -99,6 +99,7 @@ message OrderPart2 {
     string CommitmentPublicKey = 1;
     string PreviousOrderCID    = 2 [(validator.field) = {regex: "^Q[[:alnum:]]{45}$|^$"}];
     int64 Timestamp            = 3 [(validator.field) = {int_gt:1564050341,int_lt:32521429541}];
+    map<string, string> Extension = 4;
 }
 
 message OrderPart3 {

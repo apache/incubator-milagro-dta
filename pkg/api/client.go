@@ -34,9 +34,11 @@ var (
 
 //ClientService - enables service to be mocked
 type ClientService interface {
+	BCFulfillOrder(tx *BlockChainTX) (string, error)
 	FulfillOrder(req *FulfillOrderRequest) (*FulfillOrderResponse, error)
 	FulfillOrderSecret(req *FulfillOrderSecretRequest) (*FulfillOrderSecretResponse, error)
 	Status(token string) (*StatusResponse, error)
+	Dump(tx *BlockChainTX) error
 }
 
 // MilagroClientService - implements Service Interface
@@ -112,4 +114,12 @@ func (c MilagroClientService) Status(token string) (*StatusResponse, error) {
 	}
 	r := s.(*StatusResponse)
 	return r, nil
+}
+
+func (c MilagroClientService) BCFulfillOrder(tx *BlockChainTX) (string, error) {
+	return "", nil
+}
+
+func (c MilagroClientService) Dump(tx *BlockChainTX) error {
+	return nil
 }

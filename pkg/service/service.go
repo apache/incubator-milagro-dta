@@ -38,9 +38,10 @@ type Service interface {
 	OrderSecret2(req *api.FulfillOrderSecretResponse) (string, error)
 
 	Order1(req *api.OrderRequest) (string, error)
-	Order2(req *api.FulfillOrderResponse) (string, error)
+	Order2(tx *api.BlockChainTX) (string, error)
 
 	//Fullfill processing
+	BCFulfillOrder(tx *api.BlockChainTX) (string, error)
 	FulfillOrder(req *api.FulfillOrderRequest) (string, error)
 	FulfillOrderSecret(req *api.FulfillOrderSecretRequest) (string, error)
 
@@ -50,5 +51,6 @@ type Service interface {
 	SetMasterFiduciaryNodeID(masterFiduciaryNodeID string)
 
 	//System
+	Dump(tx *api.BlockChainTX) error //Decrypt and dump the order
 	Status(apiVersion, nopdeType string) (*api.StatusResponse, error)
 }

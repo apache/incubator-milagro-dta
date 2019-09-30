@@ -86,16 +86,6 @@ func subscribeAndQueue(queueWaiting chan api.BlockChainTX, logger *logger.Logger
 			queueWaiting <- payload
 			fmt.Printf("Incoming Transaction:%d \n", len(queueWaiting))
 
-			// //blockchainTX, txid, err := decodeTX(string(tx))
-			// TXIDhex := hex.EncodeToString(payload.TXhash[:])
-			// logger.Info("Incoming TXHash:%s . Processor:%s", TXIDhex, payload.Processor)
-
-			// if payload.Processor == "NONE" {
-			// 	DumpTX(&payload)
-			// } else {
-			// 	callNextTX(&payload, listenPort)
-			// }
-
 		case <-quit:
 			os.Exit(0)
 		}

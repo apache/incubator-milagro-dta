@@ -33,16 +33,12 @@ type Service interface {
 	GetOrder(req *api.GetOrderRequest) (*api.GetOrderResponse, error)
 	OrderList(req *api.OrderListRequest) (*api.OrderListResponse, error)
 
-	//Order processing
+	//Order processing - REST access to create an Order & Redeem
 	OrderSecret1(req *api.OrderSecretRequest) (string, error)
-	OrderSecret2(tx *api.BlockChainTX) (string, error)
-
 	Order1(req *api.OrderRequest) (string, error)
-	Order2(tx *api.BlockChainTX) (string, error)
 
 	//Fullfill processing
 	FulfillOrder(tx *api.BlockChainTX) (string, error)
-	FulfillOrderSecret(tx *api.BlockChainTX) (string, error)
 
 	NodeID() string
 	MasterFiduciaryNodeID() string
@@ -50,6 +46,11 @@ type Service interface {
 	SetMasterFiduciaryNodeID(masterFiduciaryNodeID string)
 
 	//System
-	Dump(tx *api.BlockChainTX) error //Decrypt and dump the order
 	Status(apiVersion, nopdeType string) (*api.StatusResponse, error)
+
+	//Blockchain transactions
+	Dump(tx *api.BlockChainTX) error //Decrypt and dump the order for debugging purposes.
+	OrderSecret2(tx *api.BlockChainTX) (string, error)
+	FulfillOrderSecret(tx *api.BlockChainTX) (string, error)
+	Order2(tx *api.BlockChainTX) (string, error)
 }

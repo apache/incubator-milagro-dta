@@ -35,7 +35,7 @@ var (
 //ClientService - enables service to be mocked
 type ClientService interface {
 	FulfillOrder(tx *BlockChainTX) (string, error)
-	FulfillOrderSecret(req *FulfillOrderSecretRequest) (*FulfillOrderSecretResponse, error)
+	FulfillOrderSecret(req *FulfillOrderSecretRequest) (string, error)
 	Status(token string) (*StatusResponse, error)
 	Dump(tx *BlockChainTX) error
 }
@@ -48,18 +48,6 @@ type MilagroClientService struct {
 // ClientEndpoints return only the exported endpoints
 func ClientEndpoints() transport.HTTPEndpoints {
 	return transport.HTTPEndpoints{
-		"FulfillOrder": {
-			Path:        "/" + apiVersion + "/fulfill/order",
-			Method:      http.MethodPost,
-			NewRequest:  func() interface{} { return &FulfillOrderRequest{} },
-			NewResponse: func() interface{} { return &FulfillOrderResponse{} },
-		},
-		"FulfillOrderSecret": {
-			Path:        "/" + apiVersion + "/fulfill/order/secret",
-			Method:      http.MethodPost,
-			NewRequest:  func() interface{} { return &FulfillOrderSecretRequest{} },
-			NewResponse: func() interface{} { return &FulfillOrderSecretResponse{} },
-		},
 		"Status": {
 			Path:        "/" + apiVersion + "/status",
 			Method:      http.MethodGet,
@@ -73,19 +61,6 @@ func NewHTTPClient(instance string, logger *logger.Logger) (ClientService, error
 	clientEndpoints, err := transport.NewHTTPClient(instance, ClientEndpoints(), logger)
 	return MilagroClientService{clientEndpoints}, err
 
-}
-
-//FulfillOrderSecret -
-func (c MilagroClientService) FulfillOrderSecret(req *FulfillOrderSecretRequest) (*FulfillOrderSecretResponse, error) {
-	endpoint := c.endpoints["FulfillOrderSecret"]
-	ctx := context.Background()
-
-	d, err := endpoint(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	r := d.(*FulfillOrderSecretResponse)
-	return r, nil
 }
 
 //Status - Allows a client to see the status of the server that it is connecting too
@@ -102,10 +77,17 @@ func (c MilagroClientService) Status(token string) (*StatusResponse, error) {
 	return r, nil
 }
 
+//FulfillOrderSecret -
+func (c MilagroClientService) FulfillOrderSecret(req *FulfillOrderSecretRequest) (string, error) {
+	return "", nil
+}
+
+//FulfillOrder -
 func (c MilagroClientService) FulfillOrder(tx *BlockChainTX) (string, error) {
 	return "", nil
 }
 
+//Dump - send a message to self via chain for display - For Debugging/Testing/Dev only
 func (c MilagroClientService) Dump(tx *BlockChainTX) error {
 	return nil
 }

@@ -115,9 +115,6 @@ func decodeTX(payload string) (*api.BlockChainTX, string, error) {
 }
 
 func callNextTX(svc service.Service, tx *api.BlockChainTX, listenPort string) error {
-	// recipient := tx.RecipientID
-	// sender := tx.SenderID
-	//payloadJSON := tx.Payload
 	payloadString := string(tx.Payload)
 
 	if tx.Processor == "NONE" {

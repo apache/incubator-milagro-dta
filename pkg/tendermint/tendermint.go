@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/apache/incubator-milagro-dta/pkg/api"
@@ -115,56 +114,22 @@ func decodeTX(payload string) (*api.BlockChainTX, string, error) {
 }
 
 func callNextTX(svc service.Service, tx *api.BlockChainTX, listenPort string) error {
-	payloadString := string(tx.Payload)
-
-	if tx.Processor == "NONE" {
-		//The TX is information and doesn't require any further processing
+	switch tx.Processor {
+	case "none":
 		return nil
-	}
-
-	if tx.Processor == "dump" {
+	case "dump":
 		svc.Dump(tx)
-		return nil
-	}
-	if tx.Processor == "v1/fulfill/order" {
+	case "v1/fulfill/order":
 		svc.FulfillOrder(tx)
-		return nil
-	}
-	if tx.Processor == "v1/order2" {
+	case "v1/order2":
 		svc.Order2(tx)
-		return nil
-	}
-
-	if tx.Processor == "v1/fulfill/order/secret" {
+	case "v1/fulfill/order/secret":
 		svc.FulfillOrderSecret(tx)
-		return nil
-	}
-	if tx.Processor == "v1/order/secret2" {
+	case "v1/order/secret2":
 		svc.OrderSecret2(tx)
-		return nil
-	}
 
-	desintationURL := fmt.Sprintf("http://localhost"+listenPort+"/%s", tx.Processor)
-
-	body := strings.NewReader(payloadString)
-	req, err := http.NewRequest("POST", os.ExpandEnv(desintationURL), body)
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Accept", "*/*")
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	scanner := bufio.NewScanner(resp.Body)
-	scanner.Split(bufio.ScanBytes)
-	t := ""
-	for scanner.Scan() {
-		t += scanner.Text()
-		///fmt.Print(scanner.Text())
+	default:
+		return errors.New("Unknown processor")
 	}
 	return nil
 }

@@ -105,7 +105,9 @@ func (s *Service) PrepareOrderPart1(order *documents.OrderDoc, reqExtension map[
 }
 
 // PrepareOrderResponse gets the updated order and returns the commitment and extension
-func (s *Service) PrepareOrderResponse(orderPart2 *documents.OrderDoc, reqExtension, fulfillExtension map[string]string) (commitment string, extension map[string]string, err error) {
+//func (s *Service) PrepareOrderResponse(orderPart2 *documents.OrderDoc, reqExtension, fulfillExtension map[string]string) (commitment string, extension map[string]string, err error) {
+
+func (s *Service) PrepareOrderResponse(orderPart2 *documents.OrderDoc) (commitment string, extension map[string]string, err error) {
 	return orderPart2.OrderPart2.CommitmentPublicKey, nil, nil
 }
 
@@ -142,10 +144,13 @@ func (s *Service) Order1(req *api.OrderRequest) (string, error) {
 		return "", err
 	}
 
-	// fulfillExtension, err := s.Plugin.PrepareOrderPart1(order, req.Extension)
-	// if err != nil {
-	// 	return "", err
-	// }
+	//Populate extension fields
+	if order.OrderReqExtension == nil {
+		order.OrderReqExtension = make(map[string]string)
+	}
+	for key, value := range req.Extension {
+		order.OrderReqExtension[key] = value
+	}
 
 	//This is serialized and output to the chain
 	txHash, payload, err := common.CreateTX(nodeID, s.Store, nodeID, order, recipientList)
@@ -206,6 +211,14 @@ func (s *Service) OrderSecret1(req *api.OrderSecretRequest) (string, error) {
 		if err != nil {
 			return "", errors.Wrap(err, "Fail to retrieve existing order")
 		}
+	}
+
+	//Populate extension fields
+	if order.OrderSecretReqExtension == nil {
+		order.OrderSecretReqExtension = make(map[string]string)
+	}
+	for key, value := range req.Extension {
+		order.OrderSecretReqExtension[key] = value
 	}
 
 	if err := s.Plugin.ValidateOrderSecretRequest(req, *order); err != nil {

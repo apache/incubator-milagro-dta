@@ -74,6 +74,11 @@ type NodeConfig struct {
 	Datastore             string `yaml:"dataStore"`
 }
 
+//Blockchain Config -
+type BlockchainConfig struct {
+	BroadcastNode string `yaml:"broadcastNode"`
+}
+
 // PluginsConfig -
 type PluginsConfig struct {
 	Service string `yaml:"service"`
@@ -81,11 +86,12 @@ type PluginsConfig struct {
 
 // Config -
 type Config struct {
-	HTTP    HTTPConfig    `yaml:"http"`
-	Node    NodeConfig    `yaml:"node"`
-	Log     LogConfig     `yaml:"log"`
-	IPFS    IPFSConfig    `yaml:"ipfs"`
-	Plugins PluginsConfig `yaml:"plugins"`
+	HTTP       HTTPConfig       `yaml:"http"`
+	Node       NodeConfig       `yaml:"node"`
+	Log        LogConfig        `yaml:"log"`
+	IPFS       IPFSConfig       `yaml:"ipfs"`
+	Plugins    PluginsConfig    `yaml:"plugins"`
+	Blockchain BlockchainConfig `yaml:"blockchain"`
 }
 
 // Init initialise config folder with default options

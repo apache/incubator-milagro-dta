@@ -20,11 +20,12 @@ package config
 // DefaultConfig -
 func DefaultConfig() *Config {
 	return &Config{
-		HTTP:    defaultHTTPConfig(),
-		Node:    defaultNodeConfig(),
-		Log:     defaultLogConfig(),
-		IPFS:    defaultIPFSConfig(),
-		Plugins: defaultPluginsConfig(),
+		HTTP:       defaultHTTPConfig(),
+		Node:       defaultNodeConfig(),
+		Log:        defaultLogConfig(),
+		IPFS:       defaultIPFSConfig(),
+		Plugins:    defaultPluginsConfig(),
+		Blockchain: defaultBlockchainConfig(),
 	}
 }
 
@@ -67,6 +68,12 @@ func defaultNodeConfig() NodeConfig {
 		MasterFiduciaryNodeID: "",
 		NodeID:                "",
 		Datastore:             "embedded",
+	}
+}
+
+func defaultBlockchainConfig() BlockchainConfig {
+	return BlockchainConfig{
+		BroadcastNode: "34.246.173.153:26657",
 	}
 }
 

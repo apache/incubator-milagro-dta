@@ -28,12 +28,12 @@ echo "$apiURL/$apiVersion/status"
 execute_bitcoin () {
   # #Run 4 Tests against the Bitcoin Extension
   echo "Bitcoin Plugin Tests [4 Tests]"
-  output1=$(curl -s -X POST "$apiURL/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":\"\",\"extension\":{\"coin\":\"0\"}}")
+  output1=$(curl -s -X POST "$apiURL/$apiVersion/order1" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":\"\",\"extension\":{\"coin\":\"0\"}}")
   #echo $output1
   op1=$(echo $output1 | jq .orderReference)
   commitment1=$(echo $output1 | jq .commitment)
   address1=$(echo $output1 | jq .extension.address)
-  output2=$(curl -s -X POST "$apiURL/$apiVersion/order/secret" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$op1,\"beneficiaryIDDocumentCID\":$identity}")
+  output2=$(curl -s -X POST "$apiURL/$apiVersion/order/secret1" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$op1,\"beneficiaryIDDocumentCID\":$identity}")
   address2=$(echo $output2 | jq .extension.address)
   commitment2=$(echo $output2 | jq .commitment)
 
@@ -52,12 +52,12 @@ execute_bitcoin () {
     exit 1
   fi
 
-  output3=$(curl -s -X POST "$apiURL/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":$identity,\"extension\":{\"coin\":\"0\"}}")
+  output3=$(curl -s -X POST "$apiURL/$apiVersion/order1" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":$identity,\"extension\":{\"coin\":\"0\"}}")
 
   op3=$(echo $output3 | jq .orderReference)
   commitment3=$(echo $output3 | jq .commitment)
   address3=$(echo $output3 | jq .extension.address)
-  output4=$(curl -s -X POST "$apiURL/$apiVersion/order/secret" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$op3}")
+  output4=$(curl -s -X POST "$apiURL/$apiVersion/order/secret1" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$op3}")
   commitment4=$(echo $output4 | jq .commitment)
   address4=$(echo $output4 | jq .extension.address)
   orderReference=$(echo $output4 | jq .orderReference)
@@ -86,13 +86,13 @@ execute_bitcoin () {
 
 
    #Tests against the Bitcoin Extension - different befificary
-   output6=$(curl -s -X POST "http://localhost:5556/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":\"\",\"extension\":{\"coin\":\"0\"}}")
+   output6=$(curl -s -X POST "http://localhost:5556/$apiVersion/order1" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":\"\",\"extension\":{\"coin\":\"0\"}}")
    #echo $output6
    op6=$(echo $output6 | jq .orderReference)
    commitment6=$(echo $output6 | jq .commitment)
    address6=$(echo $output6 | jq .extension.address)
 
-   output7=$(curl -s -X POST "http://localhost:5556/$apiVersion/order/secret" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$op6,\"beneficiaryIDDocumentCID\":\"$benid\"}")
+   output7=$(curl -s -X POST "http://localhost:5556/$apiVersion/order/secret1" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$op6,\"beneficiaryIDDocumentCID\":\"$benid\"}")
    address7=$(echo $output7 | jq .extension.address)
    commitment7=$(echo $output7 | jq .commitment)
 
@@ -111,13 +111,13 @@ execute_bitcoin () {
      exit 1
    fi
 
-  output8=$(curl -s -X POST "http://localhost:5556/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":\"$benid\",\"extension\":{\"coin\":\"0\"}}")
+  output8=$(curl -s -X POST "http://localhost:5556/$apiVersion/order1" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":\"$benid\",\"extension\":{\"coin\":\"0\"}}")
   op8=$(echo $output8 | jq .orderReference)
   commitment8=$(echo $output8 | jq .commitment)
   address8=$(echo $output8 | jq .extension.address)
 
 
-  output9=$(curl -s -X POST "http://localhost:5556/$apiVersion/order/secret" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$op8}")
+  output9=$(curl -s -X POST "http://localhost:5556/$apiVersion/order/secret1" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$op8}")
   commitment9=$(echo $output9 | jq .commitment)
   address9=$(echo $output9 | jq .extension.address)
   orderReference=$(echo $output9 | jq .orderReference)
@@ -147,14 +147,14 @@ execute_safeguardsecret () {
   inputString="This is some random test text 1234567890!"
   echo "Encrypt a String [1 Test]"
   echo $output1
-  output1=$(curl -s -X POST "$apiURL/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":$identity,\"extension\":{\"plainText\":\"$inputString\"}}")
+  output1=$(curl -s -X POST "$apiURL/$apiVersion/order1" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":$identity,\"extension\":{\"plainText\":\"$inputString\"}}")
   echo $output1
   op1=$(echo $output1 | jq .orderReference)
   cipherText=$(echo $output1 | jq .extension.cypherText)
   tvalue=$(echo $output1 | jq .extension.t)
   vvalue=$(echo $output1 | jq .extension.v)
   commitment1=$(echo $output1 | jq .commitment)
-  output2=$(curl -s -X POST "$apiURL/$apiVersion/order/secret" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$op1,\"beneficiaryIDDocumentCID\":$identity,\"extension\":{\"cypherText\":$cipherText,\"t\":$tvalue,\"v\":$vvalue}}")
+  output2=$(curl -s -X POST "$apiURL/$apiVersion/order/secret1" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$op1,\"beneficiaryIDDocumentCID\":$identity,\"extension\":{\"cypherText\":$cipherText,\"t\":$tvalue,\"v\":$vvalue}}")
   result=$(echo $output2 | jq -r .extension.plainText)
 
   orderReference=$(echo $output2 | jq .orderReference)
@@ -174,13 +174,13 @@ execute_safeguardsecret () {
 
 execute_milagro () {
   echo "Milagro Tests [1 Test]"
-  output1=$(curl -s -X POST "$apiURL/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":$identity}")
+  output1=$(curl -s -X POST "$apiURL/$apiVersion/order1" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":$identity}")
   echo $output1
   op1=$(echo $output1 | jq .orderReference)
 
 
   commitment1=$(echo $output1 | jq .commitment)
-  output2=$(curl -s -X POST "$apiURL/$apiVersion/order/secret" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$op1,\"beneficiaryIDDocumentCID\":$identity}")
+  output2=$(curl -s -X POST "$apiURL/$apiVersion/order/secret1" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$op1,\"beneficiaryIDDocumentCID\":$identity}")
   commitment2=$(echo $output2 | jq .commitment)
 
   orderReference=$(echo $output2 | jq .orderReference)

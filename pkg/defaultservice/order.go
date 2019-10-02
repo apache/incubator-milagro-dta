@@ -254,5 +254,6 @@ func (s *Service) OrderSecret1(req *api.OrderSecretRequest) (string, error) {
 		Payload:                payload,
 		Tags:                   map[string]string{"reference": order.Reference, "txhash": hex.EncodeToString(txHash)},
 	}
-	return tendermint.PostToChain(chainTX, "OrderSecret1")
+	tendermint.PostToChain(chainTX, "OrderSecret1")
+	return order.Reference, nil
 }

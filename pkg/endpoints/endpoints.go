@@ -104,20 +104,6 @@ func Endpoints(svc service.Service, corsAllow string, authorizer transport.Autho
 				transport.ErrInvalidRequest: http.StatusUnprocessableEntity,
 			},
 		},
-		"Order2": {
-			Path:        "/" + apiVersion + "/order2",
-			Method:      http.MethodPost,
-			Endpoint:    MakeOrder2Endpoint(svc),
-			NewRequest:  func() interface{} { return &api.FulfillOrderResponse{} },
-			NewResponse: func() interface{} { return &api.OrderResponse{} },
-			Options: transport.ServerOptions(
-				transport.SetCors(corsAllow),
-				transport.AuthorizeOIDC(authorizer, false),
-			),
-			ErrStatus: transport.ErrorStatus{
-				transport.ErrInvalidRequest: http.StatusUnprocessableEntity,
-			},
-		},
 
 		"GetOrder": {
 			Path:        "/" + apiVersion + "/order/{OrderReference}",
@@ -159,51 +145,8 @@ func Endpoints(svc service.Service, corsAllow string, authorizer transport.Autho
 				transport.ErrInvalidRequest: http.StatusUnprocessableEntity,
 			},
 		},
-		"OrderSecret2": {
-			Path:        "/" + apiVersion + "/order/secret2",
-			Method:      http.MethodPost,
-			Endpoint:    MakeOrderSecret2Endpoint(svc),
-			NewRequest:  func() interface{} { return &api.FulfillOrderSecretResponse{} },
-			NewResponse: func() interface{} { return &api.OrderSecretResponse{} },
-			Options: transport.ServerOptions(
-				transport.SetCors(corsAllow),
-				transport.AuthorizeOIDC(authorizer, false),
-			),
-			ErrStatus: transport.ErrorStatus{
-				transport.ErrInvalidRequest: http.StatusUnprocessableEntity,
-			},
-		},
 	}
-	masterFiduciaryEndpoints := transport.HTTPEndpoints{
-		"FulfillOrder": {
-			Path:        "/" + apiVersion + "/fulfill/order",
-			Method:      http.MethodPost,
-			Endpoint:    MakeFulfillOrderEndpoint(svc),
-			NewRequest:  func() interface{} { return &api.FulfillOrderRequest{} },
-			NewResponse: func() interface{} { return &api.FulfillOrderResponse{} },
-			Options: transport.ServerOptions(
-				transport.SetCors(corsAllow),
-				transport.AuthorizeOIDC(authorizer, false),
-			),
-			ErrStatus: transport.ErrorStatus{
-				transport.ErrInvalidRequest: http.StatusUnprocessableEntity,
-			},
-		},
-		"FulfillOrderSecret": {
-			Path:        "/" + apiVersion + "/fulfill/order/secret",
-			Method:      http.MethodPost,
-			Endpoint:    MakeFulfillOrderSecretEndpoint(svc),
-			NewRequest:  func() interface{} { return &api.FulfillOrderSecretRequest{} },
-			NewResponse: func() interface{} { return &api.FulfillOrderSecretResponse{} },
-			Options: transport.ServerOptions(
-				transport.SetCors(corsAllow),
-				transport.AuthorizeOIDC(authorizer, false),
-			),
-			ErrStatus: transport.ErrorStatus{
-				transport.ErrInvalidRequest: http.StatusUnprocessableEntity,
-			},
-		},
-	}
+	masterFiduciaryEndpoints := transport.HTTPEndpoints{}
 
 	statusEndPoints := transport.HTTPEndpoints{
 		"Status": {
@@ -338,21 +281,6 @@ func MakeOrder1Endpoint(m service.Service) endpoint.Endpoint {
 	}
 }
 
-//MakeOrder2Endpoint -
-func MakeOrder2Endpoint(m service.Service) endpoint.Endpoint {
-	// return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-	// 	req, ok := request.(*api.FulfillOrderResponse)
-	// 	if !ok {
-	// 		return nil, transport.ErrInvalidRequest
-	// 	}
-	// 	if err := validateRequest(req); err != nil {
-	// 		return "", err
-	// 	}
-	// 	return m.Order2(req)
-	// }
-	return nil
-}
-
 //MakeOrderSecret1Endpoint -
 func MakeOrderSecret1Endpoint(m service.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
@@ -365,21 +293,6 @@ func MakeOrderSecret1Endpoint(m service.Service) endpoint.Endpoint {
 		}
 		return m.OrderSecret1(req)
 	}
-}
-
-//MakeOrderSecret2Endpoint -
-func MakeOrderSecret2Endpoint(m service.Service) endpoint.Endpoint {
-	return nil
-}
-
-//MakeFulfillOrderEndpoint -
-func MakeFulfillOrderEndpoint(m service.Service) endpoint.Endpoint {
-	return nil
-}
-
-//MakeFulfillOrderSecretEndpoint -
-func MakeFulfillOrderSecretEndpoint(m service.Service) endpoint.Endpoint {
-	return nil
 }
 
 //MakeStatusEndpoint -

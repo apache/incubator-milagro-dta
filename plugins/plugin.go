@@ -26,7 +26,6 @@ import (
 	"github.com/apache/incubator-milagro-dta/libs/datastore"
 	"github.com/apache/incubator-milagro-dta/libs/ipfs"
 	"github.com/apache/incubator-milagro-dta/libs/logger"
-	"github.com/apache/incubator-milagro-dta/pkg/api"
 	"github.com/apache/incubator-milagro-dta/pkg/config"
 	"github.com/apache/incubator-milagro-dta/pkg/defaultservice"
 	"github.com/apache/incubator-milagro-dta/pkg/service"
@@ -45,7 +44,7 @@ type ServicePlugin interface {
 	defaultservice.Plugable
 	service.Service
 
-	Init(plugin defaultservice.Plugable, logger *logger.Logger, rng io.Reader, store *datastore.Store, ipfsConnector ipfs.Connector, masterFiduciaryServer api.ClientService, cfg *config.Config) error
+	Init(plugin defaultservice.Plugable, logger *logger.Logger, rng io.Reader, store *datastore.Store, ipfsConnector ipfs.Connector, cfg *config.Config) error
 }
 
 func registerPlugin(p Plugin) {

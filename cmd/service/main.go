@@ -34,7 +34,6 @@ import (
 	"github.com/apache/incubator-milagro-dta/libs/ipfs"
 	"github.com/apache/incubator-milagro-dta/libs/logger"
 	"github.com/apache/incubator-milagro-dta/libs/transport"
-	"github.com/apache/incubator-milagro-dta/pkg/api"
 	"github.com/apache/incubator-milagro-dta/pkg/config"
 	"github.com/apache/incubator-milagro-dta/pkg/endpoints"
 	"github.com/apache/incubator-milagro-dta/pkg/tendermint"
@@ -100,7 +99,7 @@ func initConfig(args []string) error {
 		return errors.Errorf("Invalid service plugin: %v", initOptions.ServicePlugin)
 	}
 
-	if err := svcPlugin.Init(svcPlugin, logger, rand.Reader, store, ipfsConnector, nil, cfg); err != nil {
+	if err := svcPlugin.Init(svcPlugin, logger, rand.Reader, store, ipfsConnector, cfg); err != nil {
 		return errors.Errorf("init service plugin %s", cfg.Plugins.Service)
 	}
 
@@ -186,18 +185,13 @@ func startDaemon(args []string) error {
 		}
 	}
 
-	masterFiduciaryServer, err := api.NewHTTPClient(cfg.Node.MasterFiduciaryServer, logger)
-	if err != nil {
-		return errors.Wrap(err, "init custody client")
-	}
-
 	//The Server must have a valid ID before starting up
 	svcPlugin := plugins.FindServicePlugin(cfg.Plugins.Service)
 	if svcPlugin == nil {
 		return errors.Errorf("invalid plugin: %v", cfg.Plugins.Service)
 	}
 
-	if err := svcPlugin.Init(svcPlugin, logger, rand.Reader, store, ipfsConnector, masterFiduciaryServer, cfg); err != nil {
+	if err := svcPlugin.Init(svcPlugin, logger, rand.Reader, store, ipfsConnector, cfg); err != nil {
 		return errors.Errorf("init service plugin %s", cfg.Plugins.Service)
 	}
 	logger.Info("Service plugin loaded: %s", svcPlugin.Name())

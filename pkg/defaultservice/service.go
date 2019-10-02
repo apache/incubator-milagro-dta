@@ -49,7 +49,6 @@ type Service struct {
 	Rng                   io.Reader
 	Store                 *datastore.Store
 	Ipfs                  ipfs.Connector
-	MasterFiduciaryServer api.ClientService
 	nodeID                string
 	masterFiduciaryNodeID string
 }
@@ -61,14 +60,12 @@ func NewService() *Service {
 }
 
 // Init sets-up the service options. It's called when the plugin gets registered
-func (s *Service) Init(plugin Plugable, logger *logger.Logger, rng io.Reader, store *datastore.Store, ipfsConnector ipfs.Connector, masterFiduciaryServer api.ClientService, cfg *config.Config) error {
+func (s *Service) Init(plugin Plugable, logger *logger.Logger, rng io.Reader, store *datastore.Store, ipfsConnector ipfs.Connector, cfg *config.Config) error {
 	s.Plugin = plugin
 	s.Logger = logger
 	s.Rng = rng
 	s.Store = store
 	s.Ipfs = ipfsConnector
-	s.MasterFiduciaryServer = masterFiduciaryServer
-
 	s.SetNodeID(cfg.Node.NodeID)
 	s.SetMasterFiduciaryNodeID(cfg.Node.MasterFiduciaryNodeID)
 

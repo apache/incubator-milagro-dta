@@ -50,7 +50,7 @@ func subscribeAndQueue(queueWaiting chan api.BlockChainTX, logger *logger.Logger
 	logger.Info("Tendermint: Connected")
 
 	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	for {
 		select {
 		case result := <-out:
@@ -170,9 +170,9 @@ func processTXQueue(svc service.Service, queue chan api.BlockChainTX, listenPort
 }
 
 //Subscribe - Connect to the Tendermint websocket to collect events
-func Subscribe(svc service.Service, store *datastore.Store, logger *logger.Logger, nodeID string, listenPort string, blockchainNode string) error {
+func Subscribe(svc service.Service, store *datastore.Store, logger *logger.Logger, nodeID string, listenPort string) error {
 
-	latestStatus, _ := getChainStatus(blockchainNode)
+	latestStatus, _ := getChainStatus(node)
 	currentBlockHeight, err := strconv.Atoi(latestStatus.Result.SyncInfo.LatestBlockHeight)
 
 	if err != nil {
@@ -187,7 +187,7 @@ func Subscribe(svc service.Service, store *datastore.Store, logger *logger.Logge
 	queueWaiting := make(chan api.BlockChainTX, 1000)
 
 	//while we are processessing the history save all new transactions in a queue for later
-	go subscribeAndQueue(queueWaiting, logger, nodeID, listenPort, blockchainNode)
+	go subscribeAndQueue(queueWaiting, logger, nodeID, listenPort, node)
 	loadAllHistoricTX(processedToHeight, currentBlockHeight, txHistory, nodeID, listenPort)
 	processTXQueue(svc, queueWaiting, listenPort)
 	return nil

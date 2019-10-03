@@ -21,12 +21,6 @@ Package plugins - registers plugins with the service
 package plugins
 
 import (
-	"io"
-
-	"github.com/apache/incubator-milagro-dta/libs/datastore"
-	"github.com/apache/incubator-milagro-dta/libs/ipfs"
-	"github.com/apache/incubator-milagro-dta/libs/logger"
-	"github.com/apache/incubator-milagro-dta/pkg/config"
 	"github.com/apache/incubator-milagro-dta/pkg/defaultservice"
 	"github.com/apache/incubator-milagro-dta/pkg/service"
 )
@@ -43,8 +37,9 @@ type Plugin interface {
 type ServicePlugin interface {
 	defaultservice.Plugable
 	service.Service
+	service.Endpoints
 
-	Init(plugin defaultservice.Plugable, logger *logger.Logger, rng io.Reader, store *datastore.Store, ipfsConnector ipfs.Connector, cfg *config.Config) error
+	Init(plugin defaultservice.Plugable, options ...defaultservice.ServiceOption) error
 }
 
 func registerPlugin(p Plugin) {

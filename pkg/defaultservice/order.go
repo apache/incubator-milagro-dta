@@ -26,6 +26,7 @@ import (
 	"github.com/apache/incubator-milagro-dta/libs/documents"
 	"github.com/apache/incubator-milagro-dta/pkg/api"
 	"github.com/apache/incubator-milagro-dta/pkg/common"
+	"github.com/apache/incubator-milagro-dta/pkg/identity"
 	"github.com/apache/incubator-milagro-dta/pkg/tendermint"
 	"github.com/pkg/errors"
 )
@@ -44,7 +45,12 @@ func (s *Service) GetOrder(req *api.GetOrderRequest) (*api.GetOrderResponse, err
 		return nil, err
 	}
 
-	_, _, _, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, s.NodeID())
+	// SIKE key
+	keyseed, err := s.KeyStore.Get("seed")
+	if err != nil {
+		return nil, err
+	}
+	_, sikeSK, err := identity.GenerateSIKEKeys(keyseed)
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +193,16 @@ func (s *Service) OrderSecret1(req *api.OrderSecretRequest) (string, error) {
 		return "", err
 	}
 
-	_, _, blsSK, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
+	// SIKE and BLS keys
+	keyseed, err := s.KeyStore.Get("seed")
+	if err != nil {
+		return nil, err
+	}
+	_, sikeSK, err := identity.GenerateSIKEKeys(keyseed)
+	if err != nil {
+		return nil, err
+	}
+	_, blsSK, err := identity.GenerateBLSKeys(keyseed)
 	if err != nil {
 		return "", err
 	}

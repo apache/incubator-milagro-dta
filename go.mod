@@ -3,6 +3,8 @@ module github.com/apache/incubator-milagro-dta
 require (
 	github.com/TylerBrock/colorjson v0.0.0-20180527164720-95ec53f28296
 	github.com/btcsuite/btcd v0.0.0-20190427004231-96897255fd17
+	github.com/VividCortex/gohistogram v1.0.0 // indirect
+	github.com/btcsuite/btcd v0.0.0-20190824003749-130ea5bddde3
 	github.com/btcsuite/btcutil v0.0.0-20190425235716-9e5f4b9a998d
 	github.com/coreos/go-oidc v2.0.0+incompatible
 	github.com/go-kit/kit v0.9.0
@@ -26,7 +28,7 @@ require (
 	github.com/libp2p/go-libp2p-crypto v0.0.2
 	github.com/libp2p/go-libp2p-peer v0.1.1
 	github.com/multiformats/go-multihash v0.0.5
-	github.com/mwitkow/go-proto-validators v0.0.0-20190709101305-c00cd28f239a
+	github.com/mwitkow/go-proto-validators v0.1.0
 	github.com/pkg/errors v0.8.1
 	github.com/pquerna/cachecontrol v0.0.0-20180517163645-1555304b9b35 // indirect
 	github.com/prometheus/client_golang v0.9.3

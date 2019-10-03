@@ -46,11 +46,11 @@ type OrderDoc struct {
 }
 
 //NewIDDoc generate a new empty IDDoc
-func NewIDDoc() IDDoc {
-	ret := IDDoc{}
-	ret.Header = &Header{}
-	ret.IDDocument = &IDDocument{}
-	return ret
+func NewIDDoc() *IDDoc {
+	return &IDDoc{
+		&Header{},
+		&IDDocument{},
+	}
 }
 
 //NewOrderDoc generate a new order
@@ -62,17 +62,14 @@ func NewOrderDoc() OrderDoc {
 }
 
 //EncodeIDDocument encode an IDDoc into a raw bytes stream for the wire
-func EncodeIDDocument(idDocument IDDoc, blsSK []byte) ([]byte, error) {
-	header := idDocument.Header
-	plaintext := idDocument.IDDocument
-	rawDoc, err := Encode("", plaintext, nil, header, blsSK, nil)
+func EncodeIDDocument(idDocument *IDDoc, blsSK []byte) ([]byte, error) {
+	rawDoc, err := Encode("", idDocument.IDDocument, nil, idDocument.Header, blsSK, nil)
 	return rawDoc, err
 }
 
 //EncodeOrderDocument encode an OrderDoc into a raw bytes stream for the wire
-func EncodeOrderDocument(nodeID string, orderDoc OrderDoc, blsSK []byte, previousCID string, recipients map[string]IDDoc) ([]byte, error) {
+func EncodeOrderDocument(nodeID string, orderDoc OrderDoc, blsSK []byte, recipients map[string]*IDDoc) ([]byte, error) {
 	header := orderDoc.Header
-	header.PreviousCID = previousCID
 	//	rawDoc, err := Encode(orderDoc.OrderDocument, nil, header, blsSK, nil)
 	rawDoc, err := Encode(nodeID, nil, orderDoc.OrderDocument, header, blsSK, recipients)
 	return rawDoc, err
@@ -182,7 +179,7 @@ func Decode(rawDoc []byte, tag string, sikeSK []byte, recipientID string, plainT
 
 //Encode - convert the header, secret and plaintext into a message for the wire
 //The Header can be pre-populated with any nece
-func Encode(nodeID string, plainText proto.Message, secretText proto.Message, header *Header, blsSK []byte, recipients map[string]IDDoc) (rawDoc []byte, err error) {
+func Encode(nodeID string, plainText proto.Message, secretText proto.Message, header *Header, blsSK []byte, recipients map[string]*IDDoc) (rawDoc []byte, err error) {
 	plainTextDocType, err := detectDocType(plainText)
 	if err != nil {
 		return nil, errors.New("Plaintext Document - Unknown Type")

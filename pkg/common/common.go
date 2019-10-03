@@ -23,26 +23,14 @@ package common
 import (
 	"encoding/hex"
 	"io"
-	"sync"
 	"time"
 
-	"github.com/apache/incubator-milagro-dta/libs/cryptowallet"
 	"github.com/apache/incubator-milagro-dta/libs/datastore"
 	"github.com/apache/incubator-milagro-dta/libs/documents"
 	"github.com/apache/incubator-milagro-dta/libs/ipfs"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 )
-
-var previousIDMutex = &sync.Mutex{}
-
-//IdentitySecrets - keys required for decryption and signing
-type IdentitySecrets struct {
-	Name          string `json:"Name"`
-	Seed          string `json:"Seed"`
-	SikeSecretKey string `json:"SikeSecretKey"`
-	BLSSecretKey  string `json:"BlsSecretKey"`
-}
 
 // CreateNewDepositOrder - Generate an empty new Deposit Order with random reference
 func CreateNewDepositOrder(BeneficiaryIDDocumentCID string, nodeID string) (*documents.OrderDoc, error) {
@@ -80,14 +68,14 @@ func RetrieveOrderFromIPFS(ipfs ipfs.Connector, ipfsID string, sikeSK []byte, re
 }
 
 // RetrieveIDDocFromIPFS finds and parses the IDDocument
-func RetrieveIDDocFromIPFS(ipfs ipfs.Connector, ipfsID string) (documents.IDDoc, error) {
+func RetrieveIDDocFromIPFS(ipfs ipfs.Connector, ipfsID string) (*documents.IDDoc, error) {
 	iddoc := &documents.IDDoc{}
 	rawDocI, err := ipfs.Get(ipfsID)
 	if err != nil {
-		return documents.IDDoc{}, err
+		return nil, err
 	}
 	err = documents.DecodeIDDocument(rawDocI, ipfsID, iddoc)
-	return *iddoc, err
+	return iddoc, err
 }
 
 // MakeRandomSeedAndStore genefates and stores a random seed
@@ -122,37 +110,6 @@ func WriteOrderToStore(store *datastore.Store, orderReference string, address st
 		return errors.New("Save Order to store")
 	}
 	return nil
-}
-
-//InitECKeys - generate EC keys using BIP44 HD Wallets (as bitcoin) from seed
-func InitECKeys(seed []byte) ([]byte, error) {
-	//EC ADD Keypair Protocol
-	_, pubKeyECADD, _, err := cryptowallet.Bip44Address(seed, cryptowallet.CoinTypeBitcoinMain, 0, 0, 0)
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to derive EC HD Wallet Key")
-	}
-	return pubKeyECADD.SerializeCompressed(), nil
-}
-
-// RetrieveIdentitySecrets gets the secrets for the node ID
-func RetrieveIdentitySecrets(store *datastore.Store, nodeID string) (name string, seed []byte, blsSK []byte, sikeSK []byte, err error) {
-	var idSecrets = &IdentitySecrets{}
-	if err := store.Get("id-doc", nodeID, idSecrets); err != nil {
-		return "", nil, nil, nil, err
-	}
-	seed, err = hex.DecodeString(idSecrets.Seed)
-	if err != nil {
-		return "", nil, nil, nil, err
-	}
-	blsSK, err = hex.DecodeString(idSecrets.BLSSecretKey)
-	if err != nil {
-		return "", nil, nil, nil, err
-	}
-	sikeSK, err = hex.DecodeString(idSecrets.SikeSecretKey)
-	if err != nil {
-		return "", nil, nil, nil, err
-	}
-	return idSecrets.Name, seed, blsSK, sikeSK, nil
 }
 
 // BuildRecipientList builds a list of recipients who are able to decrypt the encrypted envelope

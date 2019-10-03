@@ -1,4 +1,22 @@
 #!/bin/bash
+
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
 #End to End Test of Services using curl/bash
 
 apiVersion="v1"
@@ -80,63 +98,61 @@ execute_bitcoin () {
 
 
    #make another BeneficiaryID
-   output5=$(curl -s -X POST "http://localhost:5556/$apiVersion/identity" -H "accept: */*" -H       "Content-Type: application/json" -d "{\"Name\":\"AA\"}")
-   benid=$(echo $output5 | jq -r .idDocumentCID)
+  #  output5=$(curl -s -X POST "http://localhost:5556/$apiVersion/identity" -H "accept: */*" -H       "Content-Type: application/json" -d "{\"Name\":\"AA\"}")
+  #  benid=$(echo $output5 | jq -r .idDocumentCID)
+
+  #  #Tests against the Bitcoin Extension - different befificary
+  #  output6=$(curl -s -X POST "http://localhost:5556/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":\"\",\"extension\":{\"coin\":\"0\"}}")
+  #  #echo $output6
+  #  op6=$(echo $output6 | jq .orderReference)
+  #  commitment6=$(echo $output6 | jq .commitment)
+  #  address6=$(echo $output6 | jq .extension.address)
+
+  #  output7=$(curl -s -X POST "http://localhost:5556/$apiVersion/order/secret" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$op6,\"beneficiaryIDDocumentCID\":\"$benid\"}")
+  #  address7=$(echo $output7 | jq .extension.address)
+  #  commitment7=$(echo $output7 | jq .commitment)
+
+  #  echo "Committment5 $commitment6 $address6"
+  #  echo "Committment6 $commitment7 $address7"
+
+  #  if [ -z $commitment7 ]; then
+  #      echo "Failed Commitment is empty"
+  #      exit 1
+  #  fi
+
+  #  if [ $commitment6 == $commitment7 ]; then
+  #    echo "Pass - Id, Order & OrderSecret(Beneficiary)"
+  #  else
+  #    echo "Fail"
+  #    exit 1
+  #  fi
+
+  # output8=$(curl -s -X POST "http://localhost:5556/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":\"$benid\",\"extension\":{\"coin\":\"0\"}}")
+  # op8=$(echo $output8 | jq .orderReference)
+  # commitment8=$(echo $output8 | jq .commitment)
+  # address8=$(echo $output8 | jq .extension.address)
 
 
+  # output9=$(curl -s -X POST "http://localhost:5556/$apiVersion/order/secret" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$op8}")
+  # commitment9=$(echo $output9 | jq .commitment)
+  # address9=$(echo $output9 | jq .extension.address)
+  # orderReference=$(echo $output9 | jq .orderReference)
+  # orderIndex=1
 
-   #Tests against the Bitcoin Extension - different befificary
-   output6=$(curl -s -X POST "http://localhost:5556/$apiVersion/order1" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":\"\",\"extension\":{\"coin\":\"0\"}}")
-   #echo $output6
-   op6=$(echo $output6 | jq .orderReference)
-   commitment6=$(echo $output6 | jq .commitment)
-   address6=$(echo $output6 | jq .extension.address)
+  # echo "Committment7 $commitment8 $address8"
+  # echo "Committment8 $commitment9 $address9"
 
-   output7=$(curl -s -X POST "http://localhost:5556/$apiVersion/order/secret1" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$op6,\"beneficiaryIDDocumentCID\":\"$benid\"}")
-   address7=$(echo $output7 | jq .extension.address)
-   commitment7=$(echo $output7 | jq .commitment)
+  # if [ -z $commitment9 ]; then
+  #     echo "Failed Commitment is empty"
+  #     exit 1
+  # fi
 
-   echo "Committment5 $commitment6 $address6"
-   echo "Committment6 $commitment7 $address7"
-
-   if [ -z $commitment7 ]; then
-       echo "Failed Commitment is empty"
-       exit 1
-   fi
-
-   if [ $commitment6 == $commitment7 ]; then
-     echo "Pass - Id, Order & OrderSecret(Beneficiary)"
-   else
-     echo "Fail"
-     exit 1
-   fi
-
-  output8=$(curl -s -X POST "http://localhost:5556/$apiVersion/order1" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":\"$benid\",\"extension\":{\"coin\":\"0\"}}")
-  op8=$(echo $output8 | jq .orderReference)
-  commitment8=$(echo $output8 | jq .commitment)
-  address8=$(echo $output8 | jq .extension.address)
-
-
-  output9=$(curl -s -X POST "http://localhost:5556/$apiVersion/order/secret1" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$op8}")
-  commitment9=$(echo $output9 | jq .commitment)
-  address9=$(echo $output9 | jq .extension.address)
-  orderReference=$(echo $output9 | jq .orderReference)
-  orderIndex=1
-
-  echo "Committment7 $commitment8 $address8"
-  echo "Committment8 $commitment9 $address9"
-
-  if [ -z $commitment9 ]; then
-      echo "Failed Commitment is empty"
-      exit 1
-  fi
-
-  if [ $commitment8 == $commitment9 ]; then
-    echo "Pass - Id, Order(Beneficiary) & OrderSecret"
-  else
-      echo "Fail"
-      exit 1
-  fi
+  # if [ $commitment8 == $commitment9 ]; then
+  #   echo "Pass - Id, Order(Beneficiary) & OrderSecret"
+  # else
+  #     echo "Fail"
+  #     exit 1
+  # fi
 
 }
 
@@ -233,6 +249,10 @@ execute_orderlist () {
 status
 
 if [ $plugin == "bitcoinwallet" ]; then
+   execute_bitcoin
+fi
+
+if [ $plugin == "qredoplugin" ]; then
    execute_bitcoin
 fi
 

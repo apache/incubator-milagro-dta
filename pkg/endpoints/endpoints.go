@@ -45,49 +45,7 @@ var (
 )
 
 // Endpoints returns all the exported endpoints
-func Endpoints(svc service.Service, corsAllow string, authorizer transport.Authorizer, logger *logger.Logger, nodeType string) transport.HTTPEndpoints {
-	identityEndpoints := transport.HTTPEndpoints{
-		"CreateIdentity": {
-			Path:        "/" + apiVersion + "/identity",
-			Method:      http.MethodPost,
-			Endpoint:    MakeCreateIdentityEndpoint(svc),
-			NewRequest:  func() interface{} { return &api.CreateIdentityRequest{} },
-			NewResponse: func() interface{} { return &api.CreateIdentityResponse{} },
-			Options: transport.ServerOptions(
-				transport.SetCors(corsAllow),
-				transport.AuthorizeOIDC(authorizer, false),
-			),
-			ErrStatus: transport.ErrorStatus{
-				transport.ErrInvalidRequest: http.StatusUnprocessableEntity,
-			},
-		},
-		"GetIdentity": {
-			Path:        "/" + apiVersion + "/identity/{IDDocumentCID}",
-			Method:      http.MethodGet,
-			Endpoint:    MakeGetIdentityEndpoint(svc),
-			NewResponse: func() interface{} { return &api.GetIdentityResponse{} },
-			Options: transport.ServerOptions(
-				transport.SetCors(corsAllow),
-				transport.AuthorizeOIDC(authorizer, false),
-			),
-			ErrStatus: transport.ErrorStatus{
-				transport.ErrInvalidRequest: http.StatusUnprocessableEntity,
-			},
-		},
-		"IdentityList": {
-			Path:        "/" + apiVersion + "/identity",
-			Method:      http.MethodGet,
-			Endpoint:    MakeIdentityListEndpoint(svc),
-			NewResponse: func() interface{} { return &api.IdentityListResponse{} },
-			Options: transport.ServerOptions(
-				transport.SetCors(corsAllow),
-				transport.AuthorizeOIDC(authorizer, false),
-			),
-			ErrStatus: transport.ErrorStatus{
-				transport.ErrInvalidRequest: http.StatusUnprocessableEntity,
-			},
-		},
-	}
+func Endpoints(svc service.Service, corsAllow string, authorizer transport.Authorizer, logger *logger.Logger, nodeType string, pluginEndpoints service.Endpoints) transport.HTTPEndpoints {
 	principalEndpoints := transport.HTTPEndpoints{
 
 		"Order1": {
@@ -164,69 +122,41 @@ func Endpoints(svc service.Service, corsAllow string, authorizer transport.Autho
 		},
 	}
 
+	endpoints := transport.HTTPEndpoints{}
 	switch strings.ToLower(nodeType) {
 	case "multi":
-		return concatEndpoints(masterFiduciaryEndpoints, identityEndpoints, principalEndpoints, statusEndPoints)
+		endpoints = concatEndpoints(masterFiduciaryEndpoints, principalEndpoints, statusEndPoints)
 	case "principal":
-		return concatEndpoints(identityEndpoints, principalEndpoints, statusEndPoints)
+		endpoints = concatEndpoints(principalEndpoints, statusEndPoints)
 	case "fiduciary", "masterfiduciary":
-		return concatEndpoints(masterFiduciaryEndpoints, identityEndpoints, statusEndPoints)
+		endpoints = concatEndpoints(masterFiduciaryEndpoints, statusEndPoints)
 	}
 
-	return nil
+	plugNamespace, plugEndpoints := pluginEndpoints.Endpoints()
+	endpoints = concatPluginEndpoints(logger, endpoints, plugNamespace, plugEndpoints)
+
+	return endpoints
 }
 
-//MakeCreateIdentityEndpoint -
-func MakeCreateIdentityEndpoint(m service.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		req, ok := request.(*api.CreateIdentityRequest)
-		if !ok {
-			return nil, transport.ErrInvalidRequest
+func concatEndpoints(endpoints ...transport.HTTPEndpoints) transport.HTTPEndpoints {
+	var res = make(transport.HTTPEndpoints)
+	for _, endpoint := range endpoints {
+		for k, v := range endpoint {
+			res[k] = v
 		}
-		if err := validateRequest(req); err != nil {
-			return "", err
-		}
-		return m.CreateIdentity(req)
 	}
+	return res
 }
 
-//MakeGetIdentityEndpoint -
-func MakeGetIdentityEndpoint(m service.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		params := transport.GetURLParams(ctx)
-		req := &api.GetIdentityRequest{
-			IDDocumentCID: params.Get("IDDocumentCID"),
+func concatPluginEndpoints(logger *logger.Logger, dst transport.HTTPEndpoints, namespace string, endpoints ...transport.HTTPEndpoints) transport.HTTPEndpoints {
+	for _, endpoint := range endpoints {
+		for k, v := range endpoint {
+			v.Path = "/" + apiVersion + "/ext/" + namespace + v.Path
+			logger.Info("Registering plugin endpoint %v", v.Path)
+			dst["namespace."+k] = v
 		}
-		if err := validateRequest(req); err != nil {
-			return "", err
-		}
-		return m.GetIdentity(req)
 	}
-}
-
-//MakeIdentityListEndpoint -
-func MakeIdentityListEndpoint(m service.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		params := transport.GetParams(ctx)
-		sortBy := params.Get("sortBy")
-		perPage, err := strconv.Atoi(params.Get("perPage"))
-		if err != nil {
-			return nil, transport.ErrInvalidRequest
-		}
-		page, err := strconv.Atoi(params.Get("page"))
-		if err != nil {
-			return nil, transport.ErrInvalidRequest
-		}
-		req := &api.IdentityListRequest{
-			Page:    page,
-			PerPage: perPage,
-			SortBy:  sortBy,
-		}
-		if err := validateRequest(req); err != nil {
-			return "", err
-		}
-		return m.IdentityList(req)
-	}
+	return dst
 }
 
 //MakeOrderListEndpoint -
@@ -309,14 +239,4 @@ func validateRequest(req interface{}) error {
 		return errors.Wrap(transport.ErrInvalidRequest, err.Error())
 	}
 	return nil
-}
-
-func concatEndpoints(endpoints ...transport.HTTPEndpoints) transport.HTTPEndpoints {
-	var res = make(transport.HTTPEndpoints)
-	for _, endpoint := range endpoints {
-		for k, v := range endpoint {
-			res[k] = v
-		}
-	}
-	return res
 }

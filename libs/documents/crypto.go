@@ -63,7 +63,7 @@ func decapsulateWithRecipient(recipient Recipient, sikeSK []byte) ([]byte, error
 	return recreatedAesKey, nil
 }
 
-func encapsulateKeyForRecipient(recipientsIDDocs map[string]IDDoc, secret []byte) (recipientList []*Recipient, err error) {
+func encapsulateKeyForRecipient(recipientsIDDocs map[string]*IDDoc, secret []byte) (recipientList []*Recipient, err error) {
 	for id, idDocument := range recipientsIDDocs {
 		r := &Recipient{}
 		iv, err := cryptowallet.RandomBytes(16)

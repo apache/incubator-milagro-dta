@@ -20,15 +20,13 @@ Package service - defines core Milagro D-TA interface
 */
 package service
 
-import "github.com/apache/incubator-milagro-dta/pkg/api"
+import (
+	"github.com/apache/incubator-milagro-dta/libs/transport"
+	"github.com/apache/incubator-milagro-dta/pkg/api"
+)
 
 // Service is the CustodyService interface
 type Service interface {
-	//Identity
-	CreateIdentity(req *api.CreateIdentityRequest) (*api.CreateIdentityResponse, error)
-	GetIdentity(req *api.GetIdentityRequest) (*api.GetIdentityResponse, error)
-	IdentityList(req *api.IdentityListRequest) (*api.IdentityListResponse, error)
-
 	//Order
 	GetOrder(req *api.GetOrderRequest) (*api.GetOrderResponse, error)
 	OrderList(req *api.OrderListRequest) (*api.OrderListResponse, error)
@@ -53,4 +51,9 @@ type Service interface {
 	OrderSecret2(tx *api.BlockChainTX) (string, error)
 	FulfillOrderSecret(tx *api.BlockChainTX) (string, error)
 	Order2(tx *api.BlockChainTX) (string, error)
+}
+
+// Endpoints interface to register plugin specific endpoints
+type Endpoints interface {
+	Endpoints() (namespace string, endpoints transport.HTTPEndpoints)
 }

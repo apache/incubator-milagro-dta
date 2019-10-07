@@ -94,7 +94,7 @@ func adhocEncryptedEnvelopeEncode(s *Service, nodeID string, order documents.Ord
 	if err != nil {
 		return nil, err
 	}
-	beneficiaryIDDocument, err := common.RetrieveIDDocFromIPFS(s.Ipfs, beneficiaryIDDocumentCID)
+	beneficiaryIDDocument, err := common.RetrieveIDDoc(s.Tendermint, beneficiaryIDDocumentCID)
 	if err != nil {
 		return nil, err
 	}
@@ -150,17 +150,12 @@ func generateFinalPubKey(s *Service, pubKeyPart2of2 string, order documents.Orde
 
 	if order.BeneficiaryType == documents.OrderDocument_Beneficiary_Known_at_start {
 		//There is a BeneficiaryID use it to generate the key
-		//Get beneficiary's identity out of IPFS
-		id := &documents.IDDoc{}
-		rawDocI, err := s.Ipfs.Get(beneficiaryIDDocumentCID)
-		if err != nil {
-			return "", "", errors.Wrapf(err, "Read identity Doc")
-		}
-		err = documents.DecodeIDDocument(rawDocI, beneficiaryIDDocumentCID, id)
+		benIDDoc, err := common.RetrieveIDDoc(s.Tendermint, beneficiaryIDDocumentCID)
 		if err != nil {
 			return "", "", err
 		}
-		pubKeyPart1of2 = hex.EncodeToString(id.BeneficiaryECPublicKey)
+
+		pubKeyPart1of2 = hex.EncodeToString(benIDDoc.BeneficiaryECPublicKey)
 	}
 
 	finalPublicKey, err := addPublicKeys(pubKeyPart2of2, pubKeyPart1of2)

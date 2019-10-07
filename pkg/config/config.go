@@ -56,25 +56,16 @@ type LogConfig struct {
 	Level  string `yaml:"level"`
 }
 
-// IPFSConfig -
-type IPFSConfig struct {
-	Connector     string   `yaml:"connector"`
-	Bootstrap     []string `yaml:"bootstrap"`
-	ListenAddress string   `yaml:"listenAddress"`
-	APIAddress    string   `yaml:"apiAddress"`
-}
-
 // NodeConfig -
 type NodeConfig struct {
 	NodeType              string `yaml:"nodeType"`
-	MasterFiduciaryServer string `yaml:"masterFiduciaryServer"`
 	MasterFiduciaryNodeID string `yaml:"masterFiduciaryNodeID"`
 	NodeID                string `yaml:"nodeID"`
 	NodeName              string `yaml:"nodeName"`
 	Datastore             string `yaml:"dataStore"`
 }
 
-//Blockchain Config -
+//BlockchainConfig -
 type BlockchainConfig struct {
 	BroadcastNode string `yaml:"broadcastNode"`
 }
@@ -89,7 +80,6 @@ type Config struct {
 	HTTP       HTTPConfig       `yaml:"http"`
 	Node       NodeConfig       `yaml:"node"`
 	Log        LogConfig        `yaml:"log"`
-	IPFS       IPFSConfig       `yaml:"ipfs"`
 	Plugins    PluginsConfig    `yaml:"plugins"`
 	Blockchain BlockchainConfig `yaml:"blockchain"`
 }

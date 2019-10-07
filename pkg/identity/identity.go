@@ -24,9 +24,12 @@ import (
 	"bytes"
 	"time"
 
+	"github.com/apache/incubator-milagro-dta/pkg/api"
+
+	"github.com/apache/incubator-milagro-dta/pkg/tendermint"
+
 	"github.com/apache/incubator-milagro-dta/libs/cryptowallet"
 	"github.com/apache/incubator-milagro-dta/libs/documents"
-	"github.com/apache/incubator-milagro-dta/libs/ipfs"
 	"github.com/apache/incubator-milagro-dta/libs/keystore"
 	"github.com/pkg/errors"
 )
@@ -74,28 +77,38 @@ func CreateIdentity(name string) (idDocument *documents.IDDoc, rawIDDoc, seed []
 	return
 }
 
-// StoreIdentity writes IDDocument to IPFS and secret to keystore
-func StoreIdentity(rawIDDoc, secret []byte, ipfsConn ipfs.Connector, store keystore.Store) (idDocumentCID string, err error) {
-	// add ID Doc to IPFS
-	idDocumentCID, err = ipfsConn.Add(rawIDDoc)
-	if err != nil {
-		return
+// StoreIdentity writes IDDocument to blockchain and secret to keystore
+func StoreIdentity(rawIDDoc, secret []byte, tmConn *tendermint.NodeConnector, store keystore.Store) (idDocumentID string, err error) {
+
+	chainTX := &api.BlockChainTX{
+		Processor:              api.TXFulfillOrderSecretRequest,
+		SenderID:               tmConn.NodeID(),
+		RecipientID:            "",
+		AdditionalRecipientIDs: []string{},
+		Payload:                rawIDDoc,
+		Tags:                   map[string]string{},
 	}
+
+	idDocumentID = chainTX.CalcHash()
+
+	if _, err := tmConn.PostTx(chainTX, "IDDocument"); err != nil {
+		return "", err
+	}
+
 	// store the seed
-	err = store.Set("seed", secret)
-	return
+	return idDocumentID, store.Set("seed", secret)
 }
 
 // CheckIdentity verifies the IDDocument
-func CheckIdentity(id, name string, ipfsConn ipfs.Connector, store keystore.Store) error {
+func CheckIdentity(id, name string, tmConn *tendermint.NodeConnector, store keystore.Store) error {
 
-	rawIDDoc, err := ipfsConn.Get(id)
+	rawIDDoc, err := tmConn.GetTx(id)
 	if err != nil {
 		return errors.Wrap(err, "ID Document not found")
 	}
 
 	idDoc := &documents.IDDoc{}
-	if err := documents.DecodeIDDocument(rawIDDoc, id, idDoc); err != nil {
+	if err := documents.DecodeIDDocument(rawIDDoc.Payload, id, idDoc); err != nil {
 		return errors.Wrap(err, "Decode ID document")
 	}
 

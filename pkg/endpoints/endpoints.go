@@ -51,7 +51,7 @@ func Endpoints(svc service.Service, corsAllow string, authorizer transport.Autho
 		"Order1": {
 			Path:        "/" + apiVersion + "/order1",
 			Method:      http.MethodPost,
-			Endpoint:    MakeOrder1Endpoint(svc),
+			Endpoint:    MakeOrder1Endpoint(svc, logger),
 			NewRequest:  func() interface{} { return &api.OrderRequest{} },
 			NewResponse: func() interface{} { return &api.OrderResponse{} },
 			Options: transport.ServerOptions(
@@ -66,7 +66,7 @@ func Endpoints(svc service.Service, corsAllow string, authorizer transport.Autho
 		"GetOrder": {
 			Path:        "/" + apiVersion + "/order/{OrderReference}",
 			Method:      http.MethodGet,
-			Endpoint:    MakeGetOrderEndpoint(svc),
+			Endpoint:    MakeGetOrderEndpoint(svc, logger),
 			NewResponse: func() interface{} { return &api.GetOrderResponse{} },
 			Options: transport.ServerOptions(
 				transport.SetCors(corsAllow),
@@ -79,7 +79,7 @@ func Endpoints(svc service.Service, corsAllow string, authorizer transport.Autho
 		"OrderList": {
 			Path:        "/" + apiVersion + "/order",
 			Method:      http.MethodGet,
-			Endpoint:    MakeOrderListEndpoint(svc),
+			Endpoint:    MakeOrderListEndpoint(svc, logger),
 			NewResponse: func() interface{} { return &api.OrderListResponse{} },
 			Options: transport.ServerOptions(
 				transport.SetCors(corsAllow),
@@ -92,7 +92,7 @@ func Endpoints(svc service.Service, corsAllow string, authorizer transport.Autho
 		"OrderSecret1": {
 			Path:        "/" + apiVersion + "/order/secret1",
 			Method:      http.MethodPost,
-			Endpoint:    MakeOrderSecret1Endpoint(svc),
+			Endpoint:    MakeOrderSecret1Endpoint(svc, logger),
 			NewRequest:  func() interface{} { return &api.OrderSecretRequest{} },
 			NewResponse: func() interface{} { return &api.OrderSecretResponse{} },
 			Options: transport.ServerOptions(
@@ -110,7 +110,7 @@ func Endpoints(svc service.Service, corsAllow string, authorizer transport.Autho
 		"Status": {
 			Path:        "/" + apiVersion + "/status",
 			Method:      http.MethodGet,
-			Endpoint:    MakeStatusEndpoint(svc, nodeType),
+			Endpoint:    MakeStatusEndpoint(svc, logger, nodeType),
 			NewResponse: func() interface{} { return &api.StatusResponse{} },
 			Options: transport.ServerOptions(
 				transport.SetCors(corsAllow),
@@ -160,7 +160,7 @@ func concatPluginEndpoints(logger *logger.Logger, dst transport.HTTPEndpoints, n
 }
 
 //MakeOrderListEndpoint -
-func MakeOrderListEndpoint(m service.Service) endpoint.Endpoint {
+func MakeOrderListEndpoint(m service.Service, log *logger.Logger) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		params := transport.GetParams(ctx)
 		sortBy := params.Get("sortBy")
@@ -180,12 +180,13 @@ func MakeOrderListEndpoint(m service.Service) endpoint.Endpoint {
 		if err := validateRequest(req); err != nil {
 			return "", err
 		}
+		debugRequest(ctx, req, log)
 		return m.OrderList(req)
 	}
 }
 
 //MakeGetOrderEndpoint -
-func MakeGetOrderEndpoint(m service.Service) endpoint.Endpoint {
+func MakeGetOrderEndpoint(m service.Service, log *logger.Logger) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		params := transport.GetURLParams(ctx)
 		orderReference := params.Get("OrderReference")
@@ -193,12 +194,13 @@ func MakeGetOrderEndpoint(m service.Service) endpoint.Endpoint {
 		req := &api.GetOrderRequest{
 			OrderReference: orderReference,
 		}
+		debugRequest(ctx, req, log)
 		return m.GetOrder(req)
 	}
 }
 
 //MakeOrder1Endpoint -
-func MakeOrder1Endpoint(m service.Service) endpoint.Endpoint {
+func MakeOrder1Endpoint(m service.Service, log *logger.Logger) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req, ok := request.(*api.OrderRequest)
 		if !ok {
@@ -207,12 +209,13 @@ func MakeOrder1Endpoint(m service.Service) endpoint.Endpoint {
 		if err := validateRequest(req); err != nil {
 			return "", err
 		}
+		debugRequest(ctx, req, log)
 		return m.Order1(req)
 	}
 }
 
 //MakeOrderSecret1Endpoint -
-func MakeOrderSecret1Endpoint(m service.Service) endpoint.Endpoint {
+func MakeOrderSecret1Endpoint(m service.Service, log *logger.Logger) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req, ok := request.(*api.OrderSecretRequest)
 		if !ok {
@@ -221,12 +224,13 @@ func MakeOrderSecret1Endpoint(m service.Service) endpoint.Endpoint {
 		if err := validateRequest(req); err != nil {
 			return "", err
 		}
+		debugRequest(ctx, req, log)
 		return m.OrderSecret1(req)
 	}
 }
 
 //MakeStatusEndpoint -
-func MakeStatusEndpoint(m service.Service, nodeType string) endpoint.Endpoint {
+func MakeStatusEndpoint(m service.Service, log *logger.Logger, nodeType string) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		return m.Status(apiVersion, nodeType)
 	}
@@ -234,9 +238,13 @@ func MakeStatusEndpoint(m service.Service, nodeType string) endpoint.Endpoint {
 
 func validateRequest(req interface{}) error {
 	validate := validator.New()
-	validate.RegisterAlias("IPFS", "min=46,max=46,startswith=Q")
+	validate.RegisterAlias("hashID", "min=64,max=64")
 	if err := validate.Struct(req); err != nil {
 		return errors.Wrap(transport.ErrInvalidRequest, err.Error())
 	}
 	return nil
+}
+
+func debugRequest(ctx context.Context, req interface{}, log *logger.Logger) {
+	log.Debug("%s : %+v", transport.ReqID(ctx), req)
 }

@@ -34,7 +34,7 @@ func (s *Service) Order2(tx *api.BlockChainTX) (string, error) {
 	reqPayload := tx.Payload
 	txHashString := hex.EncodeToString(tx.TXhash)
 
-	remoteIDDoc, err := common.RetrieveIDDocFromIPFS(s.Ipfs, s.MasterFiduciaryNodeID())
+	remoteIDDoc, err := common.RetrieveIDDoc(s.Tendermint, s.MasterFiduciaryNodeID())
 	if err != nil {
 		return "", err
 	}
@@ -68,7 +68,7 @@ func (s *Service) Order2(tx *api.BlockChainTX) (string, error) {
 	//The Processor for the TX is 'dump' - So the principal will pick up the TX and display
 	//its contents.
 
-	recipientList, err := common.BuildRecipientList(s.Ipfs, nodeID)
+	recipientList, err := common.BuildRecipientList(s.Tendermint, nodeID)
 	if err != nil {
 		return "", err
 	}
@@ -118,7 +118,7 @@ func (s *Service) OrderSecret2(tx *api.BlockChainTX) (string, error) {
 		return "", err
 	}
 
-	remoteIDDoc, err := common.RetrieveIDDocFromIPFS(s.Ipfs, s.MasterFiduciaryNodeID())
+	remoteIDDoc, err := common.RetrieveIDDoc(s.Tendermint, s.MasterFiduciaryNodeID())
 	if err != nil {
 		return "", err
 	}
@@ -154,7 +154,7 @@ func (s *Service) OrderSecret2(tx *api.BlockChainTX) (string, error) {
 	order.OrderPart4.Extension["FinalPrivateKey"] = finalPrivateKey
 
 	//Output Only to self for autoviewing
-	recipientList, err := common.BuildRecipientList(s.Ipfs, nodeID)
+	recipientList, err := common.BuildRecipientList(s.Tendermint, nodeID)
 	if err != nil {
 		return "", err
 	}

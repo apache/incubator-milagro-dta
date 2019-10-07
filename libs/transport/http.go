@@ -441,6 +441,7 @@ func getContextStr(ctx context.Context, key interface{}) string {
 	return ""
 }
 
+// genReqID returns the request ID if present or generates a new random ID
 func getReqID(ctx context.Context) string {
 	// check if request ID is passed as HTTP header
 	reqID := getContextStr(ctx, httptransport.ContextKeyRequestXRequestID)
@@ -450,6 +451,11 @@ func getReqID(ctx context.Context) string {
 		reqID = id.String()
 	}
 	return reqID
+}
+
+// ReqID returns the Request ID if present
+func ReqID(ctx context.Context) string {
+	return getContextStr(ctx, contextReqID)
 }
 
 func metricsDurationMiddleware(duration metrics.Histogram) endpoint.Middleware {

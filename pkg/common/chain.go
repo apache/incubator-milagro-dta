@@ -27,7 +27,6 @@ func CreateTX(nodeID string, store *datastore.Store, blsSecretKey []byte, id str
 //PeekTX Decode a transaction for header data but don't decrypt it
 func PeekTX(tx []byte) (string, error) {
 	signerCID, err := documents.OrderDocumentSigner(tx)
-	print(signerCID)
 	if err != nil {
 		return "", errors.Wrap(err, "Error peeking signer")
 	}

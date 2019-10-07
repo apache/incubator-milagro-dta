@@ -19,7 +19,6 @@ package defaultservice
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"time"
 
 	"github.com/apache/incubator-milagro-dta/libs/cryptowallet"
@@ -32,41 +31,44 @@ import (
 
 // GetOrder retreives an order
 func (s *Service) GetOrder(req *api.GetOrderRequest) (*api.GetOrderResponse, error) {
-	orderReference := req.OrderReference
+	// TODO: Get Order
+	// orderReference := req.OrderReference
 
-	var cid string
-	if err := s.Store.Get("order", orderReference, &cid); err != nil {
-		return nil, err
-	}
+	// var cid string
+	// if err := s.Store.Get("order", orderReference, &cid); err != nil {
+	// 	return nil, err
+	// }
 
-	localIDDoc, err := common.RetrieveIDDocFromIPFS(s.Ipfs, s.NodeID())
-	if err != nil {
-		return nil, err
-	}
+	// localIDDoc, err := common.RetrieveIDDoc(s.Tendermint, s.NodeID())
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	// SIKE key
-	keyseed, err := s.KeyStore.Get("seed")
-	if err != nil {
-		return nil, err
-	}
-	_, sikeSK, err := identity.GenerateSIKEKeys(keyseed)
-	if err != nil {
-		return nil, err
-	}
+	// // SIKE key
+	// keyseed, err := s.KeyStore.Get("seed")
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// _, sikeSK, err := identity.GenerateSIKEKeys(keyseed)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	order, err := common.RetrieveOrderFromIPFS(s.Ipfs, cid, sikeSK, s.NodeID(), localIDDoc.BLSPublicKey)
-	if err != nil {
-		return nil, err
-	}
+	// order, err := common.RetrieveOrderFromIPFS(s.Ipfs, cid, sikeSK, s.NodeID(), localIDDoc.BLSPublicKey)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	orderByte, err := json.Marshal(order)
-	if err != nil {
-		return nil, err
-	}
-	return &api.GetOrderResponse{
-		OrderCID: cid,
-		Order:    string(orderByte),
-	}, nil
+	// orderByte, err := json.Marshal(order)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// return &api.GetOrderResponse{
+	// 	OrderCID: cid,
+	// 	Order:    string(orderByte),
+	// }, nil
+
+	return nil, errors.New("Not implemented")
 }
 
 // OrderList retrieves the list of orders
@@ -136,7 +138,7 @@ func (s *Service) Order1(req *api.OrderRequest) (string, error) {
 	//Initialise values from Request object
 	beneficiaryIDDocumentCID := req.BeneficiaryIDDocumentCID
 	nodeID := s.NodeID()
-	recipientList, err := common.BuildRecipientList(s.Ipfs, nodeID, s.MasterFiduciaryNodeID())
+	recipientList, err := common.BuildRecipientList(s.Tendermint, nodeID, s.MasterFiduciaryNodeID())
 	if err != nil {
 		return "", err
 	}
@@ -195,11 +197,11 @@ func (s *Service) OrderSecret1(req *api.OrderSecretRequest) (string, error) {
 	}
 
 	nodeID := s.NodeID()
-	recipientList, err := common.BuildRecipientList(s.Ipfs, nodeID, s.MasterFiduciaryNodeID())
+	recipientList, err := common.BuildRecipientList(s.Tendermint, nodeID, s.MasterFiduciaryNodeID())
 	if err != nil {
 		return "", err
 	}
-	remoteIDDoc, err := common.RetrieveIDDocFromIPFS(s.Ipfs, s.MasterFiduciaryNodeID())
+	remoteIDDoc, err := common.RetrieveIDDoc(s.Tendermint, s.MasterFiduciaryNodeID())
 	if err != nil {
 		return "", err
 	}
@@ -218,7 +220,7 @@ func (s *Service) OrderSecret1(req *api.OrderSecretRequest) (string, error) {
 		return "", err
 	}
 
-	localIDDoc, err := common.RetrieveIDDocFromIPFS(s.Ipfs, s.NodeID())
+	localIDDoc, err := common.RetrieveIDDoc(s.Tendermint, s.NodeID())
 	if err != nil {
 		return "", err
 	}
@@ -261,7 +263,7 @@ func (s *Service) OrderSecret1(req *api.OrderSecretRequest) (string, error) {
 		return "", err
 	}
 
-	//Create a request Object in IPFS
+	//Create a request Object
 	order.OrderPart3 = &documents.OrderPart3{
 		Redemption:               "SignedReferenceNumber",
 		PreviousOrderCID:         previousOrderHash,

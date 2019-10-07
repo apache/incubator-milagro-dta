@@ -21,7 +21,6 @@ import (
 	"io"
 
 	"github.com/apache/incubator-milagro-dta/libs/datastore"
-	"github.com/apache/incubator-milagro-dta/libs/ipfs"
 	"github.com/apache/incubator-milagro-dta/libs/keystore"
 	"github.com/apache/incubator-milagro-dta/libs/logger"
 	"github.com/apache/incubator-milagro-dta/pkg/config"
@@ -72,14 +71,6 @@ func WithDataStore(store *datastore.Store) ServiceOption {
 func WithKeyStore(store keystore.Store) ServiceOption {
 	return func(s *Service) error {
 		s.KeyStore = store
-		return nil
-	}
-}
-
-// WithIPFS adds ipfs connector to the Service
-func WithIPFS(ipfsConnector ipfs.Connector) ServiceOption {
-	return func(s *Service) error {
-		s.Ipfs = ipfsConnector
 		return nil
 	}
 }

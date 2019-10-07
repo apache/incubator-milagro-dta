@@ -55,7 +55,7 @@ func (s *Service) FulfillOrder(tx *api.BlockChainTX) (string, error) {
 		return "", err
 	}
 
-	remoteIDDoc, err := common.RetrieveIDDocFromIPFS(s.Ipfs, remoteIDDocCID)
+	remoteIDDoc, err := common.RetrieveIDDoc(s.Tendermint, remoteIDDocCID)
 	if err != nil {
 		return "", err
 	}
@@ -68,7 +68,7 @@ func (s *Service) FulfillOrder(tx *api.BlockChainTX) (string, error) {
 	}
 
 	//Recipient list is principal and self
-	recipientList, err := common.BuildRecipientList(s.Ipfs, order.PrincipalCID, nodeID)
+	recipientList, err := common.BuildRecipientList(s.Tendermint, order.PrincipalCID, nodeID)
 	if err != nil {
 		return "", err
 	}
@@ -136,7 +136,7 @@ func (s *Service) FulfillOrderSecret(tx *api.BlockChainTX) (string, error) {
 		return "", err
 	}
 
-	remoteIDDoc, err := common.RetrieveIDDocFromIPFS(s.Ipfs, remoteIDDocCID)
+	remoteIDDoc, err := common.RetrieveIDDoc(s.Tendermint, remoteIDDocCID)
 	if err != nil {
 		return "", err
 	}
@@ -149,7 +149,7 @@ func (s *Service) FulfillOrderSecret(tx *api.BlockChainTX) (string, error) {
 	}
 
 	//Recipient list is beneficiary and self
-	recipientList, err := common.BuildRecipientList(s.Ipfs, nodeID, order.BeneficiaryCID)
+	recipientList, err := common.BuildRecipientList(s.Tendermint, nodeID, order.BeneficiaryCID)
 	if err != nil {
 		return "", err
 	}

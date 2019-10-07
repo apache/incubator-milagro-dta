@@ -23,7 +23,6 @@ func DefaultConfig() *Config {
 		HTTP:       defaultHTTPConfig(),
 		Node:       defaultNodeConfig(),
 		Log:        defaultLogConfig(),
-		IPFS:       defaultIPFSConfig(),
 		Plugins:    defaultPluginsConfig(),
 		Blockchain: defaultBlockchainConfig(),
 	}
@@ -48,23 +47,10 @@ func defaultLogConfig() LogConfig {
 	}
 }
 
-// IPFSConfig -
-func defaultIPFSConfig() IPFSConfig {
-	return IPFSConfig{
-		Bootstrap: []string{
-			"/ip4/34.252.47.231/tcp/4001/ipfs/QmcEPkctfqQs6vbvTD8EdJmzy4zouAtrV8AwjLbGhbURep",
-		},
-		Connector:     "embedded",
-		ListenAddress: "/ip4/0.0.0.0/tcp/4001",
-		APIAddress:    "http://localhost:5001",
-	}
-}
-
 // NodeConfig -
 func defaultNodeConfig() NodeConfig {
 	return NodeConfig{
 		NodeType:              "multi",
-		MasterFiduciaryServer: "http://localhost:5556",
 		MasterFiduciaryNodeID: "",
 		NodeID:                "",
 		Datastore:             "embedded",

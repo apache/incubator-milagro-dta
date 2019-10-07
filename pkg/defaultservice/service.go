@@ -28,7 +28,6 @@ import (
 
 	"github.com/apache/incubator-milagro-dta/libs/datastore"
 	"github.com/apache/incubator-milagro-dta/libs/documents"
-	"github.com/apache/incubator-milagro-dta/libs/ipfs"
 	"github.com/apache/incubator-milagro-dta/libs/keystore"
 	"github.com/apache/incubator-milagro-dta/libs/logger"
 	"github.com/apache/incubator-milagro-dta/libs/transport"
@@ -52,7 +51,6 @@ type Service struct {
 	Rng                   io.Reader
 	Store                 *datastore.Store
 	KeyStore              keystore.Store
-	Ipfs                  ipfs.Connector
 	Tendermint            *tendermint.NodeConnector
 	nodeID                string
 	masterFiduciaryNodeID string
@@ -112,7 +110,7 @@ func (s *Service) Dump(tx *api.BlockChainTX) error {
 	nodeID := s.NodeID()
 	txHashString := hex.EncodeToString(tx.TXhash)
 
-	localIDDoc, err := common.RetrieveIDDocFromIPFS(s.Ipfs, nodeID)
+	localIDDoc, err := common.RetrieveIDDoc(s.Tendermint, nodeID)
 	if err != nil {
 		return err
 	}

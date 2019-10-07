@@ -31,10 +31,8 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/apache/incubator-milagro-dta/libs/keystore"
-
 	"github.com/apache/incubator-milagro-dta/libs/datastore"
-	"github.com/apache/incubator-milagro-dta/libs/ipfs"
+	"github.com/apache/incubator-milagro-dta/libs/keystore"
 	"github.com/apache/incubator-milagro-dta/libs/logger"
 	"github.com/apache/incubator-milagro-dta/libs/transport"
 	"github.com/apache/incubator-milagro-dta/pkg/api"
@@ -79,21 +77,13 @@ func initConfig(args []string) error {
 	// Init the config folder
 	config.Init(configFolder(), cfg)
 
-	logger.Info("IPFS connector type: %s", cfg.IPFS.Connector)
-	var ipfsConnector ipfs.Connector
-	switch cfg.IPFS.Connector {
-	case "api":
-		ipfsConnector, err = ipfs.NewAPIConnector(ipfs.NodeAddr(cfg.IPFS.APIAddress))
-	case "embedded":
-		ipfsConnector, err = ipfs.NewNodeConnector(
-			ipfs.AddLocalAddress(cfg.IPFS.ListenAddress),
-			ipfs.AddBootstrapPeer(cfg.IPFS.Bootstrap...),
-			ipfs.WithLevelDatastore(filepath.Join(configFolder(), "ipfs-data")),
-		)
-	}
+	// Init Tendermint node connector
+	tmConnector, err := tendermint.NewNodeConnector(cfg.Blockchain.BroadcastNode, cfg.Node.NodeID, nil, logger)
 	if err != nil {
-		return errors.Wrap(err, "init IPFS connector")
+		return errors.Wrap(err, "Blockchain Node connector")
 	}
+
+	logger.Info("Node connector address: %s", cfg.Blockchain.BroadcastNode)
 
 	keyStore, err := keystore.NewFileStore(filepath.Join(configFolder(), keysFile))
 	if err != nil {
@@ -103,20 +93,18 @@ func initConfig(args []string) error {
 	if err != nil {
 		return err
 	}
-	newID, err := identity.StoreIdentity(rawDocID, secret, ipfsConnector, keyStore)
+	newID, err := identity.StoreIdentity(rawDocID, secret, tmConnector, keyStore)
 	if err != nil {
 		return err
 	}
+
+	logger.Info("New Node ID: %s", newID)
 
 	cfg.Node.NodeID = newID
 	if initOptions.MasterFidNodeID != "" {
 		cfg.Node.MasterFiduciaryNodeID = initOptions.MasterFidNodeID
 	} else {
 		cfg.Node.MasterFiduciaryNodeID = newID
-	}
-
-	if initOptions.MasterFidNodeAddress != "" {
-		cfg.Node.MasterFiduciaryServer = initOptions.MasterFidNodeAddress
 	}
 
 	if cfg.Node.MasterFiduciaryNodeID == "" {
@@ -153,21 +141,6 @@ func startDaemon(args []string) error {
 		return errors.Wrap(err, "init datastore")
 	}
 
-	logger.Info("IPFS connector type: %s", cfg.IPFS.Connector)
-	var ipfsConnector ipfs.Connector
-	switch cfg.IPFS.Connector {
-	case "api":
-		ipfsConnector, err = ipfs.NewAPIConnector(ipfs.NodeAddr(cfg.IPFS.APIAddress))
-	case "embedded":
-		ipfsConnector, err = ipfs.NewNodeConnector(
-			ipfs.AddLocalAddress(cfg.IPFS.ListenAddress),
-			ipfs.AddBootstrapPeer(cfg.IPFS.Bootstrap...),
-			ipfs.WithLevelDatastore(filepath.Join(configFolder(), "ipfs-data")),
-		)
-	}
-	if err != nil {
-		return errors.Wrap(err, "init IPFS connector")
-	}
 	keyStore, err := keystore.NewFileStore(filepath.Join(configFolder(), keysFile))
 	if err != nil {
 		return err
@@ -208,7 +181,6 @@ func startDaemon(args []string) error {
 		defaultservice.WithRng(rand.Reader),
 		defaultservice.WithDataStore(store),
 		defaultservice.WithKeyStore(keyStore),
-		defaultservice.WithIPFS(ipfsConnector),
 		defaultservice.WithTendermint(tmConnector),
 		defaultservice.WithConfig(cfg),
 	); err != nil {
@@ -216,7 +188,7 @@ func startDaemon(args []string) error {
 	}
 	logger.Info("Service plugin loaded: %s", svcPlugin.Name())
 
-	if err := identity.CheckIdentity(cfg.Node.NodeID, cfg.Node.NodeName, ipfsConnector, keyStore); err != nil {
+	if err := identity.CheckIdentity(cfg.Node.NodeID, cfg.Node.NodeName, tmConnector, keyStore); err != nil {
 		return errors.Wrap(err, "Invalid node identity")
 	}
 

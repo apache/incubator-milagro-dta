@@ -25,9 +25,10 @@ import (
 	"io"
 	"time"
 
+	"github.com/apache/incubator-milagro-dta/pkg/tendermint"
+
 	"github.com/apache/incubator-milagro-dta/libs/datastore"
 	"github.com/apache/incubator-milagro-dta/libs/documents"
-	"github.com/apache/incubator-milagro-dta/libs/ipfs"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 )
@@ -56,25 +57,14 @@ func CreateNewDepositOrder(BeneficiaryIDDocumentCID string, nodeID string) (*doc
 	return &order, nil
 }
 
-// RetrieveOrderFromIPFS - retrieve an Order from IPFS and Decode the into an  object
-func RetrieveOrderFromIPFS(ipfs ipfs.Connector, ipfsID string, sikeSK []byte, recipientID string, sendersBlsPK []byte) (*documents.OrderDoc, error) {
-	o := &documents.OrderDoc{}
-	rawDocO, err := ipfs.Get(ipfsID)
+// RetrieveIDDoc finds and parses the IDDocument
+func RetrieveIDDoc(tmConn *tendermint.NodeConnector, id string) (*documents.IDDoc, error) {
+	rawDocI, err := tmConn.GetTx(id)
 	if err != nil {
 		return nil, err
 	}
-	err = documents.DecodeOrderDocument(rawDocO, ipfsID, o, sikeSK, recipientID, sendersBlsPK)
-	return o, err
-}
-
-// RetrieveIDDocFromIPFS finds and parses the IDDocument
-func RetrieveIDDocFromIPFS(ipfs ipfs.Connector, ipfsID string) (*documents.IDDoc, error) {
 	iddoc := &documents.IDDoc{}
-	rawDocI, err := ipfs.Get(ipfsID)
-	if err != nil {
-		return nil, err
-	}
-	err = documents.DecodeIDDocument(rawDocI, ipfsID, iddoc)
+	err = documents.DecodeIDDocument(rawDocI.Payload, id, iddoc)
 	return iddoc, err
 }
 
@@ -114,10 +104,10 @@ func WriteOrderToStore(store *datastore.Store, orderReference string, address st
 }
 
 // BuildRecipientList builds a list of recipients who are able to decrypt the encrypted envelope
-func BuildRecipientList(ipfs ipfs.Connector, IDDocs ...string) (map[string]*documents.IDDoc, error) {
+func BuildRecipientList(tmConn *tendermint.NodeConnector, ids ...string) (map[string]*documents.IDDoc, error) {
 	recipients := make(map[string]*documents.IDDoc)
-	for _, v := range IDDocs {
-		iddoc, err := RetrieveIDDocFromIPFS(ipfs, v)
+	for _, v := range ids {
+		iddoc, err := RetrieveIDDoc(tmConn, v)
 		if err != nil {
 			return nil, err
 		}

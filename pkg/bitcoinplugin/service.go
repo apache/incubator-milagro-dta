@@ -116,7 +116,7 @@ func (s *Service) ProduceBeneficiaryEncryptedData(blsSK []byte, order *documents
 // ProduceFinalSecret -
 func (s *Service) ProduceFinalSecret(seed, sikeSK []byte, order, orderPart4 *documents.OrderDoc, beneficiaryIDDocumentCID string) (secret, commitment string, extension map[string]string, err error) {
 	//retrieve principal IDDoc
-	principalDocID, err := common.RetrieveIDDocFromIPFS(s.Ipfs, order.PrincipalCID)
+	principalDocID, err := common.RetrieveIDDoc(s.Tendermint, order.PrincipalCID)
 	if err != nil {
 		return "", "", nil, err
 	}

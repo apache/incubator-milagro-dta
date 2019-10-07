@@ -30,16 +30,24 @@ import (
 )
 
 const (
-	//OrderIn Types for the Blockchain
-	TXOrderRequest    = "v1/order1"
-	TXFulfillRequest  = "v1/fulfill/order"
-	TXFulfillResponse = "v1/order2"
-	TXOrderResponse   = "dump"
+	// OrderIn Types for the Blockchain
 
-	TXOrderSecretRequest         = "v1/order/secret1"
-	TXFulfillOrderSecretRequest  = "v1/fulfill/order/secret"
+	// TXOrderRequest -
+	TXOrderRequest = "v1/order1"
+	// TXFulfillRequest -
+	TXFulfillRequest = "v1/fulfill/order"
+	// TXFulfillResponse -
+	TXFulfillResponse = "v1/order2"
+	// TXOrderResponse -
+	TXOrderResponse = "dump"
+	// TXOrderSecretRequest -
+	TXOrderSecretRequest = "v1/order/secret1"
+	// TXFulfillOrderSecretRequest -
+	TXFulfillOrderSecretRequest = "v1/fulfill/order/secret"
+	// TXFulfillOrderSecretResponse -
 	TXFulfillOrderSecretResponse = "v1/order/secret2"
-	TXOrderSecretResponse        = "dump"
+	// TXOrderSecretResponse -
+	TXOrderSecretResponse = "dump"
 )
 
 //BlockChainTX - struct for on chain req/resp
@@ -56,8 +64,12 @@ type BlockChainTX struct {
 // CalcHash calculates, sets the TXhash and returns the string representation
 func (tx *BlockChainTX) CalcHash() string {
 	txSha := sha256.Sum256(tx.Payload)
+	txHash := hex.EncodeToString(txSha[:])
+
 	tx.TXhash = txSha[:]
-	return hex.EncodeToString(txSha[:])
+	tx.Tags["txhash"] = txHash
+
+	return txHash
 
 }
 
@@ -75,7 +87,7 @@ type CreateIdentityResponse struct {
 
 //GetIdentityRequest -
 type GetIdentityRequest struct {
-	IDDocumentCID string `json:"idDocumentCID"  validate:"IPFS"`
+	IDDocumentCID string `json:"idDocumentCID"  validate:"hashID"`
 }
 
 //GetIdentityResponse -
@@ -108,15 +120,15 @@ type IdentityListResponse struct {
 
 //OrderRequest -
 type OrderRequest struct {
-	// BeneficiaryIDDocumentCID string            `json:"BeneficiaryIDDocumentCID,omitempty" validate:"omitempty,IPFS"`
+	// BeneficiaryIDDocumentCID string            `json:"BeneficiaryIDDocumentCID,omitempty" validate:"omitempty,hashID"`
 	BeneficiaryIDDocumentCID string            `json:"beneficiaryIDDocumentCID,omitempty"`
 	Extension                map[string]string `json:"extension,omitempty"`
 }
 
 //OrderResponse -
 type OrderResponse struct {
-	// OrderPart1CID  string            `json:"orderPart1CID,omitempty" validate:"omitempty,IPFS"`
-	// OrderPart2CID  string            `json:"orderPart2CID,omitempty" validate:"omitempty,IPFS"`
+	// OrderPart1CID  string            `json:"orderPart1CID,omitempty" validate:"omitempty,hashID"`
+	// OrderPart2CID  string            `json:"orderPart2CID,omitempty" validate:"omitempty,hashID"`
 	OrderReference string            `json:"orderReference,omitempty" validate:"omitempty"`
 	Commitment     string            `json:"commitment,omitempty"`
 	CreatedAt      int64             `json:"createdAt,omitempty"`
@@ -154,7 +166,7 @@ type GetOrderResponse struct {
 //OrderSecretRequest -
 type OrderSecretRequest struct {
 	OrderReference           string            `json:"orderReference,omitempty" validate:"omitempty"`
-	BeneficiaryIDDocumentCID string            `json:"beneficiaryIDDocumentCID,omitempty" validate:"omitempty,IPFS"`
+	BeneficiaryIDDocumentCID string            `json:"beneficiaryIDDocumentCID,omitempty" validate:"omitempty,hashID"`
 	Extension                map[string]string `json:"extension,omitempty"`
 }
 
@@ -168,8 +180,8 @@ type OrderSecretResponse struct {
 
 //FulfillOrderSecretRequest -
 type FulfillOrderSecretRequest struct {
-	OrderPart3CID     string            `json:"orderPart3CID,omitempty" validate:"IPFS"`
-	SenderDocumentCID string            `json:"documentCID,omitempty" validate:"IPFS"`
+	OrderPart3CID     string            `json:"orderPart3CID,omitempty" validate:"hashID"`
+	SenderDocumentCID string            `json:"documentCID,omitempty" validate:"hashID"`
 	Extension         map[string]string `json:"extension,omitempty"`
 }
 
@@ -181,8 +193,8 @@ type FulfillOrderSecretResponse struct {
 
 //FulfillOrderRequest -
 type FulfillOrderRequest struct {
-	OrderPart1CID string            `json:"orderPart1CID,omitempty" validate:"IPFS"`
-	DocumentCID   string            `json:"documentCID,omitempty" validate:"IPFS"`
+	OrderPart1CID string            `json:"orderPart1CID,omitempty" validate:"hashID"`
+	DocumentCID   string            `json:"documentCID,omitempty" validate:"hashID"`
 	Extension     map[string]string `json:"extension,omitempty"`
 }
 

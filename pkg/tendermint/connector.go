@@ -70,6 +70,11 @@ func (nc *NodeConnector) Stop() error {
 	return nc.tmClient.Stop()
 }
 
+// NodeID returns the NodeID
+func (nc *NodeConnector) NodeID() string {
+	return nc.nodeID
+}
+
 // GetTx retreives a transaction by hash
 func (nc *NodeConnector) GetTx(txHash string) (*api.BlockChainTX, error) {
 	query := fmt.Sprintf("tag.txhash='%s'", txHash)
@@ -78,7 +83,7 @@ func (nc *NodeConnector) GetTx(txHash string) (*api.BlockChainTX, error) {
 		return nil, err
 	}
 	if len(result.Txs) == 0 {
-		return nil, errors.New("Transaction not found")
+		return nil, errors.Errorf("Document not found: %v", txHash)
 	}
 
 	payload := &api.BlockChainTX{}

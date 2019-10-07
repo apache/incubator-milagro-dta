@@ -93,7 +93,7 @@ func DecodeIDDocument(rawdoc []byte, tag string, idDocument *IDDoc) error {
 	return nil
 }
 
-//PeekOrderDocument - look at the header inside an order document before decryption
+//OrderDocumentSigner - look at the header inside an order document before decryption
 func OrderDocumentSigner(rawDoc []byte) (string, error) {
 	signedEnvelope := SignedEnvelope{}
 	err := proto.Unmarshal(rawDoc, &signedEnvelope)

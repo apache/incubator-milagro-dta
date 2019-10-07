@@ -105,6 +105,7 @@ func RetrieveSeed(store *datastore.Store, reference string) (seedHex string, err
 	return seedHex, nil
 }
 
+//WriteOrderToStore stores an order
 func WriteOrderToStore(store *datastore.Store, orderReference string, address string) error {
 	if err := store.Set("order", orderReference, address, map[string]string{"time": time.Now().UTC().Format(time.RFC3339)}); err != nil {
 		return errors.New("Save Order to store")
@@ -113,8 +114,8 @@ func WriteOrderToStore(store *datastore.Store, orderReference string, address st
 }
 
 // BuildRecipientList builds a list of recipients who are able to decrypt the encrypted envelope
-func BuildRecipientList(ipfs ipfs.Connector, IDDocs ...string) (map[string]documents.IDDoc, error) {
-	recipients := make(map[string]documents.IDDoc)
+func BuildRecipientList(ipfs ipfs.Connector, IDDocs ...string) (map[string]*documents.IDDoc, error) {
+	recipients := make(map[string]*documents.IDDoc)
 	for _, v := range IDDocs {
 		iddoc, err := RetrieveIDDocFromIPFS(ipfs, v)
 		if err != nil {

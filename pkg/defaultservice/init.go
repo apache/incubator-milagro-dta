@@ -24,8 +24,8 @@ import (
 	"github.com/apache/incubator-milagro-dta/libs/ipfs"
 	"github.com/apache/incubator-milagro-dta/libs/keystore"
 	"github.com/apache/incubator-milagro-dta/libs/logger"
-	"github.com/apache/incubator-milagro-dta/pkg/api"
 	"github.com/apache/incubator-milagro-dta/pkg/config"
+	"github.com/apache/incubator-milagro-dta/pkg/tendermint"
 )
 
 // ServiceOption function to set Service properties
@@ -84,10 +84,18 @@ func WithIPFS(ipfsConnector ipfs.Connector) ServiceOption {
 	}
 }
 
-// WithMasterFiduciary adds master fiduciary connector to the Service
-func WithMasterFiduciary(masterFiduciaryServer api.ClientService) ServiceOption {
+// WithTendermint adds tendermint node connector to the Service
+func WithTendermint(tmConnector *tendermint.NodeConnector) ServiceOption {
 	return func(s *Service) error {
-		s.MasterFiduciaryServer = masterFiduciaryServer
+		s.Tendermint = tmConnector
+		return nil
+	}
+}
+
+// WithMasterFiduciary adds master fiduciary connector to the Service
+func WithMasterFiduciary(masterFiduciaryNodeID string) ServiceOption {
+	return func(s *Service) error {
+		s.SetMasterFiduciaryNodeID(masterFiduciaryNodeID)
 		return nil
 	}
 }

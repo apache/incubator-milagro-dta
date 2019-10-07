@@ -10,16 +10,8 @@ import (
 )
 
 // CreateTX creates the transaction ready for write to the chain
-func CreateTX(nodeID string, store *datastore.Store, id string, order *documents.OrderDoc, recipients map[string]documents.IDDoc) ([]byte, []byte, error) {
-	secrets := &IdentitySecrets{}
-	if err := store.Get("id-doc", nodeID, secrets); err != nil {
-		return nil, nil, errors.New("load secrets from store")
-	}
-	blsSecretKey, err := hex.DecodeString(secrets.BLSSecretKey)
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "Decode identity secrets")
-	}
-	rawDoc, err := documents.EncodeOrderDocument(nodeID, *order, blsSecretKey, "previousID", recipients)
+func CreateTX(nodeID string, store *datastore.Store, blsSecretKey []byte, id string, order *documents.OrderDoc, recipients map[string]*documents.IDDoc) ([]byte, []byte, error) {
+	rawDoc, err := documents.EncodeOrderDocument(nodeID, *order, blsSecretKey, recipients)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "Failed to encode IDDocument")
 	}
@@ -32,7 +24,7 @@ func CreateTX(nodeID string, store *datastore.Store, id string, order *documents
 	return TXID[:], rawDoc, nil
 }
 
-//Decode a transaction for header data but don't decrypt it
+//PeekTX Decode a transaction for header data but don't decrypt it
 func PeekTX(tx []byte) (string, error) {
 	signerCID, err := documents.OrderDocumentSigner(tx)
 	print(signerCID)

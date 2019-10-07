@@ -24,6 +24,8 @@ package api
 */
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"time"
 )
 
@@ -49,6 +51,14 @@ type BlockChainTX struct {
 	Payload                []byte
 	TXhash                 []byte
 	Tags                   map[string]string
+}
+
+// CalcHash calculates, sets the TXhash and returns the string representation
+func (tx *BlockChainTX) CalcHash() string {
+	txSha := sha256.Sum256(tx.Payload)
+	tx.TXhash = txSha[:]
+	return hex.EncodeToString(txSha[:])
+
 }
 
 //CreateIdentityRequest -

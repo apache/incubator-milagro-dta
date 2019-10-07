@@ -19,11 +19,12 @@ package defaultservice
 
 import (
 	"encoding/hex"
+	"fmt"
 
 	"github.com/apache/incubator-milagro-dta/libs/documents"
 	"github.com/apache/incubator-milagro-dta/pkg/api"
 	"github.com/apache/incubator-milagro-dta/pkg/common"
-	"github.com/apache/incubator-milagro-dta/pkg/tendermint"
+	"github.com/apache/incubator-milagro-dta/pkg/identity"
 	"github.com/pkg/errors"
 )
 
@@ -38,7 +39,16 @@ func (s *Service) Order2(tx *api.BlockChainTX) (string, error) {
 		return "", err
 	}
 
-	_, _, _, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
+	// SIKE and BLS keys
+	keyseed, err := s.KeyStore.Get("seed")
+	if err != nil {
+		return "", err
+	}
+	_, sikeSK, err := identity.GenerateSIKEKeys(keyseed)
+	if err != nil {
+		return "", err
+	}
+	_, blsSK, err := identity.GenerateBLSKeys(keyseed)
 	if err != nil {
 		return "", err
 	}
@@ -73,7 +83,7 @@ func (s *Service) Order2(tx *api.BlockChainTX) (string, error) {
 	}
 
 	//Generate a transaction
-	txHash, payload, err := common.CreateTX(nodeID, s.Store, nodeID, order, recipientList)
+	txHash, payload, err := common.CreateTX(nodeID, s.Store, blsSK, nodeID, order, recipientList)
 
 	//Write the Order2 results to the chain
 	chainTX := &api.BlockChainTX{
@@ -84,8 +94,8 @@ func (s *Service) Order2(tx *api.BlockChainTX) (string, error) {
 		Payload:                payload,
 		Tags:                   map[string]string{"reference": order.Reference, "txhash": hex.EncodeToString(txHash)},
 	}
-	return tendermint.PostToChain(chainTX, "Order2")
 
+	return s.Tendermint.PostTx(chainTX, "Order2")
 }
 
 // OrderSecret2 - Process an incoming Blockchain Order/Secret transaction from a MasterFiduciary, to generate the final secret
@@ -94,7 +104,16 @@ func (s *Service) OrderSecret2(tx *api.BlockChainTX) (string, error) {
 	reqPayload := tx.Payload
 	txHashString := hex.EncodeToString(tx.TXhash)
 
-	_, _, _, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
+	// SIKE and BLS keys
+	keyseed, err := s.KeyStore.Get("seed")
+	if err != nil {
+		return "", err
+	}
+	_, sikeSK, err := identity.GenerateSIKEKeys(keyseed)
+	if err != nil {
+		return "", err
+	}
+	_, blsSK, err := identity.GenerateBLSKeys(keyseed)
 	if err != nil {
 		return "", err
 	}
@@ -107,17 +126,16 @@ func (s *Service) OrderSecret2(tx *api.BlockChainTX) (string, error) {
 	//Decode the Order from the supplied TX
 	order := &documents.OrderDoc{}
 	err = documents.DecodeOrderDocument(reqPayload, txHashString, order, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)
+	if err != nil {
+		fmt.Println("ERROR DEcode Order:", err)
+		return "", err
+	}
 
 	if order.BeneficiaryCID != nodeID {
 		return "", errors.New("Invalid Processor")
 	}
 
-	_, seed, _, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
-	if err != nil {
-		return "", err
-	}
-
-	finalPrivateKey, _, extension, err := s.Plugin.ProduceFinalSecret(seed, sikeSK, order, order, nodeID)
+	finalPrivateKey, _, extension, err := s.Plugin.ProduceFinalSecret(keyseed, sikeSK, order, order, nodeID)
 	if err != nil {
 		return "", err
 	}
@@ -140,7 +158,7 @@ func (s *Service) OrderSecret2(tx *api.BlockChainTX) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	txHash, payload, err := common.CreateTX(nodeID, s.Store, nodeID, order, recipientList)
+	txHash, payload, err := common.CreateTX(nodeID, s.Store, blsSK, nodeID, order, recipientList)
 
 	//Write the requests to the chain
 	chainTX := &api.BlockChainTX{
@@ -151,5 +169,6 @@ func (s *Service) OrderSecret2(tx *api.BlockChainTX) (string, error) {
 		Payload:                payload,
 		Tags:                   map[string]string{"reference": order.Reference, "txhash": hex.EncodeToString(txHash)},
 	}
-	return tendermint.PostToChain(chainTX, "OrderSecret2")
+
+	return s.Tendermint.PostTx(chainTX, "OrderSecret2")
 }

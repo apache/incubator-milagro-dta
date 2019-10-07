@@ -34,7 +34,8 @@ import (
 	"github.com/apache/incubator-milagro-dta/libs/transport"
 	"github.com/apache/incubator-milagro-dta/pkg/api"
 	"github.com/apache/incubator-milagro-dta/pkg/common"
-	"github.com/apache/incubator-milagro-dta/pkg/config"
+	"github.com/apache/incubator-milagro-dta/pkg/identity"
+	"github.com/apache/incubator-milagro-dta/pkg/tendermint"
 	"github.com/hokaccha/go-prettyjson"
 )
 
@@ -52,6 +53,7 @@ type Service struct {
 	Store                 *datastore.Store
 	KeyStore              keystore.Store
 	Ipfs                  ipfs.Connector
+	Tendermint            *tendermint.NodeConnector
 	nodeID                string
 	masterFiduciaryNodeID string
 }
@@ -115,7 +117,12 @@ func (s *Service) Dump(tx *api.BlockChainTX) error {
 		return err
 	}
 
-	_, _, _, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
+	// SIKE and BLS keys
+	keyseed, err := s.KeyStore.Get("seed")
+	if err != nil {
+		return err
+	}
+	_, sikeSK, err := identity.GenerateSIKEKeys(keyseed)
 	if err != nil {
 		return err
 	}
@@ -127,6 +134,8 @@ func (s *Service) Dump(tx *api.BlockChainTX) error {
 	fmt.Println(string(pp))
 
 	return nil
+}
+
 // Endpoints for extending the plugin endpoints
 func (s *Service) Endpoints() (namespace string, endpoints transport.HTTPEndpoints) {
 	return s.Name(), nil

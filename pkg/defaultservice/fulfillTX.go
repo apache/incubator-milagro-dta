@@ -25,9 +25,10 @@ import (
 	"github.com/apache/incubator-milagro-dta/libs/documents"
 	"github.com/apache/incubator-milagro-dta/pkg/api"
 	"github.com/apache/incubator-milagro-dta/pkg/common"
-	"github.com/apache/incubator-milagro-dta/pkg/tendermint"
+	"github.com/apache/incubator-milagro-dta/pkg/identity"
 )
 
+// FulfillOrder TX
 func (s *Service) FulfillOrder(tx *api.BlockChainTX) (string, error) {
 	nodeID := s.NodeID()
 	reqPayload := tx.Payload
@@ -40,7 +41,16 @@ func (s *Service) FulfillOrder(tx *api.BlockChainTX) (string, error) {
 	}
 	remoteIDDocCID := signerID
 
-	_, _, _, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
+	// SIKE and BLS keys
+	keyseed, err := s.KeyStore.Get("seed")
+	if err != nil {
+		return "", err
+	}
+	_, sikeSK, err := identity.GenerateSIKEKeys(keyseed)
+	if err != nil {
+		return "", err
+	}
+	_, blsSK, err := identity.GenerateBLSKeys(keyseed)
 	if err != nil {
 		return "", err
 	}
@@ -83,7 +93,7 @@ func (s *Service) FulfillOrder(tx *api.BlockChainTX) (string, error) {
 	}
 
 	//Create a new Transaction payload and TX
-	txHash, payload, err := common.CreateTX(nodeID, s.Store, nodeID, order, recipientList)
+	txHash, payload, err := common.CreateTX(nodeID, s.Store, blsSK, nodeID, order, recipientList)
 
 	//Write the requests to the chain
 	chainTX := &api.BlockChainTX{
@@ -95,8 +105,8 @@ func (s *Service) FulfillOrder(tx *api.BlockChainTX) (string, error) {
 		TXhash:                 txHash,
 		Tags:                   map[string]string{"reference": order.Reference, "txhash": hex.EncodeToString(txHash)},
 	}
-	return tendermint.PostToChain(chainTX, "FulfillOrder")
 
+	return s.Tendermint.PostTx(chainTX, "FulfillOrder")
 }
 
 // FulfillOrderSecret -
@@ -112,7 +122,16 @@ func (s *Service) FulfillOrderSecret(tx *api.BlockChainTX) (string, error) {
 	}
 	remoteIDDocCID := signerID
 
-	_, _, _, sikeSK, err := common.RetrieveIdentitySecrets(s.Store, nodeID)
+	// SIKE and BLS keys
+	keyseed, err := s.KeyStore.Get("seed")
+	if err != nil {
+		return "", err
+	}
+	_, sikeSK, err := identity.GenerateSIKEKeys(keyseed)
+	if err != nil {
+		return "", err
+	}
+	_, blsSK, err := identity.GenerateBLSKeys(keyseed)
 	if err != nil {
 		return "", err
 	}
@@ -155,7 +174,7 @@ func (s *Service) FulfillOrderSecret(tx *api.BlockChainTX) (string, error) {
 	}
 
 	//Create a new Transaction payload and TX
-	txHash, payload, err := common.CreateTX(nodeID, s.Store, nodeID, order, recipientList)
+	txHash, payload, err := common.CreateTX(nodeID, s.Store, blsSK, nodeID, order, recipientList)
 
 	//Write the requests to the chain
 	chainTX := &api.BlockChainTX{
@@ -167,5 +186,6 @@ func (s *Service) FulfillOrderSecret(tx *api.BlockChainTX) (string, error) {
 		Payload: payload,
 		Tags:    map[string]string{"reference": order.Reference, "txhash": hex.EncodeToString(txHash)},
 	}
-	return tendermint.PostToChain(chainTX, "FulfillOrderSecret")
+
+	return s.Tendermint.PostTx(chainTX, "FulfillOrderSecret")
 }

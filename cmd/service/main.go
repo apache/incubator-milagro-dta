@@ -21,6 +21,7 @@ Package main - handles config, initialisation and starts the service daemon
 package main
 
 import (
+	"context"
 	"crypto/rand"
 	"fmt"
 	"net/http"
@@ -36,6 +37,7 @@ import (
 	"github.com/apache/incubator-milagro-dta/libs/ipfs"
 	"github.com/apache/incubator-milagro-dta/libs/logger"
 	"github.com/apache/incubator-milagro-dta/libs/transport"
+	"github.com/apache/incubator-milagro-dta/pkg/api"
 	"github.com/apache/incubator-milagro-dta/pkg/config"
 	"github.com/apache/incubator-milagro-dta/pkg/defaultservice"
 	"github.com/apache/incubator-milagro-dta/pkg/endpoints"
@@ -138,10 +140,11 @@ func startDaemon(args []string) error {
 		cfg.Log.Format,
 		cfg.Log.Level,
 	)
-
 	if err != nil {
 		return errors.Wrap(err, "init logger")
 	}
+
+	logger.Debug("Logger in DEBUG mode!")
 
 	// Create KV store
 	logger.Info("Datastore type: %s", cfg.Node.Datastore)
@@ -187,6 +190,12 @@ func startDaemon(args []string) error {
 		}
 	}
 
+	// Init Tendermint node connector
+	tmConnector, err := tendermint.NewNodeConnector(cfg.Blockchain.BroadcastNode, cfg.Node.NodeID, store, logger)
+	if err != nil {
+		return errors.Wrap(err, "Blockchain Node connector")
+	}
+
 	//The Server must have a valid ID before starting up
 	svcPlugin := plugins.FindServicePlugin(cfg.Plugins.Service)
 	if svcPlugin == nil {
@@ -200,7 +209,7 @@ func startDaemon(args []string) error {
 		defaultservice.WithDataStore(store),
 		defaultservice.WithKeyStore(keyStore),
 		defaultservice.WithIPFS(ipfsConnector),
-		defaultservice.WithMasterFiduciary(masterFiduciaryServer),
+		defaultservice.WithTendermint(tmConnector),
 		defaultservice.WithConfig(cfg),
 	); err != nil {
 		return errors.Errorf("init service plugin %s", cfg.Plugins.Service)
@@ -223,23 +232,47 @@ func startDaemon(args []string) error {
 	}, []string{"method", "success"})
 
 	// Stop chan
+	ctx, cancelContext := context.WithCancel(context.Background())
+
 	errChan := make(chan error)
 
-	logger.Info("NODE ID (IPFS):  %v", svcPlugin.NodeID())
 	logger.Info("Node Type: %v", strings.ToLower(cfg.Node.NodeType))
-	endpoints := endpoints.Endpoints(svcPlugin, cfg.HTTP.CorsAllow, authorizer, logger, cfg.Node.NodeType, svcPlugin)
-	httpHandler := transport.NewHTTPHandler(endpoints, logger, duration)
+	logger.Info("Node ID:  %v", svcPlugin.NodeID())
+	logger.Info("Master Fiduciary: %v", svcPlugin.MasterFiduciaryNodeID())
 
 	//Connect to Blockchain - Tendermint
-	go tendermint.Subscribe(svcPlugin, store, logger, cfg.Node.NodeID, cfg.HTTP.ListenAddr)
-	if err != nil {
-		return errors.Wrap(err, "init Tendermint Blockchain")
-	}
+	go func() {
+		processFn := func(tx *api.BlockChainTX) error {
+			switch tx.Processor {
+			case "none":
+				return nil
+			case "dump":
+				svcPlugin.Dump(tx)
+			case "v1/fulfill/order":
+				svcPlugin.FulfillOrder(tx)
+			case "v1/order2":
+				svcPlugin.Order2(tx)
+			case "v1/fulfill/order/secret":
+				svcPlugin.FulfillOrderSecret(tx)
+			case "v1/order/secret2":
+				svcPlugin.OrderSecret2(tx)
+			default:
+				return errors.New("Unknown processor")
+			}
+			return nil
+		}
+
+		logger.Info("Starting Blockchain listener to node: %v", cfg.Blockchain.BroadcastNode)
+		errChan <- tmConnector.Subscribe(ctx, processFn)
+		// errChan <- tendermint.Subscribe(svcPlugin, store, logger, cfg.Node.NodeID, cfg.HTTP.ListenAddr)
+	}()
 
 	// Start the application http server
 	go func() {
-		logger.Info("starting listener on %v, custody server %v", cfg.HTTP.ListenAddr, cfg.Node.MasterFiduciaryServer)
-		// httpHandler.PathPrefix("/api/").Handler(http.St:ripPrefix("/api/", http.FileServer(http.Dir("./swagger"))))
+		httpEndpoints := endpoints.Endpoints(svcPlugin, cfg.HTTP.CorsAllow, authorizer, logger, cfg.Node.NodeType, svcPlugin)
+		httpHandler := transport.NewHTTPHandler(httpEndpoints, logger, duration)
+
+		logger.Info("Starting HTTP listener on %v", cfg.HTTP.ListenAddr)
 		errChan <- http.ListenAndServe(cfg.HTTP.ListenAddr, httpHandler)
 	}()
 
@@ -247,7 +280,7 @@ func startDaemon(args []string) error {
 		http.DefaultServeMux.Handle("/metrics", promhttp.Handler())
 		// Start the debug and metrics http server
 		go func() {
-			logger.Info("starting metrics listener on %v", cfg.HTTP.MetricsAddr)
+			logger.Info("Starting metrics listener on %v", cfg.HTTP.MetricsAddr)
 			errChan <- http.ListenAndServe(cfg.HTTP.MetricsAddr, http.DefaultServeMux)
 		}()
 	}
@@ -260,7 +293,11 @@ func startDaemon(args []string) error {
 	}()
 
 	stopErr := <-errChan
-	_ = logger.Log("exit", stopErr.Error())
+	if stopErr != nil {
+		_ = logger.Log("exit", stopErr.Error())
+	}
+
+	cancelContext()
 	return store.Close()
 }
 

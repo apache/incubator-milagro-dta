@@ -78,6 +78,7 @@ func parseConfig(args []string) (*config.Config, error) {
 
 	fs := flag.NewFlagSet("daemon", flag.ExitOnError)
 	fs.StringVar(&(cfg.Plugins.Service), "service", cfg.Plugins.Service, "Service plugin")
+	fs.StringVar(&(cfg.Log.Level), "log-level", cfg.Log.Level, "Log level")
 
 	if err := fs.Parse(args); err != nil {
 		return nil, err

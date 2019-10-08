@@ -93,20 +93,10 @@ func (s *Service) FulfillOrder(tx *api.BlockChainTX) (string, error) {
 	}
 
 	//Create a new Transaction payload and TX
-	txHash, payload, err := common.CreateTX(nodeID, s.Store, blsSK, nodeID, order, recipientList)
+	tx, txID, err := common.CreateOrderTX(nodeID, api.TXFulfillResponse, s.Store, blsSK, order, recipientList, order.PrincipalCID)
+	s.Logger.Debug("Created new %v Tx: %v", api.TXFulfillResponse, txID)
 
-	//Write the requests to the chain
-	chainTX := &api.BlockChainTX{
-		Processor:              api.TXFulfillResponse,
-		SenderID:               nodeID,
-		RecipientID:            order.PrincipalCID,
-		AdditionalRecipientIDs: []string{},
-		Payload:                payload,
-		TXhash:                 txHash,
-		Tags:                   map[string]string{"reference": order.Reference, "txhash": hex.EncodeToString(txHash)},
-	}
-
-	return s.Tendermint.PostTx(chainTX, "FulfillOrder")
+	return s.Tendermint.PostTx(tx)
 }
 
 // FulfillOrderSecret -
@@ -174,18 +164,8 @@ func (s *Service) FulfillOrderSecret(tx *api.BlockChainTX) (string, error) {
 	}
 
 	//Create a new Transaction payload and TX
-	txHash, payload, err := common.CreateTX(nodeID, s.Store, blsSK, nodeID, order, recipientList)
+	tx, txID, err := common.CreateOrderTX(nodeID, api.TXFulfillOrderSecretResponse, s.Store, blsSK, order, recipientList, order.BeneficiaryCID)
+	s.Logger.Debug("Created new %v Tx: %v", api.TXFulfillOrderSecretResponse, txID)
 
-	//Write the requests to the chain
-	chainTX := &api.BlockChainTX{
-		Processor:              api.TXFulfillOrderSecretResponse,
-		SenderID:               nodeID,
-		RecipientID:            order.BeneficiaryCID,
-		AdditionalRecipientIDs: []string{},
-
-		Payload: payload,
-		Tags:    map[string]string{"reference": order.Reference, "txhash": hex.EncodeToString(txHash)},
-	}
-
-	return s.Tendermint.PostTx(chainTX, "FulfillOrderSecret")
+	return s.Tendermint.PostTx(tx)
 }

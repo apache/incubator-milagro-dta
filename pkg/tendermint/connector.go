@@ -95,7 +95,7 @@ func (nc *NodeConnector) GetTx(txHash string) (*api.BlockChainTX, error) {
 }
 
 // PostTx posts a transaction to the chain and returns the transaction ID
-func (nc *NodeConnector) PostTx(tx *api.BlockChainTX, method string) (txID string, err error) {
+func (nc *NodeConnector) PostTx(tx *api.BlockChainTX) (txID string, err error) {
 	txID = tx.CalcHash()
 
 	//serialize the whole transaction
@@ -138,7 +138,7 @@ func (nc *NodeConnector) PostTx(tx *api.BlockChainTX, method string) (txID strin
 		return "", errors.Errorf("Post to blockchain node status %v: %v", resp.StatusCode, respErr)
 	}
 
-	nc.log.Debug("POST TO CHAIN: METHOD: %s CALLS: %s  - TXID: %s", method, tx.Processor, txID)
+	nc.log.Debug("Post to chain: Processor: %s: txID: %s", tx.Processor, txID)
 
 	return
 }
@@ -181,7 +181,7 @@ func (nc *NodeConnector) Subscribe(ctx context.Context, processFn ProcessTXFunc)
 func (nc *NodeConnector) subscribeAndQueue(ctx context.Context, txQueue chan *api.BlockChainTX) error {
 	query := "tag.recipient='" + nc.nodeID + "'"
 
-	out, err := nc.tmClient.Subscribe(context.Background(), "test", query, 1000)
+	out, err := nc.tmClient.Subscribe(context.Background(), "", query, 1000)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to subscribe to query %s", query)
 	}
@@ -192,6 +192,7 @@ func (nc *NodeConnector) subscribeAndQueue(ctx context.Context, txQueue chan *ap
 			case result := <-out:
 				tx := result.Data.(tmtypes.EventDataTx).Tx
 				payload := &api.BlockChainTX{}
+
 				err := json.Unmarshal(tx, payload)
 				if err != nil {
 					nc.log.Debug("IGNORED TX - Invalid!")
@@ -203,6 +204,8 @@ func (nc *NodeConnector) subscribeAndQueue(ctx context.Context, txQueue chan *ap
 					nc.log.Debug("IGNORED TX! Recipient not match the query! (%v != %v)", payload.RecipientID, nc.nodeID)
 					break
 				}
+
+				// TODO: Check if hash match the payload
 
 				//Add into the waitingQueue for later processing
 				txQueue <- payload

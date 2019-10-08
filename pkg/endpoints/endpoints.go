@@ -238,7 +238,7 @@ func MakeStatusEndpoint(m service.Service, log *logger.Logger, nodeType string) 
 
 func validateRequest(req interface{}) error {
 	validate := validator.New()
-	validate.RegisterAlias("hashID", "min=64,max=64")
+	validate.RegisterAlias("hashID", "min=40,max=64")
 	if err := validate.Struct(req); err != nil {
 		return errors.Wrap(transport.ErrInvalidRequest, err.Error())
 	}

@@ -25,8 +25,9 @@ package api
 
 import (
 	"crypto/sha256"
-	"encoding/hex"
 	"time"
+
+	"github.com/btcsuite/btcutil/base58"
 )
 
 const (
@@ -46,6 +47,8 @@ const (
 	TXFulfillOrderSecretRequest = "v1/fulfill/order/secret"
 	// TXFulfillOrderSecretResponse -
 	TXFulfillOrderSecretResponse = "v1/order/secret2"
+	// TXIdentity - Identity document
+	TXIdentity = "v1/identity"
 	// TXOrderSecretResponse -
 	TXOrderSecretResponse = "dump"
 )
@@ -61,16 +64,44 @@ type BlockChainTX struct {
 	Tags                   map[string]string
 }
 
-// CalcHash calculates, sets the TXhash and returns the string representation
+// NewBlockChainTX constructs a new Tx and returns it with the TxID
+func NewBlockChainTX(processor string, payload []byte, ref string, senderID string, recipients ...string) (*BlockChainTX, string) {
+	b := &BlockChainTX{
+		Processor: processor,
+		Payload:   payload,
+		SenderID:  senderID,
+		Tags:      make(map[string]string),
+	}
+	// Add recipients
+	for i, r := range recipients {
+		if i == 0 {
+			b.RecipientID = r
+			continue
+		}
+		b.AdditionalRecipientIDs = append(b.AdditionalRecipientIDs, r)
+	}
+	// Add reference tag
+	if ref != "" {
+		b.Tags["reference"] = ref
+	}
+	// Calculate hash
+	txHash := b.CalcHash()
+	// Set the hash tag
+	b.Tags["txhash"] = txHash
+
+	return b, txHash
+}
+
+// CalcHash calculates, sets the TXhash and returns the string representation using Base58 encoding
 func (tx *BlockChainTX) CalcHash() string {
 	txSha := sha256.Sum256(tx.Payload)
-	txHash := hex.EncodeToString(txSha[:])
+	txHash := base58.Encode(txSha[:])
 
-	tx.TXhash = txSha[:]
-	tx.Tags["txhash"] = txHash
+	// txHash := hex.EncodeToString(txSha[:])
+	// tx.TXhash = txSha[:]
+	// tx.Tags["txhash"] = txHash
 
 	return txHash
-
 }
 
 //CreateIdentityRequest -

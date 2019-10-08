@@ -18,7 +18,6 @@
 package defaultservice
 
 import (
-	"encoding/hex"
 	"time"
 
 	"github.com/apache/incubator-milagro-dta/libs/cryptowallet"
@@ -144,7 +143,7 @@ func (s *Service) Order1(req *api.OrderRequest) (string, error) {
 	}
 
 	//Create Order
-	order, err := common.CreateNewDepositOrder(beneficiaryIDDocumentCID, nodeID)
+	order, err := common.CreateNewDepositOrder(beneficiaryIDDocumentCID, nodeID, s.Plugin.Name())
 	if err != nil {
 		return "", err
 	}
@@ -167,21 +166,11 @@ func (s *Service) Order1(req *api.OrderRequest) (string, error) {
 		return "", err
 	}
 
-	//This is serialized and output to the chain
-	txHash, payload, err := common.CreateTX(nodeID, s.Store, blsSK, nodeID, order, recipientList)
+	//Create a new Transaction payload and TX
+	tx, txID, err := common.CreateOrderTX(nodeID, api.TXFulfillRequest, s.Store, blsSK, order, recipientList, s.MasterFiduciaryNodeID())
+	s.Logger.Debug("Created new %v Tx: %v", api.TXFulfillRequest, txID)
 
-	//Write the requests to the chain
-	chainTX := &api.BlockChainTX{
-		Processor:              api.TXFulfillRequest,
-		SenderID:               nodeID,
-		RecipientID:            s.MasterFiduciaryNodeID(),
-		AdditionalRecipientIDs: []string{},
-		Payload:                payload, //marshaledRequest,
-		TXhash:                 txHash,
-		Tags:                   map[string]string{"reference": order.Reference, "txhash": hex.EncodeToString(txHash)},
-	}
-
-	if _, err := s.Tendermint.PostTx(chainTX, "Order1"); err != nil {
+	if _, err := s.Tendermint.PostTx(tx); err != nil {
 		return "", err
 	}
 
@@ -271,19 +260,10 @@ func (s *Service) OrderSecret1(req *api.OrderSecretRequest) (string, error) {
 		Timestamp:                time.Now().Unix(),
 	}
 
-	txHash, payload, err := common.CreateTX(nodeID, s.Store, blsSK, nodeID, order, recipientList)
+	tx, txID, err := common.CreateOrderTX(nodeID, api.TXFulfillOrderSecretRequest, s.Store, blsSK, order, recipientList, s.MasterFiduciaryNodeID())
+	s.Logger.Debug("Created new %v Tx: %v", api.TXFulfillOrderSecretRequest, txID)
 
-	//Write the requests to the chain
-	chainTX := &api.BlockChainTX{
-		Processor:              api.TXFulfillOrderSecretRequest,
-		SenderID:               nodeID,
-		RecipientID:            s.MasterFiduciaryNodeID(),
-		AdditionalRecipientIDs: []string{},
-		Payload:                payload,
-		Tags:                   map[string]string{"reference": order.Reference, "txhash": hex.EncodeToString(txHash)},
-	}
-
-	if _, err := s.Tendermint.PostTx(chainTX, "OrderSecret1"); err != nil {
+	if _, err := s.Tendermint.PostTx(tx); err != nil {
 		return "", err
 	}
 

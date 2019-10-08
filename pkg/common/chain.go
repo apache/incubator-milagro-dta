@@ -1,27 +1,35 @@
 package common
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
-
 	"github.com/apache/incubator-milagro-dta/libs/datastore"
 	"github.com/apache/incubator-milagro-dta/libs/documents"
+	"github.com/apache/incubator-milagro-dta/pkg/api"
 	"github.com/pkg/errors"
 )
 
-// CreateTX creates the transaction ready for write to the chain
-func CreateTX(nodeID string, store *datastore.Store, blsSecretKey []byte, id string, order *documents.OrderDoc, recipients map[string]*documents.IDDoc) ([]byte, []byte, error) {
-	rawDoc, err := documents.EncodeOrderDocument(nodeID, *order, blsSecretKey, recipients)
+// CreateOrderTX creates the transaction ready for write to the chain
+func CreateOrderTX(
+	nodeID string,
+	processor string,
+	store *datastore.Store,
+	blsSecretKey []byte,
+	order *documents.OrderDoc,
+	recipientDocs map[string]*documents.IDDoc,
+	recipientID string,
+) (*api.BlockChainTX, string, error) {
+	rawDoc, err := documents.EncodeOrderDocument(nodeID, *order, blsSecretKey, recipientDocs)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "Failed to encode IDDocument")
+		return nil, "", errors.Wrap(err, "Failed to encode IDDocument")
 	}
-	TXID := sha256.Sum256(rawDoc)
-	TXIDhex := hex.EncodeToString(TXID[:])
+
+	tx, txID := api.NewBlockChainTX(processor, rawDoc, order.Reference, nodeID, recipientID)
+
 	//Write order to store
-	if err := WriteOrderToStore(store, order.Reference, TXIDhex); err != nil {
-		return nil, nil, errors.New("Save Order to store")
+	if err := WriteOrderToStore(store, order.Reference, txID); err != nil {
+		return nil, "", errors.New("Save Order to store")
 	}
-	return TXID[:], rawDoc, nil
+
+	return tx, txID, nil
 }
 
 //PeekTX Decode a transaction for header data but don't decrypt it

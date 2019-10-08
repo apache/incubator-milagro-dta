@@ -82,20 +82,11 @@ func (s *Service) Order2(tx *api.BlockChainTX) (string, error) {
 		order.OrderPart2.Extension[key] = value
 	}
 
-	//Generate a transaction
-	txHash, payload, err := common.CreateTX(nodeID, s.Store, blsSK, nodeID, order, recipientList)
+	//Create a new Transaction payload and TX
+	tx, txID, err := common.CreateOrderTX(nodeID, api.TXOrderResponse, s.Store, blsSK, order, recipientList, nodeID)
+	s.Logger.Debug("Created new %v Tx: %v", api.TXOrderResponse, txID)
 
-	//Write the Order2 results to the chain
-	chainTX := &api.BlockChainTX{
-		Processor:              api.TXOrderResponse,
-		SenderID:               nodeID,
-		RecipientID:            nodeID,
-		AdditionalRecipientIDs: []string{},
-		Payload:                payload,
-		Tags:                   map[string]string{"reference": order.Reference, "txhash": hex.EncodeToString(txHash)},
-	}
-
-	return s.Tendermint.PostTx(chainTX, "Order2")
+	return s.Tendermint.PostTx(tx)
 }
 
 // OrderSecret2 - Process an incoming Blockchain Order/Secret transaction from a MasterFiduciary, to generate the final secret
@@ -158,17 +149,10 @@ func (s *Service) OrderSecret2(tx *api.BlockChainTX) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	txHash, payload, err := common.CreateTX(nodeID, s.Store, blsSK, nodeID, order, recipientList)
 
-	//Write the requests to the chain
-	chainTX := &api.BlockChainTX{
-		Processor:              api.TXOrderSecretResponse, //NONE
-		SenderID:               nodeID,
-		RecipientID:            nodeID,
-		AdditionalRecipientIDs: []string{},
-		Payload:                payload,
-		Tags:                   map[string]string{"reference": order.Reference, "txhash": hex.EncodeToString(txHash)},
-	}
+	//Create a new Transaction payload and TX
+	tx, txID, err := common.CreateOrderTX(nodeID, api.TXOrderSecretResponse, s.Store, blsSK, order, recipientList, nodeID)
+	s.Logger.Debug("Created new %v Tx: %v", api.TXOrderSecretResponse, txID)
 
-	return s.Tendermint.PostTx(chainTX, "OrderSecret2")
+	return s.Tendermint.PostTx(tx)
 }

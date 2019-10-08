@@ -24,13 +24,11 @@ import (
 	"bytes"
 	"time"
 
-	"github.com/apache/incubator-milagro-dta/pkg/api"
-
-	"github.com/apache/incubator-milagro-dta/pkg/tendermint"
-
 	"github.com/apache/incubator-milagro-dta/libs/cryptowallet"
 	"github.com/apache/incubator-milagro-dta/libs/documents"
 	"github.com/apache/incubator-milagro-dta/libs/keystore"
+	"github.com/apache/incubator-milagro-dta/pkg/api"
+	"github.com/apache/incubator-milagro-dta/pkg/tendermint"
 	"github.com/pkg/errors"
 )
 
@@ -80,18 +78,9 @@ func CreateIdentity(name string) (idDocument *documents.IDDoc, rawIDDoc, seed []
 // StoreIdentity writes IDDocument to blockchain and secret to keystore
 func StoreIdentity(rawIDDoc, secret []byte, tmConn *tendermint.NodeConnector, store keystore.Store) (idDocumentID string, err error) {
 
-	chainTX := &api.BlockChainTX{
-		Processor:              api.TXFulfillOrderSecretRequest,
-		SenderID:               tmConn.NodeID(),
-		RecipientID:            "",
-		AdditionalRecipientIDs: []string{},
-		Payload:                rawIDDoc,
-		Tags:                   map[string]string{},
-	}
+	chainTx, idDocumentID := api.NewBlockChainTX(api.TXIdentity, rawIDDoc, "", tmConn.NodeID())
 
-	idDocumentID = chainTX.CalcHash()
-
-	if _, err := tmConn.PostTx(chainTX, "IDDocument"); err != nil {
+	if _, err := tmConn.PostTx(chainTx); err != nil {
 		return "", err
 	}
 

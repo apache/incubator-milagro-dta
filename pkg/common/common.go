@@ -34,7 +34,7 @@ import (
 )
 
 // CreateNewDepositOrder - Generate an empty new Deposit Order with random reference
-func CreateNewDepositOrder(BeneficiaryIDDocumentCID string, nodeID string) (*documents.OrderDoc, error) {
+func CreateNewDepositOrder(BeneficiaryIDDocumentCID string, nodeID string, orderType string) (*documents.OrderDoc, error) {
 	//Create a reference for this order
 	reference, err := uuid.NewUUID()
 	if err != nil {
@@ -49,7 +49,7 @@ func CreateNewDepositOrder(BeneficiaryIDDocumentCID string, nodeID string) (*doc
 	}
 
 	//oder.Type will be used to extend the things that an order can do.
-	order.Type = "Safeguard_Secret"
+	order.Type = orderType
 	order.PrincipalCID = nodeID
 	order.Reference = reference.String()
 	order.BeneficiaryCID = BeneficiaryIDDocumentCID

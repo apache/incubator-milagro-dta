@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/TylerBrock/colorjson"
+	"github.com/apache/incubator-milagro-dta/pkg/tendermint"
 	"github.com/urfave/cli"
 )
 
@@ -52,10 +53,10 @@ Qredo DT-A uses:
 		if url == "" {
 			url = "localhost:26657"
 		}
-		if len(c.Args()) == 0 {
-			print(app.UsageText)
-			return nil
-		}
+		// if len(c.Args()) == 0 {
+		// 	print(app.UsageText)
+		// 	return nil
+		// }
 
 		fullUrl := "http://" + url + "/tx_search?query=\"" + tag + "=" + lookup + "\""
 		print(fullUrl)
@@ -67,19 +68,19 @@ Qredo DT-A uses:
 		defer resp.Body.Close()
 		body, err := ioutil.ReadAll(resp.Body)
 
-		txResponse, err := UnmarshalFetchTxResponse([]byte(body))
+		txResponse, err := tendermint.UnmarshalFetchTxResponse([]byte(body))
 
-		txs := txResponse.Result.Txs
+		txs := txResponse.TResult.Txs
 		for r1, v := range txs {
 			for r2, v1 := range v.TxResult.Events {
 				for r3, v2 := range v1.Attributes {
 					newkey, _ := base64.StdEncoding.DecodeString(v2.Key)
-					txResponse.Result.Txs[r1].TxResult.Events[r2].Attributes[r3].Key = string(newkey)
+					txResponse.TResult.Txs[r1].TxResult.Events[r2].Attributes[r3].Key = string(newkey)
 					newval, _ := base64.StdEncoding.DecodeString(v2.Value)
-					txResponse.Result.Txs[r1].TxResult.Events[r2].Attributes[r3].Value = string(newval)
+					txResponse.TResult.Txs[r1].TxResult.Events[r2].Attributes[r3].Value = string(newval)
 
 					if string(newkey) == "key" {
-						txResponse.Result.Txs[r1].TxResult.Events[r2].Attributes[r3].Value = hex.EncodeToString(newval)
+						txResponse.TResult.Txs[r1].TxResult.Events[r2].Attributes[r3].Value = hex.EncodeToString(newval)
 					}
 				}
 			}

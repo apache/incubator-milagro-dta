@@ -32,8 +32,8 @@ type Service interface {
 	OrderList(req *api.OrderListRequest) (*api.OrderListResponse, error)
 
 	//Order processing - REST access to create an Order & Redeem
-	OrderSecret1(req *api.OrderSecretRequest) (string, error)
-	Order1(req *api.OrderRequest) (string, error)
+	Order(req *api.OrderRequest) (string, error)
+	OrderSecret(req *api.OrderSecretRequest) (string, error)
 
 	//Fullfill processing
 	FulfillOrder(tx *api.BlockChainTX) (string, error)

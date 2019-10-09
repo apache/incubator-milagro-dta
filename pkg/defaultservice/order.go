@@ -128,8 +128,8 @@ func (s *Service) ProduceFinalSecret(seed, sikeSK []byte, order, orderPart4 *doc
 	return finalPrivateKey, finalPublicKey, nil, err
 }
 
-// Order1 -
-func (s *Service) Order1(req *api.OrderRequest) (string, error) {
+// Order creates a new deposit order
+func (s *Service) Order(req *api.OrderRequest) (string, error) {
 	if err := s.Plugin.ValidateOrderRequest(req); err != nil {
 		return "", err
 	}
@@ -177,8 +177,8 @@ func (s *Service) Order1(req *api.OrderRequest) (string, error) {
 	return order.Reference, nil
 }
 
-// OrderSecret1 -
-func (s *Service) OrderSecret1(req *api.OrderSecretRequest) (string, error) {
+// OrderSecret initiates the process for retreiving the order secret
+func (s *Service) OrderSecret(req *api.OrderSecretRequest) (string, error) {
 	orderReference := req.OrderReference
 	var previousOrderHash string
 	if err := s.Store.Get("order", orderReference, &previousOrderHash); err != nil {
@@ -218,8 +218,6 @@ func (s *Service) OrderSecret1(req *api.OrderSecretRequest) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
-	_ = tx
 
 	order := &documents.OrderDoc{}
 	err = documents.DecodeOrderDocument(tx.Payload, previousOrderHash, order, sikeSK, nodeID, remoteIDDoc.BLSPublicKey)

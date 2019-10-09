@@ -126,7 +126,7 @@ func (s *Service) OrderSecret2(tx *api.BlockChainTX) (string, error) {
 		return "", errors.New("Invalid Processor")
 	}
 
-	finalPrivateKey, _, extension, err := s.Plugin.ProduceFinalSecret(keyseed, sikeSK, order, order, nodeID)
+	finalPrivateKey, finalPublicKey, extension, err := s.Plugin.ProduceFinalSecret(keyseed, sikeSK, order, order, nodeID)
 	if err != nil {
 		return "", err
 	}
@@ -143,6 +143,7 @@ func (s *Service) OrderSecret2(tx *api.BlockChainTX) (string, error) {
 		order.OrderPart4.Extension[key] = value
 	}
 	order.OrderPart4.Extension["FinalPrivateKey"] = finalPrivateKey
+	order.OrderPart4.Extension["FinalPublicKey"] = finalPublicKey
 
 	//Output Only to self for autoviewing
 	recipientList, err := common.BuildRecipientList(s.Tendermint, nodeID)

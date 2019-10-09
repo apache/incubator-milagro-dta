@@ -41,13 +41,23 @@ func main() {
 		},
 	}
 	app.Copyright = "(c) 2019 Chris Morris"
-	app.UsageText = `fishhook configdir nodeurl query skip
-eg. fishhook /Users/john/.milagro 10.10,10,10:26657 "tag.recipient='Au1WipqVeTx9i2PV4UcCxmY6iQvA9RZXy88xJLRzafwc'" 3
+	app.UsageText = `USAGE:
+    fishhook configdir nodeurl query skip
 
-configdir - the local directory where the DT-A configuration (eg. config.yaml, keys) are stored
-nodeurl   - the host:port of a member Node of the Tendermint Network
-query     - A query to filter the results by (enclosed query in double quotes and values in single quotes)
-skip      - number of matches to skip before showing match and terminating
+DESCRIPTION:
+    fishhook attaches to the specified Tendermint Node via web sockets, and waits for a
+    query to be matches skip times, oncer complete it uses the local keys stored in configdir
+    to decode the Transaction and dump it to stdout
+
+EXAMPLE:
+    fishhook /Users/john/.milagro 10.10,10,10:26657 "tag.recipient='Au1WipqVeTx9i2PV4UcCxmY6iQvA9RZXy88xJLRzafwc'" 3
+
+PARAMETERS: (all mandatory)
+    configdir - the local directory where the DT-A configuration (eg. config.yaml, keys) are stored
+    nodeurl   - the host:port of a member Node of the Tendermint Network
+    query     - A query to filter the results by (enclosed query in double quotes and values in single quotes)
+              - if query is 'self', query auto generated to match itself as recipient.
+    skip      - number of matches to skip before showing match and terminating
 `
 	app.Usage = `retrieve and parse a transaction in the Qredo DT-A Format from a Tendermint Blockchain
 Note tags are case sensistive
@@ -59,21 +69,25 @@ Note tags are case sensistive
 		query := c.Args().Get(2)
 		skip, err := strconv.Atoi(c.Args().Get(3))
 
-		if err != nil {
-			print("Invalid skip value\n")
-			os.Exit(1)
-		}
-
 		if len(c.Args()) != 4 {
 			print(app.UsageText)
 			os.Exit(1)
 			return nil
 		}
 
+		if err != nil {
+			print("Invalid skip value\n")
+			os.Exit(1)
+		}
+
 		cfg, err := parseConfig(folder)
 		if err != nil {
 			print("Failed to open config")
 			os.Exit(1)
+		}
+
+		if query == "self" {
+			query = "tag.recipient='" + cfg.Node.NodeID + "'"
 		}
 
 		keyStore, err := keystore.NewFileStore(filepath.Join(folder, keysFile))
@@ -116,12 +130,11 @@ Note tags are case sensistive
 		for {
 			select {
 			case result := <-out:
-				matchCount++
 				if matchCount != skip {
+					matchCount++
 					continue
 				}
 
-				print("result")
 				tx := result.Data.(tmtypes.EventDataTx).Tx
 				nodeID := cfg.Node.NodeID
 				payload := &api.BlockChainTX{}

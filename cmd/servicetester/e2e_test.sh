@@ -22,13 +22,14 @@
 apiVersion="v1"
 defaultURL="http://localhost:5556"
 apiURL="${1:-$defaultURL}"
-
+configdir="/Users/chris/.milagro"
+host="34.246.173.153:26657"
 
 status () {
   #Determine if an extension is running
   statusOutput=$(curl -s -X GET "$apiURL/$apiVersion/status" -H "accept: */*" -H "Content-Type: application/json")
 
-echo "$apiURL/$apiVersion/status"
+  echo "$apiURL/$apiVersion/status"
 
   identity=$(echo $statusOutput | jq .nodeCID)
   extensionVendor=$(echo $statusOutput | jq -r .extensionVendor)
@@ -45,144 +46,93 @@ echo "$apiURL/$apiVersion/status"
 
 execute_bitcoin () {
   # #Run 4 Tests against the Bitcoin Extension
-  echo "Bitcoin Plugin Tests [4 Tests]"
-  output1=$(curl -s -X POST "$apiURL/$apiVersion/order1" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":\"\",\"extension\":{\"coin\":\"0\"}}")
-  #echo $output1
-  op1=$(echo $output1 | jq .orderReference)
-  commitment1=$(echo $output1 | jq .commitment)
-  address1=$(echo $output1 | jq .extension.address)
-  output2=$(curl -s -X POST "$apiURL/$apiVersion/order/secret1" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$op1,\"beneficiaryIDDocumentCID\":$identity}")
-  address2=$(echo $output2 | jq .extension.address)
-  commitment2=$(echo $output2 | jq .commitment)
+  echo "Bitcoin Plugin Tests [2 Tests]"
 
-  echo "Committment1 $commitment1 $address1"
-  echo "Committment2 $commitment2 $address2"
 
+ ( sleep 1; curl -s -X POST "$apiURL/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json"  -d "{\"beneficiaryIDDocumentCID\":\"\",\"extension\":{\"coin\":\"0\"}}" > ref ) &
+  output1=$(fishhook $configdir $host "self" 2)
+  ref=$(cat ref)
+  commitment1=$(echo $output1 | jq .OrderPart2.CommitmentPublicKey)
+  address1=$(echo $output1 | jq .OrderPart2.Extension.address)
+  (sleep 1; curl -s -X POST "$apiURL/$apiVersion/order/secret" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$ref,\"beneficiaryIDDocumentCID\":$identity}" > /dev/null ) &
+  output2=$(fishhook $configdir $host "self" 2)
+  address2=$(echo $output2 | jq .OrderPart4.Extension.address)
+  commitment2=$(echo $output2 | jq .OrderPart4.Extension.FinalPublicKey)
+  #echo "Committment1 $commitment1 $address1"
+  #echo "Committment2 $commitment2 $address2"
   if [ -z $commitment2 ]; then
       echo "Failed Commitment is empty"
       exit 1
   fi
-
-  if [ $commitment1 == $commitment2 ]; then
-    echo "Pass - Id, Order & OrderSecret(Beneficiary)"
-  else
+  if [ $commitment1 != $commitment2 ]; then
     echo "Fail"
     exit 1
   fi
+  if [ $address2 != $address2 ]; then
+    echo "Fail"
+    exit 1
+  fi
+  echo "Pass - Id, Order & OrderSecret(Beneficiary)"
 
-  output3=$(curl -s -X POST "$apiURL/$apiVersion/order1" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":$identity,\"extension\":{\"coin\":\"0\"}}")
 
-  op3=$(echo $output3 | jq .orderReference)
-  commitment3=$(echo $output3 | jq .commitment)
-  address3=$(echo $output3 | jq .extension.address)
-  output4=$(curl -s -X POST "$apiURL/$apiVersion/order/secret1" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$op3}")
-  commitment4=$(echo $output4 | jq .commitment)
-  address4=$(echo $output4 | jq .extension.address)
-  orderReference=$(echo $output4 | jq .orderReference)
-  orderIndex=1
-
-  echo "Committment3 $commitment3 $address3"
-  echo "Committment4 $commitment4 $address4"
-
-  if [ -z $commitment4 ]; then
+  ( sleep 1; curl -s -X POST "$apiURL/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json"  -d "{\"beneficiaryIDDocumentCID\":$identity,\"extension\":{\"coin\":\"0\"}}" > ref ) &
+  output1=$(fishhook $configdir $host "self" 2)
+  ref=$(cat ref)
+  commitment1=$(echo $output1 | jq .OrderPart2.CommitmentPublicKey)
+  address1=$(echo $output1 | jq .OrderPart2.Extension.address)
+  (sleep 1; curl -s -X POST "$apiURL/$apiVersion/order/secret" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$ref}" > /dev/null ) &
+  output2=$(fishhook $configdir $host "self" 2)
+  address2=$(echo $output2 | jq .OrderPart4.Extension.address)
+  commitment2=$(echo $output2 | jq .OrderPart4.Extension.FinalPublicKey)
+  #echo "Committment1 $commitment1 $address1"
+  #echo "Committment2 $commitment2 $address2"
+  if [ -z $commitment2 ]; then
       echo "Failed Commitment is empty"
       exit 1
   fi
-
-  if [ $commitment3 == $commitment4 ]; then
-    echo "Pass - Id, Order(Beneficiary) & OrderSecret"
-  else
-      echo "Fail"
-      exit 1
+  if [ $commitment1 != $commitment2 ]; then
+    echo "Fail"
+    exit 1
   fi
-
-
-   #make another BeneficiaryID
-  #  output5=$(curl -s -X POST "http://localhost:5556/$apiVersion/identity" -H "accept: */*" -H       "Content-Type: application/json" -d "{\"Name\":\"AA\"}")
-  #  benid=$(echo $output5 | jq -r .idDocumentCID)
-
-  #  #Tests against the Bitcoin Extension - different befificary
-  #  output6=$(curl -s -X POST "http://localhost:5556/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":\"\",\"extension\":{\"coin\":\"0\"}}")
-  #  #echo $output6
-  #  op6=$(echo $output6 | jq .orderReference)
-  #  commitment6=$(echo $output6 | jq .commitment)
-  #  address6=$(echo $output6 | jq .extension.address)
-
-  #  output7=$(curl -s -X POST "http://localhost:5556/$apiVersion/order/secret" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$op6,\"beneficiaryIDDocumentCID\":\"$benid\"}")
-  #  address7=$(echo $output7 | jq .extension.address)
-  #  commitment7=$(echo $output7 | jq .commitment)
-
-  #  echo "Committment5 $commitment6 $address6"
-  #  echo "Committment6 $commitment7 $address7"
-
-  #  if [ -z $commitment7 ]; then
-  #      echo "Failed Commitment is empty"
-  #      exit 1
-  #  fi
-
-  #  if [ $commitment6 == $commitment7 ]; then
-  #    echo "Pass - Id, Order & OrderSecret(Beneficiary)"
-  #  else
-  #    echo "Fail"
-  #    exit 1
-  #  fi
-
-  # output8=$(curl -s -X POST "http://localhost:5556/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":\"$benid\",\"extension\":{\"coin\":\"0\"}}")
-  # op8=$(echo $output8 | jq .orderReference)
-  # commitment8=$(echo $output8 | jq .commitment)
-  # address8=$(echo $output8 | jq .extension.address)
-
-
-  # output9=$(curl -s -X POST "http://localhost:5556/$apiVersion/order/secret" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$op8}")
-  # commitment9=$(echo $output9 | jq .commitment)
-  # address9=$(echo $output9 | jq .extension.address)
-  # orderReference=$(echo $output9 | jq .orderReference)
-  # orderIndex=1
-
-  # echo "Committment7 $commitment8 $address8"
-  # echo "Committment8 $commitment9 $address9"
-
-  # if [ -z $commitment9 ]; then
-  #     echo "Failed Commitment is empty"
-  #     exit 1
-  # fi
-
-  # if [ $commitment8 == $commitment9 ]; then
-  #   echo "Pass - Id, Order(Beneficiary) & OrderSecret"
-  # else
-  #     echo "Fail"
-  #     exit 1
-  # fi
-
+  if [ $address2 != $address2 ]; then
+    echo "Fail"
+    exit 1
+  fi
+ echo "Pass - Id, Order(Beneficiary) & OrderSecret"
 }
 
 
 ###############################################################################################################################
 
 execute_safeguardsecret () {
+
   inputString="This is some random test text 1234567890!"
   echo "Encrypt a String [1 Test]"
-  echo $output1
-  output1=$(curl -s -X POST "$apiURL/$apiVersion/order1" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":$identity,\"extension\":{\"plainText\":\"$inputString\"}}")
-  echo $output1
-  op1=$(echo $output1 | jq .orderReference)
-  cipherText=$(echo $output1 | jq .extension.cypherText)
-  tvalue=$(echo $output1 | jq .extension.t)
-  vvalue=$(echo $output1 | jq .extension.v)
-  commitment1=$(echo $output1 | jq .commitment)
-  output2=$(curl -s -X POST "$apiURL/$apiVersion/order/secret1" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$op1,\"beneficiaryIDDocumentCID\":$identity,\"extension\":{\"cypherText\":$cipherText,\"t\":$tvalue,\"v\":$vvalue}}")
-  result=$(echo $output2 | jq -r .extension.plainText)
-
-  orderReference=$(echo $output2 | jq .orderReference)
-  orderIndex=0
 
 
-  if [ "$inputString" == "$result" ]; then
-    echo "Pass"
+  ( sleep 1; curl -s -X POST "$apiURL/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":$identity,\"extension\":{\"plainText\":\"$inputString\"}}" > ref ) &
+  output1=$(fishhook $configdir $host "self" 2)
+  ref=$(cat ref)
+  cipherText=$(echo $output1 | jq .OrderPart2.Extension.cypherText)
+
+  #echo $cipherText
+  ( sleep 1; curl -s -X POST "$apiURL/$apiVersion/order/secret" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$ref,\"beneficiaryIDDocumentCID\":$identity,\"extension\":{\"cypherText\":$cipherText}}" > /dev/null) &
+  output2=$(fishhook $configdir $host "self" 2)
+  plaintext=$(echo $output2 | jq -r .OrderPart4.Extension.plainText)
+
+
+  if [ -z "$plaintext" ]; then
+      echo "Failed Commitment is empty"
+      exit 1
+  fi
+
+  if [ "$inputString" == "$plaintext" ]; then
+    echo "Order Create/Retrieve Pass"
   else
-    echo "Fail"
+    echo "Order Create/Retrieve Fail"
     exit 1
   fi
+
 }
 
 # #############################################################################
@@ -190,21 +140,18 @@ execute_safeguardsecret () {
 
 execute_milagro () {
   echo "Milagro Tests [1 Test]"
-  output1=$(curl -s -X POST "$apiURL/$apiVersion/order1" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":$identity}")
-  echo $output1
-  op1=$(echo $output1 | jq .orderReference)
+  ( sleep 1; curl -s -X POST "$apiURL/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":$identity}" > ref ) &
+  output1=$(fishhook $configdir $host "self" 1)
+  ref=$(cat ref)
+  commitment1=$(echo $output1 | jq .OrderPart2.CommitmentPublicKey)
+  #echo "Committment1 $commitment1"
 
-
-  commitment1=$(echo $output1 | jq .commitment)
-  output2=$(curl -s -X POST "$apiURL/$apiVersion/order/secret1" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$op1,\"beneficiaryIDDocumentCID\":$identity}")
-  commitment2=$(echo $output2 | jq .commitment)
-
-  orderReference=$(echo $output2 | jq .orderReference)
+  ( sleep 1; curl -s -X POST "$apiURL/$apiVersion/order/secret" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$ref,\"beneficiaryIDDocumentCID\":$identity}" > /dev/null) &
+  output2=$(fishhook $configdir $host "self" 3)
+  commitment2=$(echo $output2 | jq .OrderPart4.Extension.FinalPublicKey)
   orderIndex=0
-
-
-  echo "Committment1 $commitment1"
-  echo "Committment2 $commitment2"
+  #echo "Committment1 $commitment1"
+  #echo "Committment2 $commitment2"
 
   if [ -z $commitment2 ]; then
       echo "Failed Commitment is empty"
@@ -263,5 +210,5 @@ fi
 if [ $plugin == "safeguardsecret" ]; then
     execute_safeguardsecret
 fi
-execute_orderlist
+#execute_orderlist
 

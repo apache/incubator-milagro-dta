@@ -22,7 +22,7 @@
 apiVersion="v1"
 defaultURL="http://localhost:5556"
 apiURL="${1:-$defaultURL}"
-configdir="/Users/chris/.milagro"
+configdir=~/.milagro
 host="34.246.173.153:26657"
 
 status () {

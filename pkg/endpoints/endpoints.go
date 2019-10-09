@@ -49,9 +49,9 @@ func Endpoints(svc service.Service, corsAllow string, authorizer transport.Autho
 	principalEndpoints := transport.HTTPEndpoints{
 
 		"Order1": {
-			Path:        "/" + apiVersion + "/order1",
+			Path:        "/" + apiVersion + "/order",
 			Method:      http.MethodPost,
-			Endpoint:    MakeOrder1Endpoint(svc, logger),
+			Endpoint:    MakeOrderEndpoint(svc, logger),
 			NewRequest:  func() interface{} { return &api.OrderRequest{} },
 			NewResponse: func() interface{} { return &api.OrderResponse{} },
 			Options: transport.ServerOptions(
@@ -90,9 +90,9 @@ func Endpoints(svc service.Service, corsAllow string, authorizer transport.Autho
 			},
 		},
 		"OrderSecret1": {
-			Path:        "/" + apiVersion + "/order/secret1",
+			Path:        "/" + apiVersion + "/order/secret",
 			Method:      http.MethodPost,
-			Endpoint:    MakeOrderSecret1Endpoint(svc, logger),
+			Endpoint:    MakeOrderSecretEndpoint(svc, logger),
 			NewRequest:  func() interface{} { return &api.OrderSecretRequest{} },
 			NewResponse: func() interface{} { return &api.OrderSecretResponse{} },
 			Options: transport.ServerOptions(
@@ -199,8 +199,8 @@ func MakeGetOrderEndpoint(m service.Service, log *logger.Logger) endpoint.Endpoi
 	}
 }
 
-//MakeOrder1Endpoint -
-func MakeOrder1Endpoint(m service.Service, log *logger.Logger) endpoint.Endpoint {
+//MakeOrderEndpoint -
+func MakeOrderEndpoint(m service.Service, log *logger.Logger) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req, ok := request.(*api.OrderRequest)
 		if !ok {
@@ -210,12 +210,12 @@ func MakeOrder1Endpoint(m service.Service, log *logger.Logger) endpoint.Endpoint
 			return "", err
 		}
 		debugRequest(ctx, req, log)
-		return m.Order1(req)
+		return m.Order(req)
 	}
 }
 
-//MakeOrderSecret1Endpoint -
-func MakeOrderSecret1Endpoint(m service.Service, log *logger.Logger) endpoint.Endpoint {
+//MakeOrderSecretEndpoint -
+func MakeOrderSecretEndpoint(m service.Service, log *logger.Logger) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req, ok := request.(*api.OrderSecretRequest)
 		if !ok {
@@ -225,7 +225,7 @@ func MakeOrderSecret1Endpoint(m service.Service, log *logger.Logger) endpoint.En
 			return "", err
 		}
 		debugRequest(ctx, req, log)
-		return m.OrderSecret1(req)
+		return m.OrderSecret(req)
 	}
 }
 

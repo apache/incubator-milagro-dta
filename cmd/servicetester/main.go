@@ -84,7 +84,7 @@ func  Dump(tx *BlockChainTX) error {
 	}
 
 	order := &documents.OrderDoc{}
-	err = documents.DecodeOrderDocument(tx.Payload, txHashString, order, sikeSK, nodeID, localIDDoc.BLSPublicKey)
+	err = documents.FinalPrivateKey(tx.Payload, txHashString, order, sikeSK, nodeID, localIDDoc.BLSPublicKey)
 
 	pp, _ := prettyjson.Marshal(order)
 	fmt.Println(string(pp))

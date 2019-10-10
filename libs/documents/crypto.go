@@ -136,11 +136,15 @@ func Verify(signedEnvelope SignedEnvelope, blsPK []byte) error {
 	message := signedEnvelope.Message
 	signature := signedEnvelope.Signature
 
+	if len(signature) == 0 {
+		return errors.New("Invalid Signature")
+	}
+
 	rc := crypto.BLSVerify(message, blsPK, signature)
 	if rc == 0 {
 		return nil
 	}
-	return errors.New("invalid signature")
+	return errors.New("Invalid signature")
 }
 
 // Appends padding.

@@ -15,6 +15,7 @@ import (
 	"github.com/apache/incubator-milagro-dta/libs/logger"
 	"github.com/apache/incubator-milagro-dta/pkg/api"
 	status "github.com/apache/incubator-milagro-dta/pkg/tendermint/status"
+	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	tmclient "github.com/tendermint/tendermint/rpc/client"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -155,14 +156,12 @@ func (nc *NodeConnector) Subscribe(ctx context.Context, processFn ProcessTXFunc)
 		return errors.Wrap(err, "Failed to obtain latest blockheight of Blockchain")
 	}
 
-	var processedToHeight int
-	if err := nc.store.Get("chain", "height", &processedToHeight); err != nil {
+	var processedTo string
+	if err := nc.store.Get("chain", "height", &processedTo); err != nil {
 		if err != datastore.ErrKeyNotFound {
 			return errors.Wrap(err, "Get last processed block height")
 		}
 	}
-
-	nc.log.Debug("Block height: Current: %v; Processed: %v", currentBlockHeight, processedToHeight)
 
 	// create the transaction queue chan
 	txQueue := make(chan *api.BlockChainTX, txChanSize)
@@ -172,10 +171,98 @@ func (nc *NodeConnector) Subscribe(ctx context.Context, processFn ProcessTXFunc)
 		return err
 	}
 
+	nc.loadMissingHistory(currentBlockHeight, processedTo, processFn)
 	// TODO: load historicTX
 
 	// Process events
 	return nc.processTXQueue(ctx, txQueue, processFn)
+}
+
+func decodeProcessedTo(processedTo string) (processedToHeight int64, processedToIndex uint32, err error) {
+	pth := strings.Split(processedTo, ".")
+
+	if len(pth) == 2 {
+		processedToHeight, err = strconv.ParseInt(pth[0], 10, 64)
+		if err != nil {
+			return 0, 0, errors.Wrapf(err, "Can't decode processed to Height %s", processedTo)
+		}
+		procindex64, err := strconv.ParseUint(pth[1], 10, 32)
+		if err != nil {
+			return 0, 0, errors.Wrapf(err, "Can't decode processed to Index %s", processedTo)
+		}
+		processedToIndex = uint32(procindex64)
+		return processedToHeight, processedToIndex, nil
+	}
+	return 0, 0, nil
+
+}
+
+func (nc *NodeConnector) loadMissingHistory(currentBlockHeight int, processedTo string, processFn ProcessTXFunc) error {
+	nc.log.Debug("Block height: Current: %v; Processed: %s", currentBlockHeight, processedTo)
+	processedToHeight, processedToIndex, err := decodeProcessedTo(processedTo)
+	if err != nil {
+		return err
+	}
+
+	//Open a 2nd websocket client
+	tmNodeAddr := strings.TrimRight(nc.tmNodeAddr, "/")
+	tmHistoryClient := tmclient.NewHTTP(fmt.Sprintf("tcp://%s", tmNodeAddr), "/websocket")
+	if err := tmHistoryClient.Start(); err != nil {
+		return errors.Wrap(err, "Start tendermint history client")
+	}
+
+	currentPage := 1
+	query := fmt.Sprintf("tag.recipient='%v' AND tag.sender='%v' AND tx.height>=%d AND tx.height<=%d", nc.nodeID, nc.nodeID, processedToHeight, currentBlockHeight)
+	numPerPage := 5
+
+	for {
+		result, err := tmHistoryClient.TxSearch(query, true, currentPage, numPerPage)
+		if err != nil {
+			return errors.Wrapf(err, "Failed to subscribe to query %s", query)
+		}
+
+		for _, chainTx := range result.Txs {
+
+			tx := chainTx.Tx
+
+			payload := &api.BlockChainTX{}
+			err := json.Unmarshal(tx, payload)
+			if err != nil {
+				nc.log.Debug("IGNORED TX - Invalid!")
+				break
+			}
+			payload.Index = chainTx.Index
+			payload.Height = chainTx.Height
+
+			//processedTo check
+			if payload.Height < processedToHeight {
+				continue
+			}
+			if payload.Height == processedToHeight && payload.Index <= processedToIndex {
+				continue
+			}
+
+			//Dont queue just process directly
+
+			if err := processFn(payload); err != nil {
+				msg := fmt.Sprintf("HISTORY %s Block:%v Index:%v Error:%v", color.RedString("FAILURE"), chainTx.Height, chainTx.Index, err)
+				nc.log.Info(msg)
+			} else {
+				msg := fmt.Sprintf("HISTORY %s Block:%v Index:%v", color.GreenString("PROCESSED"), chainTx.Height, chainTx.Index)
+				nc.log.Info(msg)
+			}
+
+			if err := nc.updateProcessedUpToHeight(chainTx.Height, chainTx.Index); err != nil {
+				return err
+			}
+
+		}
+		if currentPage*numPerPage > result.TotalCount {
+			break
+		}
+		currentPage++
+	}
+	return nil
 }
 
 func (nc *NodeConnector) subscribeAndQueue(ctx context.Context, txQueue chan *api.BlockChainTX) error {
@@ -194,6 +281,9 @@ func (nc *NodeConnector) subscribeAndQueue(ctx context.Context, txQueue chan *ap
 				payload := &api.BlockChainTX{}
 
 				err := json.Unmarshal(tx, payload)
+				payload.Height = result.Data.(tmtypes.EventDataTx).Height
+				payload.Index = result.Data.(tmtypes.EventDataTx).Index
+
 				if err != nil {
 					nc.log.Debug("IGNORED TX - Invalid!")
 					break
@@ -221,16 +311,32 @@ func (nc *NodeConnector) subscribeAndQueue(ctx context.Context, txQueue chan *ap
 func (nc *NodeConnector) processTXQueue(ctx context.Context, txQueue chan *api.BlockChainTX, processFn ProcessTXFunc) error {
 	for {
 		select {
-		case tx := <-txQueue:
-			if err := processFn(tx); err != nil {
-				// TODO: errors block processing the queue
+		case chainTx := <-txQueue:
+
+			if err := processFn(chainTx); err != nil {
+				msg := fmt.Sprintf("TX %s Block:%v Index:%v Error:%v", color.RedString("FAILURE"), chainTx.Height, chainTx.Index, err)
+				nc.log.Info(msg)
+			} else {
+				msg := fmt.Sprintf("TX %s Block:%v Index:%v", color.GreenString("PROCESSED"), chainTx.Height, chainTx.Index)
+				nc.log.Info(msg)
+			}
+			if err := nc.updateProcessedUpToHeight(chainTx.Height, chainTx.Index); err != nil {
 				return err
 			}
+
 			// TODO: store the last block height
 		case <-ctx.Done():
 			return nil
 		}
 	}
+}
+
+func (nc *NodeConnector) updateProcessedUpToHeight(height int64, index uint32) error {
+	processedTo := fmt.Sprintf("%v.%v", height, index)
+	if err := nc.store.Set("chain", "height", &processedTo, nil); err != nil {
+		return errors.Wrapf(err, "Failed to update processed up to %s ", processedTo)
+	}
+	return nil
 }
 
 func (nc *NodeConnector) getChainStatus() (*status.StatusResponse, error) {

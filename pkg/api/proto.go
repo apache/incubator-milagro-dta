@@ -56,6 +56,8 @@ const (
 //BlockChainTX - struct for on chain req/resp
 type BlockChainTX struct {
 	Processor              string
+	Height                 int64
+	Index                  uint32
 	SenderID               string
 	RecipientID            string
 	AdditionalRecipientIDs []string

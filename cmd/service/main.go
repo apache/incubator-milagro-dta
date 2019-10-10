@@ -219,19 +219,23 @@ func startDaemon(args []string) error {
 			case "none":
 				return nil
 			case "dump":
-				svcPlugin.Dump(tx)
+				return nil
+				//				return svcPlugin.Dump(tx)
 			case "v1/fulfill/order":
-				svcPlugin.FulfillOrder(tx)
+				_, err := svcPlugin.FulfillOrder(tx)
+				return err
 			case "v1/order2":
-				svcPlugin.Order2(tx)
+				_, err := svcPlugin.Order2(tx)
+				return err
 			case "v1/fulfill/order/secret":
-				svcPlugin.FulfillOrderSecret(tx)
+				_, err := svcPlugin.FulfillOrderSecret(tx)
+				return err
 			case "v1/order/secret2":
-				svcPlugin.OrderSecret2(tx)
+				_, err := svcPlugin.OrderSecret2(tx)
+				return err
 			default:
 				return errors.New("Unknown processor")
 			}
-			return nil
 		}
 
 		logger.Info("Starting Blockchain listener to node: %v", cfg.Blockchain.BroadcastNode)

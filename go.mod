@@ -5,7 +5,7 @@ require (
 	github.com/btcsuite/btcd v0.0.0-20190824003749-130ea5bddde3
 	github.com/btcsuite/btcutil v0.0.0-20190425235716-9e5f4b9a998d
 	github.com/coreos/go-oidc v2.0.0+incompatible
-	github.com/fatih/color v1.7.0 // indirect
+	github.com/fatih/color v1.7.0
 	github.com/go-kit/kit v0.9.0
 	github.com/go-playground/locales v0.12.1 // indirect
 	github.com/go-playground/universal-translator v0.16.0 // indirect
@@ -14,6 +14,7 @@ require (
 	github.com/gogo/protobuf v1.3.0
 	github.com/golang/protobuf v1.3.2
 	github.com/google/uuid v1.1.1
+	github.com/gookit/color v1.2.0
 	github.com/gorilla/mux v1.7.3
 	github.com/hokaccha/go-prettyjson v0.0.0-20190818114111-108c894c2c0e
 	github.com/leodido/go-urn v1.1.0 // indirect

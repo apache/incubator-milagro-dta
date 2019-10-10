@@ -210,7 +210,15 @@ func MakeOrderEndpoint(m service.Service, log *logger.Logger) endpoint.Endpoint 
 			return "", err
 		}
 		debugRequest(ctx, req, log)
-		return m.Order(req)
+
+		orderRef, err := m.Order(req)
+		if err != nil {
+			return nil, err
+		}
+
+		return &api.OrderResponse{
+			OrderReference: orderRef,
+		}, nil
 	}
 }
 
@@ -225,7 +233,15 @@ func MakeOrderSecretEndpoint(m service.Service, log *logger.Logger) endpoint.End
 			return "", err
 		}
 		debugRequest(ctx, req, log)
-		return m.OrderSecret(req)
+
+		orderRef, err := m.OrderSecret(req)
+		if err != nil {
+			return nil, err
+		}
+
+		return &api.OrderSecretResponse{
+			OrderReference: orderRef,
+		}, nil
 	}
 }
 

@@ -123,7 +123,7 @@ func DecodeOrderDocument(rawdoc []byte, tag string, orderdoc *OrderDoc, sikeSK [
 	return nil
 }
 
-//Decode - Given a raw envelope, Sike Secret Key & ID - decode into plaintext, ciphertext(decrypted) and header
+//Decode - Given a raw envelope, Sike Secret Key & ID - decode into plaintext, cipherText(decrypted) and header
 func Decode(rawDoc []byte, tag string, sikeSK []byte, recipientID string, plainText proto.Message, encryptedText proto.Message, sendersBlsPK []byte) (header *Header, err error) {
 	signedEnvelope := SignedEnvelope{}
 	err = proto.Unmarshal(rawDoc, &signedEnvelope)
@@ -171,7 +171,7 @@ func Decode(rawDoc []byte, tag string, sikeSK []byte, recipientID string, plainT
 		}
 		err = proto.Unmarshal(decryptedCipherText, encryptedText)
 		if err != nil {
-			return &Header{}, errors.New("Failed to unmarshall ciphertext")
+			return &Header{}, errors.New("Failed to unmarshall cipherText")
 		}
 	}
 	return header, nil
@@ -204,7 +204,7 @@ func Encode(nodeID string, plainText proto.Message, secretText proto.Message, he
 			return nil, errors.Wrap(err, "Failed to marshall Plaintext to Protobuf")
 		}
 	}
-	//Ciphertext
+	//CipherText
 	var cipherText []byte
 	if secretText != nil {
 		secretBody, err := proto.Marshal(secretText)

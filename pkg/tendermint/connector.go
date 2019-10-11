@@ -317,7 +317,7 @@ func (nc *NodeConnector) processTXQueue(ctx context.Context, txQueue chan *api.B
 				msg := fmt.Sprintf("TX %s Block:%v Index:%v Error:%v", color.RedString("FAILURE"), chainTx.Height, chainTx.Index, err)
 				nc.log.Info(msg)
 			} else {
-				msg := fmt.Sprintf("TX %s Block:%v Index:%v", color.GreenString("PROCESSED"), chainTx.Height, chainTx.Index)
+				msg := fmt.Sprintf("TX %s Block:%v Index:%v Type:%v", color.GreenString("PROCESSED"), chainTx.Height, chainTx.Index, chainTx.Processor)
 				nc.log.Info(msg)
 			}
 			if err := nc.updateProcessedUpToHeight(chainTx.Height, chainTx.Index); err != nil {

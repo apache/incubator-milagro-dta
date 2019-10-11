@@ -159,18 +159,18 @@ func Test_Smoke_Test(t *testing.T) {
 	EKHex := hex.EncodeToString(EK)
 	fmt.Printf("EKHex : %s \n", EKHex)
 
-	// Decapsulate the AES Key and use it to decrypt the ciphertext.
+	// Decapsulate the AES Key and use it to decrypt the cipherText.
 	// P2 and P3 should be the same. This value is the AES-256 key
 	// used to encrypt the plaintext P1
 	RC3, P3 := DecapsulateDecrypt(C2, IV2, SIKEsk, EK)
 	if RC3 != 0 {
 		fmt.Println("Panicking!")
-		panic("Failed to decapsulate key and decrypt ciphertext")
+		panic("Failed to decapsulate key and decrypt cipherText")
 	}
 	P3Hex := hex.EncodeToString(P3)
 	fmt.Printf("P3Hex : %s \n", P3Hex)
 
-	// Decrypt the ciphertext to recover the orignal plaintext
+	// Decrypt the cipherText to recover the orignal plaintext
 	// contained in P1
 	K2 := P3
 	P4 := AESCBCDecrypt(K2, IV1, C1)

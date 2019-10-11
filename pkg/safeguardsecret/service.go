@@ -63,9 +63,9 @@ func (s *Service) PrepareOrderResponse(order *documents.OrderDoc) (commitment st
 	plainText := order.OrderReqExtension["plainText"]
 	delete(order.OrderReqExtension, "plainText") //we don't want to store this
 	c, v, t, err := crypto.Secp256k1Encrypt(plainText, finalPublicKey)
-	cypherTextWithParams := fmt.Sprintf("%s:%s:%s", t, v, c)
-	return finalPublicKey, map[string]string{"cypherText": cypherTextWithParams}, nil
-	//	return finalPublicKey, map[string]string{"cypherText": c, "v": v, "t": t}, nil
+	CiphertextWithParams := fmt.Sprintf("%s:%s:%s", t, v, c)
+	return finalPublicKey, map[string]string{"CipherText": CiphertextWithParams}, nil
+	//	return finalPublicKey, map[string]string{"Ciphertext": c, "v": v, "t": t}, nil
 }
 
 // ProduceFinalSecret -
@@ -76,14 +76,14 @@ func (s *Service) ProduceFinalSecret(seed, sikeSK []byte, order, orderPart4 *doc
 	if err != nil {
 		return "", "", nil, err
 	}
-	cypherTextWithParams := order.OrderPart2.Extension["cypherText"]
+	cypherTextWithParams := order.OrderPart2.Extension["CipherText"]
 	cypherparts := strings.SplitN(cypherTextWithParams, ":", 3) //maps parts to t:v:c
 	if len(cypherparts) != 3 {
-		return "", "", nil, errors.New("Invalid CypherText")
+		return "", "", nil, errors.New("Invalid Ciphertext")
 	}
 	plainText, err := crypto.Secp256k1Decrypt(cypherparts[2], cypherparts[1], cypherparts[0], finalPrivateKey)
 	if err != nil {
 		return "", "", nil, err
 	}
-	return finalPrivateKey, finalPublicKey, map[string]string{"plainText": plainText}, nil
+	return finalPrivateKey, finalPublicKey, map[string]string{"PlainText": plainText}, nil
 }

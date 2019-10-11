@@ -48,7 +48,7 @@ func Test_EnvelopeEncryption(t *testing.T) {
 	order.Reference = testText
 	raw, _ := EncodeOrderDocument(id1, order, blsSK, recipients)
 	contains := bytes.Contains(raw, testTextBytes)
-	assert.False(t, contains, "Testtext should not be found inside the Envelope - its inside the ciphertext")
+	assert.False(t, contains, "Testtext should not be found inside the Envelope - its inside the cipherText")
 
 	iddoc, _, _, _, _, blsSK := BuildTestIDDoc()
 	iddoc.AuthenticationReference = testText

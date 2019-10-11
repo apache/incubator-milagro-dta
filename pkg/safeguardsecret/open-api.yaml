@@ -69,7 +69,7 @@ paths:
                 extension:
                   type: object
                   properties:
-                    cypherText:
+                    cipherText:
                       type: string
                       example: a72d69d8fb151edde606163ff880ae4f572d40b5135816379c7f6438a66dee44
                     t:
@@ -100,7 +100,7 @@ components:
         extension:
           type: object
           properties:
-            cypherText:
+            cipherText:
               type: string
             t:
               type: string

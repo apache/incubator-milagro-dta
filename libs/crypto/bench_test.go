@@ -102,7 +102,7 @@ func Test_Bench1(t *testing.T) {
 	elapsed = time.Since(start)
 	log.Printf("EncapsulateEncrypt took %s", elapsed/100)
 
-	// Decapsulate the AES Key and use it to decrypt the ciphertext.
+	// Decapsulate the AES Key and use it to decrypt the cipherText.
 	// P2 and P3 should be the same. This value is the AES-256 key
 	// used to encrypt the plaintext P1
 

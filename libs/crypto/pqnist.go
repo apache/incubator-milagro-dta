@@ -348,7 +348,7 @@ func SIKEKeys(seed []byte) (rc int, sikePK []byte, sikeSK []byte) {
 
   The  message is encrypted using AES-256. The key
   is generated inside this function as an output
-  from the encapsulation function. The ciphertext
+  from the encapsulation function. The cipherText
   is returned using the P paramter.
 
   @param P            Plaintext to be encrypted
@@ -380,7 +380,7 @@ func EncapsulateEncrypt(p []byte, iv []byte, sikePK []byte) (rc int, c []byte, e
 /*DecapsulateDecrypt Decapsulate the AES Key and decrypt the message
 
 Decapsulate the AES key and use it to decrypt the
-ciphertext. The plaintext is returned using the C
+cipherText. The plaintext is returned using the C
 parameter.
 
 @param C            Ciphertext to be decrypted

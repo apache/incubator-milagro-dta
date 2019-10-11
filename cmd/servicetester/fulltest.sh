@@ -44,6 +44,7 @@ report () {
         printf "  ${GREEN}PASSED $1 ${NC}\n"
     else
         printf "  ${RED}FAILED $1 ${NC}\n"
+        printf "  Remeber to recompile fishhook (esp. if Protobuffers change)\n"
     fi
 }
 
@@ -51,15 +52,16 @@ test_plugin () {
     pushd .
     cd ../..
     start_server $1
-    popd 
+    popd
     ./e2e_test.sh #> /dev/null
     res=$?
-    report "$1" $res 
-    
+    report "$1" $res
+
     kill -s int $pid
 }
 
 cd "$(dirname "$0")"
+
 test_plugin bitcoinwallet
 test_plugin milagro
 test_plugin safeguardsecret

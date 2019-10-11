@@ -81,11 +81,11 @@ func Secp256k1Decrypt(C, V, T, sK string) (message string, err error) {
 		return
 	}
 
-	//Cast the cypherText back to Octets
+	//Cast the cipherText back to Octets
 	mOct := NewOctet(len(C) + 16 - (len(C) % 16))
 
 	if C.ECP_SECP256K1_ECIES_DECRYPT(hashFunc, paramP1, paramP2, vOct, cOct, tOct, uOct, mOct) != 1 {
-		return "", errors.New("Cannot decrypt cyphertext")
+		return "", errors.New("Cannot decrypt cipherText")
 	}
 
 	b := mOct.ToBytes()

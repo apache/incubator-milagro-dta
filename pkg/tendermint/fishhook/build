@@ -1,2 +1,3 @@
 go build -o fishhook main.go
+cp fishhook /Users/chris/go/src/github.com/apache/incubator-milagro-dta/cmd/servicetester/
 

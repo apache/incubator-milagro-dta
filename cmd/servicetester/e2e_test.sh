@@ -117,17 +117,15 @@ execute_safeguardsecret () {
   inputString="This is some random test text 1234567890!"
   printf "  Encrypt a String [1 Test]\n"
 
-
-  ( sleep 1; curl -s -X POST "$apiURL/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":$identity,\"extension\":{\"plainText\":\"$inputString\"}}" > ref ) &
+  ( sleep 2; curl -s -X POST "$apiURL/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":$identity,\"extension\":{\"plainText\":\"$inputString\"}}" > ref ) &
   output1=$(fishhook $configdir $host "self" 2)
+ 
   ref=$(cat ref | jq .orderReference)
-  cipherText=$(echo $output1 | jq .OrderPart2.Extension.cypherText)
+  cipherText=$(echo $output1 | jq .OrderPart2.Extension.CipherText)
 
-  #echo $cipherText
-  ( sleep 1; curl -s -X POST "$apiURL/$apiVersion/order/secret" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$ref,\"beneficiaryIDDocumentCID\":$identity,\"extension\":{\"cypherText\":$cipherText}}" > /dev/null) &
+  ( sleep 1; curl -s -X POST "$apiURL/$apiVersion/order/secret" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$ref,\"beneficiaryIDDocumentCID\":$identity,\"extension\":{\"cipherText\":$cipherText}}" > /dev/null) &
   output2=$(fishhook $configdir $host "self" 2)
-  plaintext=$(echo $output2 | jq -r .OrderPart4.Extension.plainText)
-
+  plaintext=$(echo $output2 | jq -r .OrderPart4.Extension.PlainText)
 
   if [ -z "$plaintext" ]; then
       printf "  ${RED}FAIL${NC}  Commitment is empty\n"

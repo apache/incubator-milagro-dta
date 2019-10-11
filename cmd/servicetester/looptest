@@ -1,0 +1,7 @@
+count=1
+while :
+do
+  echo "Run $count"
+  ./fulltest.sh
+  ((count++))
+done

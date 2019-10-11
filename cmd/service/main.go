@@ -219,8 +219,8 @@ func startDaemon(args []string) error {
 			case "none":
 				return nil
 			case "dump":
-				return nil
-				//				return svcPlugin.Dump(tx)
+				//return nil
+				return svcPlugin.Dump(tx)
 			case "v1/fulfill/order":
 				_, err := svcPlugin.FulfillOrder(tx)
 				return err

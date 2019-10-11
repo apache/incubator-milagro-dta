@@ -20,6 +20,7 @@ require (
 	github.com/leodido/go-urn v1.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/mattn/go-isatty v0.0.9 // indirect
+	github.com/mr-tron/base58 v1.1.2
 	github.com/multiformats/go-multihash v0.0.5
 	github.com/mwitkow/go-proto-validators v0.1.0
 	github.com/pkg/errors v0.8.1

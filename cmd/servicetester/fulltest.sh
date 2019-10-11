@@ -17,6 +17,12 @@
 # specific language governing permissions and limitations
 # under the License.
 
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+ORANGE='\033[0;33m'
+NC='\033[0m' # No Color
+
+
 
 pushd () {
     command pushd "$@" > /dev/null
@@ -35,9 +41,9 @@ start_server () {
 
 report () {
     if [ $2 -eq 0 ]; then
-        echo "PASSED $1"
+        printf "  ${GREEN}PASSED $1 ${NC}\n"
     else
-        echo "FAILED $1"
+        printf "  ${RED}FAILED $1 ${NC}\n"
     fi
 }
 

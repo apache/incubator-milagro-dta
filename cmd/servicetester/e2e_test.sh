@@ -24,20 +24,27 @@ defaultURL="http://localhost:5556"
 apiURL="${1:-$defaultURL}"
 configdir=~/.milagro
 host="34.246.173.153:26657"
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+ORANGE='\033[0;33m'
+BLUE='\033[1;34m'
+NC='\033[0m' # No Color
+
+
 
 status () {
   #Determine if an extension is running
   statusOutput=$(curl -s -X GET "$apiURL/$apiVersion/status" -H "accept: */*" -H "Content-Type: application/json")
 
-  echo "$apiURL/$apiVersion/status"
+  #printf "$apiURL/$apiVersion/status\n"
 
   identity=$(echo $statusOutput | jq .nodeCID)
   extensionVendor=$(echo $statusOutput | jq -r .extensionVendor)
   plugin=$(echo $statusOutput | jq -r .plugin)
-  echo "Plugin $plugin"
+  printf "Plugin ${BLUE}$plugin ${NC}\n"
 
   if [ -z "${extensionVendor}" ]; then
-      echo "Server Not Running"
+       printf "${RED} Server Not Running{NC}\n"
       exit 1
   fi
 }
@@ -46,38 +53,39 @@ status () {
 
 execute_bitcoin () {
   # #Run 4 Tests against the Bitcoin Extension
-  echo "Bitcoin Plugin Tests [2 Tests]"
+  echo "  Bitcoin Plugin Tests [2 Tests]"
 
 
  ( sleep 1; curl -s -X POST "$apiURL/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json"  -d "{\"beneficiaryIDDocumentCID\":\"\",\"extension\":{\"coin\":\"0\"}}" > ref ) &
   output1=$(fishhook $configdir $host "self" 2)
-  ref=$(cat ref)
+  ref=$(cat ref | jq .orderReference)
   commitment1=$(echo $output1 | jq .OrderPart2.CommitmentPublicKey)
   address1=$(echo $output1 | jq .OrderPart2.Extension.address)
   (sleep 1; curl -s -X POST "$apiURL/$apiVersion/order/secret" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$ref,\"beneficiaryIDDocumentCID\":$identity}" > /dev/null ) &
+
   output2=$(fishhook $configdir $host "self" 2)
   address2=$(echo $output2 | jq .OrderPart4.Extension.address)
   commitment2=$(echo $output2 | jq .OrderPart4.Extension.FinalPublicKey)
   #echo "Committment1 $commitment1 $address1"
   #echo "Committment2 $commitment2 $address2"
   if [ -z $commitment2 ]; then
-      echo "Failed Commitment is empty"
+      printf "  ${RED}FAIL${NC} Commitment is empty\n"
       exit 1
   fi
   if [ $commitment1 != $commitment2 ]; then
-    echo "Fail"
+    printf "  ${RED}FAIL${NC}\n "
     exit 1
   fi
   if [ $address2 != $address2 ]; then
-    echo "Fail"
+    printf "  ${RED}FAIL${NC}\n "
     exit 1
   fi
-  echo "Pass - Id, Order & OrderSecret(Beneficiary)"
+  printf "  ${GREEN}Pass${NC} - Id, Order & OrderSecret(Beneficiary)\n"
 
 
   ( sleep 1; curl -s -X POST "$apiURL/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json"  -d "{\"beneficiaryIDDocumentCID\":$identity,\"extension\":{\"coin\":\"0\"}}" > ref ) &
   output1=$(fishhook $configdir $host "self" 2)
-  ref=$(cat ref)
+  ref=$(cat ref | jq .orderReference)
   commitment1=$(echo $output1 | jq .OrderPart2.CommitmentPublicKey)
   address1=$(echo $output1 | jq .OrderPart2.Extension.address)
   (sleep 1; curl -s -X POST "$apiURL/$apiVersion/order/secret" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$ref}" > /dev/null ) &
@@ -87,18 +95,18 @@ execute_bitcoin () {
   #echo "Committment1 $commitment1 $address1"
   #echo "Committment2 $commitment2 $address2"
   if [ -z $commitment2 ]; then
-      echo "Failed Commitment is empty"
+      printf "  ${RED}FAIL${NC}  Commitment is empty\n"
       exit 1
   fi
   if [ $commitment1 != $commitment2 ]; then
-    echo "Fail"
+    printf "  ${RED}FAIL${NC}\n "
     exit 1
   fi
   if [ $address2 != $address2 ]; then
-    echo "Fail"
+    printf "  ${RED}FAIL${NC}\n"
     exit 1
   fi
- echo "Pass - Id, Order(Beneficiary) & OrderSecret"
+ printf "  ${GREEN}Pass${NC} - Id, Order(Beneficiary) & OrderSecret\n"
 }
 
 
@@ -107,12 +115,12 @@ execute_bitcoin () {
 execute_safeguardsecret () {
 
   inputString="This is some random test text 1234567890!"
-  echo "Encrypt a String [1 Test]"
+  printf "  Encrypt a String [1 Test]\n"
 
 
   ( sleep 1; curl -s -X POST "$apiURL/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":$identity,\"extension\":{\"plainText\":\"$inputString\"}}" > ref ) &
   output1=$(fishhook $configdir $host "self" 2)
-  ref=$(cat ref)
+  ref=$(cat ref | jq .orderReference)
   cipherText=$(echo $output1 | jq .OrderPart2.Extension.cypherText)
 
   #echo $cipherText
@@ -122,14 +130,14 @@ execute_safeguardsecret () {
 
 
   if [ -z "$plaintext" ]; then
-      echo "Failed Commitment is empty"
+      printf "  ${RED}FAIL${NC}  Commitment is empty\n"
       exit 1
   fi
 
   if [ "$inputString" == "$plaintext" ]; then
-    echo "Order Create/Retrieve Pass"
+    printf "  ${GREEN}Pass ${NC}Order Create/Retrieve\n"
   else
-    echo "Order Create/Retrieve Fail"
+    printf "  ${RED}FAIL ${NC}Order Create/Retrieve\n"
     exit 1
   fi
 
@@ -139,10 +147,10 @@ execute_safeguardsecret () {
 
 
 execute_milagro () {
-  echo "Milagro Tests [1 Test]"
+  echo "  Milagro Tests [1 Test]"
   ( sleep 1; curl -s -X POST "$apiURL/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":$identity}" > ref ) &
   output1=$(fishhook $configdir $host "self" 1)
-  ref=$(cat ref)
+  ref=$(cat ref | jq .orderReference)
   commitment1=$(echo $output1 | jq .OrderPart2.CommitmentPublicKey)
   #echo "Committment1 $commitment1"
 
@@ -154,14 +162,14 @@ execute_milagro () {
   #echo "Committment2 $commitment2"
 
   if [ -z $commitment2 ]; then
-      echo "Failed Commitment is empty"
+      eprintfcho "  ${RED}FAIL${NC}  Commitment is empty\n"
       exit 1
   fi
 
   if [ $commitment1 == $commitment2 ]; then
-    echo "Order Create/Retrieve Pass"
+    printf "  ${GREEN}Pass${NC} Order Create/Retrieve\n"
   else
-    echo "Order Create/Retrieve Fail"
+    printf "  ${RED}FAIL${NC} Order Create/Retrieve\n"
     exit 1
   fi
 }
@@ -174,7 +182,7 @@ execute_milagro () {
 # #############################################################################
 
 execute_orderlist () {
-  echo "Milagro Tests [1 Test]"
+  printf "Milagro Tests [1 Test]\n"
   commitment2=$(echo $output2 | jq .commitment)
   outputList=$(curl -s -X GET "$apiURL/$apiVersion/order?page=0&perPage=2&sortBy=dateCreatedDsc" -H "accept: */*")
   orderReference=$(echo $outputList | jq -r ".orderReference | .[$orderIndex]")
@@ -184,10 +192,10 @@ execute_orderlist () {
   hasSecret=`echo $outputOrder | grep "Secret"`
 
   if [ -z $hasSecret ]; then
-      echo "Failed Order has error"
+      printf "  ${RED}FAIL${NC} Order has erro\n"
       exit 1
   else
-     echo "Passed orderList & get"
+     printf "  ${GREEN}Pass${NC} orderList & get\n"
   fi
 }
 
@@ -195,20 +203,20 @@ execute_orderlist () {
 
 status
 
+
 if [ $plugin == "bitcoinwallet" ]; then
    execute_bitcoin
 fi
 
-if [ $plugin == "qredoplugin" ]; then
-   execute_bitcoin
-fi
 
 if [ $plugin == "milagro"  ]; then
    execute_milagro
 fi
 
+
 if [ $plugin == "safeguardsecret" ]; then
     execute_safeguardsecret
 fi
+
 #execute_orderlist
 

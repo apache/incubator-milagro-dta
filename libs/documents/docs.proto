@@ -106,12 +106,13 @@ message OrderDocument {
     string PrincipalCID      = 4 [(validator.field) = {regex: "^Q[[:alnum:]]{45}$|^$"}];  //empty if ok
     string BeneficiaryCID    = 5 [(validator.field) = {regex: "^Q[[:alnum:]]{45}$|^$"}];  //empty if ok
     string Reference         = 6 [(validator.field) = {string_not_empty:true}]; //an id for this order e.g. walletID
-    int64 Timestamp          = 7 [(validator.field) = {int_gt:1564050341,int_lt:32521429541}];
-    OrderPart2 OrderPart2    = 8;
-    OrderPart3 OrderPart3    = 9;
-    OrderPart4 OrderPart4    = 10;
-    map<string, string> OrderReqExtension = 11;
-    map<string, string> OrderSecretReqExtension = 12;
+    bytes ReferenceSignature    = 7;
+    int64 Timestamp          = 8 [(validator.field) = {int_gt:1564050341,int_lt:32521429541}];
+    OrderPart2 OrderPart2    = 9;
+    OrderPart3 OrderPart3    = 10;
+    OrderPart4 OrderPart4    = 11;
+    map<string, string> OrderReqExtension = 12;
+    map<string, string> OrderSecretReqExtension = 13;
 }
 
 

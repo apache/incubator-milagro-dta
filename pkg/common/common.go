@@ -28,6 +28,7 @@ import (
 	"github.com/apache/incubator-milagro-dta/pkg/tendermint"
 	"github.com/mr-tron/base58"
 
+	"github.com/apache/incubator-milagro-dta/libs/crypto"
 	"github.com/apache/incubator-milagro-dta/libs/cryptowallet"
 	"github.com/apache/incubator-milagro-dta/libs/datastore"
 	"github.com/apache/incubator-milagro-dta/libs/documents"
@@ -35,7 +36,7 @@ import (
 )
 
 // CreateNewDepositOrder - Generate an empty new Deposit Order with random reference
-func CreateNewDepositOrder(BeneficiaryIDDocumentCID string, nodeID string, orderType string) (*documents.OrderDoc, error) {
+func CreateNewDepositOrder(BeneficiaryIDDocumentCID string, nodeID string, orderType string, blsSK []byte) (*documents.OrderDoc, error) {
 	//Create a reference for this order
 	refBytes, err := cryptowallet.RandomBytes(32)
 	reference := base58.Encode(refBytes[:])
@@ -55,6 +56,15 @@ func CreateNewDepositOrder(BeneficiaryIDDocumentCID string, nodeID string, order
 	order.Type = orderType
 	order.PrincipalCID = nodeID
 	order.Reference = reference
+
+	rc, signature := crypto.BLSSign([]byte(reference), blsSK)
+
+	if rc != 0 {
+		return &documents.OrderDoc{}, errors.New("Failed to sign order reference")
+	}
+
+	order.ReferenceSignature = signature
+
 	order.BeneficiaryCID = BeneficiaryIDDocumentCID
 	order.Timestamp = time.Now().Unix()
 	return &order, nil

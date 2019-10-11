@@ -142,8 +142,18 @@ func (s *Service) Order(req *api.OrderRequest) (string, error) {
 		return "", err
 	}
 
+	// BLS key
+	keyseed, err := s.KeyStore.Get("seed")
+	if err != nil {
+		return "", err
+	}
+	_, blsSK, err := identity.GenerateBLSKeys(keyseed)
+	if err != nil {
+		return "", err
+	}
+
 	//Create Order
-	order, err := common.CreateNewDepositOrder(beneficiaryIDDocumentCID, nodeID, s.Plugin.Name())
+	order, err := common.CreateNewDepositOrder(beneficiaryIDDocumentCID, nodeID, s.Plugin.Name(), blsSK)
 	if err != nil {
 		return "", err
 	}
@@ -154,16 +164,6 @@ func (s *Service) Order(req *api.OrderRequest) (string, error) {
 	}
 	for key, value := range req.Extension {
 		order.OrderReqExtension[key] = value
-	}
-
-	// BLS key
-	keyseed, err := s.KeyStore.Get("seed")
-	if err != nil {
-		return "", err
-	}
-	_, blsSK, err := identity.GenerateBLSKeys(keyseed)
-	if err != nil {
-		return "", err
 	}
 
 	//Create a new Transaction payload and TX

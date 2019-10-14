@@ -172,7 +172,6 @@ func (nc *NodeConnector) Subscribe(ctx context.Context, processFn ProcessTXFunc)
 	}
 
 	nc.loadMissingHistory(currentBlockHeight, processedTo, processFn)
-	// TODO: load historicTX
 
 	// Process events
 	return nc.processTXQueue(ctx, txQueue, processFn)
@@ -212,14 +211,19 @@ func (nc *NodeConnector) loadMissingHistory(currentBlockHeight int, processedTo 
 	}
 
 	currentPage := 1
-	query := fmt.Sprintf("tag.recipient='%v' AND tag.sender='%v' AND tx.height>=%d AND tx.height<=%d", nc.nodeID, nc.nodeID, processedToHeight, currentBlockHeight)
+	query := fmt.Sprintf("tag.recipient='%v' AND tx.height>=%v AND tx.height<=%v", nc.nodeID, processedToHeight, currentBlockHeight)
 	numPerPage := 5
-
+	processedCount := 1
 	for {
 		result, err := tmHistoryClient.TxSearch(query, true, currentPage, numPerPage)
 		if err != nil {
 			return errors.Wrapf(err, "Failed to subscribe to query %s", query)
 		}
+
+		//skip over any previously processed
+
+		totalCount := result.TotalCount
+		totalToProcess := totalCount - int(processedToIndex)
 
 		for _, chainTx := range result.Txs {
 
@@ -235,33 +239,51 @@ func (nc *NodeConnector) loadMissingHistory(currentBlockHeight int, processedTo 
 			payload.Height = chainTx.Height
 
 			//processedTo check
-			if payload.Height < processedToHeight {
+
+			if processedToHeight == payload.Height && processedToIndex >= payload.Index {
+				//We have already processed this before
+				msg := fmt.Sprintf("[%v/%v] HISTORY %s Block:%v Index:%v", processedCount, totalCount, color.BlueString("ALREADY PROCESSED"), chainTx.Height, chainTx.Index)
+				nc.log.Info(msg)
+				processedCount++
 				continue
+
 			}
-			if payload.Height == processedToHeight && payload.Index <= processedToIndex {
-				continue
-			}
+			// if processedToHeight == payload.Height && payload.Index == 0 {
+			// 	totalCount = totalCount - int(processedToIndex)
+			// }
+
+			// if processedToHeight > payload.Height {
+			// 	continue
+			// }
+
+			// if processedToHeight == payload.Height && processedToIndex > payload.Index {
+			// 	continue
+			// }
 
 			//Dont queue just process directly
 
 			if err := processFn(payload); err != nil {
-				msg := fmt.Sprintf("HISTORY %s Block:%v Index:%v Error:%v", color.RedString("FAILURE"), chainTx.Height, chainTx.Index, err)
+				msg := fmt.Sprintf("[%v/%v] HISTORY %s Block:%v Index:%v Error:%v", processedCount, totalCount, color.RedString("FAILURE"), chainTx.Height, chainTx.Index, err)
 				nc.log.Info(msg)
 			} else {
-				msg := fmt.Sprintf("HISTORY %s Block:%v Index:%v", color.GreenString("PROCESSED"), chainTx.Height, chainTx.Index)
+				msg := fmt.Sprintf("[%v/%v] HISTORY %s Block:%v Index:%v", processedCount, totalCount, color.GreenString("PROCESSED"), chainTx.Height, chainTx.Index)
 				nc.log.Info(msg)
 			}
+			processedCount++
 
 			if err := nc.updateProcessedUpToHeight(chainTx.Height, chainTx.Index); err != nil {
 				return err
 			}
+			processedToHeight = chainTx.Height
+			processedToIndex = chainTx.Index
 
 		}
-		if currentPage*numPerPage > result.TotalCount {
+		if processedCount == totalToProcess {
 			break
 		}
 		currentPage++
 	}
+	nc.log.Info("Process history complete")
 	return nil
 }
 
@@ -312,17 +334,21 @@ func (nc *NodeConnector) processTXQueue(ctx context.Context, txQueue chan *api.B
 	for {
 		select {
 		case chainTx := <-txQueue:
-
-			if err := processFn(chainTx); err != nil {
-				msg := fmt.Sprintf("TX %s Block:%v Index:%v Error:%v", color.RedString("FAILURE"), chainTx.Height, chainTx.Index, err)
-				nc.log.Info(msg)
-			} else {
-				msg := fmt.Sprintf("TX %s Block:%v Index:%v Type:%v", color.GreenString("PROCESSED"), chainTx.Height, chainTx.Index, chainTx.Processor)
-				nc.log.Info(msg)
-			}
-			if err := nc.updateProcessedUpToHeight(chainTx.Height, chainTx.Index); err != nil {
-				return err
-			}
+			//nc.log.Info(("incoming tx"))
+			go func() error {
+				if err := processFn(chainTx); err != nil {
+					msg := fmt.Sprintf("TX %s Block:%v Index:%v Error:%v", color.RedString("FAILURE"), chainTx.Height, chainTx.Index, err)
+					nc.log.Info(msg)
+				} else {
+					orderRef := chainTx.Tags["reference"]
+					msg := fmt.Sprintf("TX %s Block:%v Index:%v Type:%v Ref:%v", color.GreenString("PROCESSED"), chainTx.Height, chainTx.Index, chainTx.Processor, orderRef)
+					nc.log.Info(msg)
+				}
+				if err := nc.updateProcessedUpToHeight(chainTx.Height, chainTx.Index); err != nil {
+					return err
+				}
+				return nil
+			}()
 
 			// TODO: store the last block height
 		case <-ctx.Done():

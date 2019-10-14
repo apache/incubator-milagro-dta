@@ -1,0 +1,13 @@
+#!/bin/bash
+rm refs
+x=1
+while [ $x -le $1 ]
+do
+    (curl -s -X POST http://localhost:5556/v1/order -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":\"\"}" | jq .orderReference >> refs ) &
+  x=$(( $x + 1 ))
+done
+
+
+
+
+

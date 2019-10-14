@@ -21,6 +21,8 @@ Package documents - data is signed and nested in "encrypted envelope"
 package documents
 
 import (
+	"sync"
+
 	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
 )
@@ -31,6 +33,7 @@ import (
 var (
 	//EnvelopeVersion the versioning of the entire Envelope, (not individual documents/contents)
 	EnvelopeVersion float32 = 1.0
+	mutex                   = &sync.Mutex{}
 )
 
 //IDDoc wrapper to encapsulate Header & IDDocument into one object
@@ -166,6 +169,7 @@ func Decode(rawDoc []byte, tag string, sikeSK []byte, recipientID string, plainT
 		}
 
 		decryptedCipherText, err := aesDecrypt(envelope.EncryptedBody, header.EncryptedBodyIV, aesKey)
+
 		if err != nil {
 			return &Header{}, errors.Wrap(err, "Failed to AES Decrypt Envelope cipherText")
 		}

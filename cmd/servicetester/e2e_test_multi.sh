@@ -19,10 +19,13 @@
 
 #End to End Test of Services using curl/bash
 
+principalID="FvhP9PyS1LNNizM1kns65PUA9imPya2zzTbZZ9BYaVLo"
+beneficiaryID="5m4iJRCRzcMySHFXgAPB1gyfBvHgomwEpWDpZRHayPyP"
+beneficiaryConfigdir=~/.milagro3
 apiVersion="v1"
 defaultURL="http://localhost:5556"
 apiURL="${1:-$defaultURL}"
-configdir=~/.milagro
+configdir=~/.milagro1
 host="34.246.173.153:26657"
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -146,19 +149,23 @@ execute_safeguardsecret () {
 
 execute_milagro () {
   echo "  Milagro Tests [1 Test]"
-  ( sleep 1; curl -s -X POST "$apiURL/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":$identity}" > ref ) &
+  ( sleep 1; curl -s -X POST "$apiURL/$apiVersion/order" -H "accept: */*" -H "Content-Type: application/json" -d "{\"beneficiaryIDDocumentCID\":\"\"}" > ref ) &
+
   output1=$(fishhook $configdir $host "self" 1)
   ref=$(cat ref | jq .orderReference)
   commitment1=$(echo $output1 | jq .OrderPart2.CommitmentPublicKey)
   echo "Committment1 $commitment1"
 
-  ( sleep 1; curl -s -X POST "$apiURL/$apiVersion/order/secret" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$ref,\"beneficiaryIDDocumentCID\":$identity}" > /dev/null) &
-  output2=$(fishhook $configdir $host "self" 3)
+
+
+  ( sleep 1; curl -s -X POST "$apiURL/$apiVersion/order/secret" -H "accept: */*" -H "Content-Type: application/json" -d "{\"orderReference\":$ref,\"beneficiaryIDDocumentCID\":\"$beneficiaryID\"}" > /dev/null) &
+
+
+  output2=$(fishhook $beneficiaryConfigdir $host "self" 1)
   commitment2=$(echo $output2 | jq .OrderPart4.Extension.FinalPublicKey)
   orderIndex=0
-  echo "Committment1 $commitment1"
-  echo "Committment2 $commitment2"
 
+  
   if [ -z $commitment2 ]; then
       printf "  ${RED}FAIL${NC}  Commitment is empty\n"
       exit 1
@@ -200,7 +207,6 @@ execute_orderlist () {
 # #############################################################################
 
 status
-
 
 if [ $plugin == "bitcoinwallet" ]; then
    execute_bitcoin

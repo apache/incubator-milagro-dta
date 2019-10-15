@@ -17,8 +17,8 @@
 
 #build the protobuffer docs.pb.go file from the definition file docs.proto
 protoc \
-  --proto_path=$HOME/go/src \
-  --proto_path=$HOME/go/src/github.com/gogo/protobuf/ \
+  --proto_path=$GOPATH/src \
+  --proto_path=$GOPATH/src/github.com/gogo/protobuf/ \
   --proto_path=. \
   --go_out=. \
   --govalidators_out=. \

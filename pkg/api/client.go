@@ -35,6 +35,7 @@ var (
 // ClientService interface
 type ClientService interface {
 	Order(token string, req *OrderRequest) (*OrderResponse, error)
+	OrderList(token string, req *OrderListRequest) (*OrderListResponse, error)
 	OrderSecret(token string, req *OrderSecretRequest) (*OrderSecretResponse, error)
 	Status(token string) (*StatusResponse, error)
 }
@@ -64,6 +65,12 @@ func ClientEndpoints() transport.HTTPEndpoints {
 			Method:      http.MethodGet,
 			NewResponse: func() interface{} { return &StatusResponse{} },
 		},
+		"OrderList": {
+			Path:        "/" + apiVersion + "/order",
+			Method:      http.MethodGet,
+			NewRequest:  func() interface{} { return &OrderListRequest{} },
+			NewResponse: func() interface{} { return &OrderListResponse{} },
+		},
 	}
 }
 
@@ -86,6 +93,20 @@ func (c MilagroClientService) Order(token string, req *OrderRequest) (*OrderResp
 	}
 
 	return resp.(*OrderResponse), nil
+}
+
+//OrderList - returns a paginated list of orders
+func (c MilagroClientService) OrderList(token string, req *OrderListRequest) (*OrderListResponse, error) {
+	endpoint := c.endpoints["OrderList"]
+	ctx := context.Background()
+	ctx = transport.SetJWTAuthHeader(ctx, token)
+
+	resp, err := endpoint(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.(*OrderListResponse), nil
 }
 
 // OrderSecret makes a request for initiate the order secret

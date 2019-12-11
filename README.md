@@ -111,6 +111,7 @@ Build and install the AMCL library
 ```
 git clone https://github.com/apache/incubator-milagro-crypto-c.git
 cd incubator-milagro-crypto-c
+git checkout feecb27e7cc24ba5809405cc3efe74b0f7ac69ef
 mkdir build
 cd build
 cmake -D CMAKE_BUILD_TYPE=Release -D BUILD_SHARED_LIBS=ON -D AMCL_CHUNK=64 -D AMCL_CURVE="BLS381,SECP256K1" -D AMCL_RSA="" -D BUILD_PYTHON=OFF -D BUILD_BLS=ON -D BUILD_WCC=OFF -D BUILD_MPIN=OFF -D BUILD_X509=OFF -D CMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_C_FLAGS="-fPIC" ..

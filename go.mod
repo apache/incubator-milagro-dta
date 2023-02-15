@@ -5,13 +5,13 @@ require (
 	github.com/btcsuite/btcd v0.0.0-20190824003749-130ea5bddde3
 	github.com/btcsuite/btcutil v0.0.0-20190425235716-9e5f4b9a998d
 	github.com/coreos/go-oidc v2.0.0+incompatible
-	github.com/go-kit/kit v0.8.0
+	github.com/go-kit/kit v0.9.0
 	github.com/go-playground/locales v0.12.1 // indirect
 	github.com/go-playground/universal-translator v0.16.0 // indirect
 	github.com/go-test/deep v1.0.2
 	github.com/go-yaml/yaml v2.1.0+incompatible
 	github.com/gogo/protobuf v1.2.1
-	github.com/golang/protobuf v1.3.1
+	github.com/golang/protobuf v1.4.3
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.7.3
 	github.com/ipfs/go-datastore v0.0.5
@@ -26,9 +26,9 @@ require (
 	github.com/libp2p/go-libp2p-peer v0.1.1
 	github.com/multiformats/go-multihash v0.0.5
 	github.com/mwitkow/go-proto-validators v0.1.0
-	github.com/pkg/errors v0.8.1
+	github.com/pkg/errors v0.9.1
 	github.com/pquerna/cachecontrol v0.0.0-20180517163645-1555304b9b35 // indirect
-	github.com/prometheus/client_golang v0.9.3
+	github.com/prometheus/client_golang v1.11.1
 	github.com/stretchr/testify v1.4.0
 	github.com/tyler-smith/go-bip39 v1.0.0
 	go.etcd.io/bbolt v1.3.3
